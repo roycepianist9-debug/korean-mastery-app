@@ -1,0 +1,43 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "server",
+    "db",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://3WxSqnsMcVEPsye.953848e40918:OaxCkl52O5D616fwEqLQ@gateway06.us-east-1.prod.aws.tidbcloud.com:4000/AgvNoYTdwLUFS5Bk9mDdFK?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663639757732/AgvNoYTdwLUFS5Bk9mDdFK",
+    "access_key_id": "ASIAZV3A2ECZBUYX5ZPG",
+    "secret_access_key": "bOxKKI1TXJa0iw72ulaZ1fr+ANVHOurZnxoKIO6u",
+    "session_token": "IQoJb3JpZ2luX2VjELP//////////wEaCXVzLWVhc3QtMSJIMEYCIQD6JcX1x9+68pF9MsdQfyKvXprNZDDk6aiRgOTIIpMLgQIhAOrlfCQLCJg4VL2IDUHBVa9l4qQXnrOMPV1o9kxC0pOXKvYDCHwQBBoMNjY1Mzg2MDk4ODY2IgwZ2+oLBF86kMUNYfUq0wMnYx86V2Fx2r+jxQqWHFr6Kl83PRdmhXRU8TBrlzk/TsIgK0gEFkMzidGW/GH/oM1nZXYfcHUrrdwHUxLoGFHDhNQalCCgk3oUZ5Bdqy79EtdvIhLwI9Nyw9pMWRx24vlm0F+CPEemgx03LoImg3/E+rmTe/kWtqUfIqSsep5kbDnT4ln1r7/syrhPAAkI6EsuOYQdZ/0p0YW+uyKiMWg4137bxNarTjrFql/0z7Hu4opkmiyogSI7v/blwGz7Ajf9ZPzeNWMdUfyt2pDJZ3KjnZe/vErqlstyytAYn1zBhhzvt7xFAtPzvB3IeJRkLF4RFzSHA6ODzK5/SPrXIBt3cjub1sBGOuXhaI4G+FZ63S/hD5G4jzTQPNE77ahYjQZyT+cot4wkyliEBxSNTz/m1ZRb/GabL0xWt7wuKYO3nOu4j8Q/h0LWa5yQYuDmDftMcwsF8yql4nwpP3KswQPovlblRCNB/Qf5JOXojucA3cQbCVEqY/kXP1zAc3lOSLmkrBWy5rPLaoGlGzAsOWPzB09xPVzbMw48djXL4uo+9CVikFtGg2uKhM8flkBevULw5GJhZjhwh0BpsmRjDjZuJOSTN+w2WKvj+WFpk+oCZNzxbjC6053QBjqcAQG9K67USIh90pWhYExlu7baLl5fbxDtVfNPPZPTJbPS84qHPIBRQDVN7EBEwRyCkRB09Qj46KtJcABH2HOM6MEh6ICYykEX0VKn4YOMn0z8E8v2EFwZG64MXSTT+v+cHGB+0B8ooQtbYagA7+dylVfL516o89KBPSFuFRkgTpf7O9xRtssP52s1q4T1C8FZ1290BubjIDzUvPmCcQ==",
+    "expiration": "2026-05-16T06:45:14.000Z"
+  },
+  "name": "korean-mastery-app",
+  "path": "/home/ubuntu/korean-mastery-app",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "APok8cwMPGSuokTg3Ca657",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "BLAwDgXSF3vkYcg9Arcb7E",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Chris",
+    "OWNER_OPEN_ID": "9MzHaEq47pGKFZzknh9ffM",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "8d6ae20d-3ba5-4a98-8c05-dc2c9edef628",
+    "VITE_APP_ID": "AgvNoYTdwLUFS5Bk9mDdFK",
+    "VITE_APP_LOGO": "",
+    "VITE_APP_TITLE": "Korean Mastery App",
+    "VITE_FRONTEND_FORGE_API_KEY": "4LG2Zvs67FQRjPuUPrz2D4",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}
