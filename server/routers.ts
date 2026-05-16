@@ -1,28 +1,241 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { invokeLLM } from "./_core/llm";
+import {
+  searchWords,
+  getWordById,
+  getRandomWords,
+  getWordStats,
+  getUserProgress,
+  upsertWordProgress,
+  getUserProgressStats,
+  getProgressByLevel,
+  getProgressByPos,
+  getOrCreateUserStats,
+  updateUserStatsAfterSwipe,
+} from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  words: router({
+    search: publicProcedure
+      .input(z.object({
+        query: z.string().optional(),
+        pos: z.string().optional(),
+        topikLevel: z.string().optional(),
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).max(100).default(30),
+      }))
+      .query(async ({ input }) => {
+        return searchWords(input);
+      }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return getWordById(input.id);
+      }),
+
+    random: publicProcedure
+      .input(z.object({
+        pos: z.string().optional(),
+        topikLevel: z.string().optional(),
+        limit: z.number().min(1).max(50).default(10),
+        excludeIds: z.array(z.number()).optional(),
+      }))
+      .query(async ({ input }) => {
+        return getRandomWords({
+          pos: input.pos,
+          topikLevel: input.topikLevel,
+          limit: input.limit,
+          excludeIds: input.excludeIds,
+        });
+      }),
+
+    stats: publicProcedure.query(async () => {
+      return getWordStats();
+    }),
+  }),
+
+  progress: router({
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      return getUserProgressStats(ctx.user.id);
+    }),
+
+    getByLevel: protectedProcedure.query(async ({ ctx }) => {
+      return getProgressByLevel(ctx.user.id);
+    }),
+
+    getByPos: protectedProcedure.query(async ({ ctx }) => {
+      return getProgressByPos(ctx.user.id);
+    }),
+
+    getForWords: protectedProcedure
+      .input(z.object({ wordIds: z.array(z.number()) }))
+      .query(async ({ ctx, input }) => {
+        return getUserProgress(ctx.user.id, input.wordIds);
+      }),
+
+    swipe: protectedProcedure
+      .input(z.object({
+        wordId: z.number(),
+        known: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const status = input.known ? 'learned' as const : 'reviewing' as const;
+        await upsertWordProgress(ctx.user.id, input.wordId, status, input.known);
+
+        // XP: 10 for learned, 3 for reviewing
+        const xpGained = input.known ? 10 : 3;
+        const wordsLearned = input.known ? 1 : 0;
+        await updateUserStatsAfterSwipe(ctx.user.id, xpGained, wordsLearned);
+
+        return { status, xpGained };
+      }),
+
+    batchSwipe: protectedProcedure
+      .input(z.object({
+        results: z.array(z.object({
+          wordId: z.number(),
+          known: z.boolean(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        let totalXp = 0;
+        let totalLearned = 0;
+
+        for (const result of input.results) {
+          const status = result.known ? 'learned' as const : 'reviewing' as const;
+          await upsertWordProgress(ctx.user.id, result.wordId, status, result.known);
+          totalXp += result.known ? 10 : 3;
+          if (result.known) totalLearned += 1;
+        }
+
+        await updateUserStatsAfterSwipe(ctx.user.id, totalXp, totalLearned);
+
+        return { totalXp, totalLearned, totalReviewed: input.results.length };
+      }),
+  }),
+
+  gamification: router({
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      const stats = await getOrCreateUserStats(ctx.user.id);
+      if (!stats) return {
+        xp: 0, currentStreak: 0, longestStreak: 0,
+        totalWordsLearned: 0, totalReviews: 0, level: 1, levelTitle: 'Beginner',
+      };
+
+      // Calculate level from XP
+      const level = Math.floor(stats.xp / 100) + 1;
+      const levelTitles = [
+        'Beginner', 'Novice', 'Apprentice', 'Student', 'Scholar',
+        'Adept', 'Expert', 'Master', 'Grandmaster', 'Legend',
+      ];
+      const levelTitle = levelTitles[Math.min(level - 1, levelTitles.length - 1)] ?? 'Legend';
+
+      return {
+        xp: stats.xp,
+        currentStreak: stats.currentStreak,
+        longestStreak: stats.longestStreak,
+        totalWordsLearned: stats.totalWordsLearned,
+        totalReviews: stats.totalReviews,
+        level,
+        levelTitle,
+      };
+    }),
+  }),
+
+  llm: router({
+    getWordTips: protectedProcedure
+      .input(z.object({
+        korean: z.string(),
+        meaning: z.string(),
+        pos: z.string(),
+        koreanExample: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a Korean language tutor. Given a Korean word, provide:
+1. A brief grammar tip (1-2 sentences) about how this word is used
+2. Two additional example sentences in Korean with English translations
+3. A usage note about nuance, formality level, or common mistakes
+
+Format your response as JSON with this exact structure:
+{
+  "grammarTip": "...",
+  "examples": [
+    { "korean": "...", "english": "..." },
+    { "korean": "...", "english": "..." }
+  ],
+  "usageNote": "..."
+}`
+              },
+              {
+                role: "user",
+                content: `Word: ${input.korean}
+Meaning: ${input.meaning}
+Part of speech: ${input.pos}
+${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "word_tips",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    grammarTip: { type: "string" },
+                    examples: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          korean: { type: "string" },
+                          english: { type: "string" },
+                        },
+                        required: ["korean", "english"],
+                        additionalProperties: false,
+                      },
+                    },
+                    usageNote: { type: "string" },
+                  },
+                  required: ["grammarTip", "examples", "usageNote"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const content = response.choices?.[0]?.message?.content;
+          if (content) {
+            return JSON.parse(content);
+          }
+          return null;
+        } catch (error) {
+          console.error("[LLM] Failed to generate word tips:", error);
+          return null;
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
