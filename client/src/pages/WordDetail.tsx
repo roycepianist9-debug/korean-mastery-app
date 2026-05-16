@@ -30,7 +30,7 @@ export default function WordDetail() {
     if (!word || !isAuthenticated) return;
     setTipsRequested(true);
     tipsMutation.mutate({
-      korean: word.korean,
+      korean: word.korean || "",
       meaning: word.meaning,
       pos: word.pos,
       koreanExample: word.koreanExample || undefined,

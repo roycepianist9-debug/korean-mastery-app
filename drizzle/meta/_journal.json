@@ -15,6 +15,13 @@
       "when": 1778891027709,
       "tag": "0001_tiresome_zarek",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778972970357,
+      "tag": "0002_acoustic_strong_guy",
+      "breakpoints": true
     }
   ]
 }

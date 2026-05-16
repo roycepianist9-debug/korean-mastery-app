@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
+import LanguageToggle from "@/components/LanguageToggle";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
@@ -10,10 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const { language } = useLanguage();
 
   const wordStats = trpc.words.stats.useQuery();
   const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
@@ -36,7 +40,9 @@ export default function Home() {
     const levels = ['beginner', 'intermediate', 'advanced'] as const;
     const levelTotals: Record<string, number> = {};
     for (const item of ws.byLevel) {
-      levelTotals[item.level] = item.count;
+      if (item.level) {
+        levelTotals[item.level] = item.count;
+      }
     }
     return levels.map(level => {
       const total = levelTotals[level] ?? 0;
@@ -71,13 +77,16 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-4 pt-6 pb-2">
+        <div className="flex items-center justify-between mb-4">
+          <LanguageToggle />
+        </div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-foreground">
-              {isAuthenticated ? `Welcome back!` : 'Korean Mastery'}
+              {isAuthenticated ? `Welcome back!` : language === 'korean' ? 'Korean Mastery' : 'Chinese Mastery'}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {isAuthenticated ? 'Ready to learn?' : 'Master 56,000+ Korean words'}
+              {isAuthenticated ? 'Ready to learn?' : language === 'korean' ? 'Master 56,000+ Korean words' : 'Master 11,000+ Chinese words'}
             </p>
           </div>
           {isAuthenticated && gs && (

@@ -79,3 +79,20 @@
 - [x] Remove "Learned" and "Reviewing" background labels from each word card in swipe-to-mark
 - [x] Restore original card background color (no green/orange tint on cards at rest)
 - [x] Keep only the top instruction hint ("Swipe right = Learned · Swipe left = Reviewing")
+
+
+## Chinese (Mandarin HSK) Support
+- [x] Update database schema: add `language` field to words table (enum: 'korean' | 'chinese')
+- [x] Create separate progress tracking for Chinese words (same user_id, language='chinese')
+- [x] Add language toggle UI: Korean 🇰🇷 and Chinese 🇨🇳 flags in top navigation
+- [x] Persist language preference in localStorage
+- [x] Seed Chinese HSK Level 1 vocabulary from Mandarin Bean (20 sample words with matched examples)
+- [x] Hand-matched example sentences for Chinese words (with pinyin)
+- [x] Update Home page: show language toggle, language-specific stats
+- [x] Update SwipeGame: language-aware card display, Chinese HSK level filtering
+- [x] Update WordList: language-aware filtering and display
+- [x] Language-aware routing: /play?lang=chinese, /words?lang=chinese, etc.
+- [x] Render Chinese fields in SwipeGame (chinese, pinyin, chineseExample, examplePinyin)
+- [x] Render Chinese fields in WordList (chinese, pinyin, HSK level badges)
+- [ ] Expand Chinese vocabulary: add HSK Level 2-3 words (500+ more words)
+- [ ] Add Chinese tokenization for clickable example sentences

@@ -1,4 +1,5 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, index } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, varchar, index } from "drizzle-orm/mysql-core";
+import { timestamp } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -19,25 +20,32 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
- * Korean dictionary words from KRDICT.
+ * Dictionary words for both Korean and Chinese.
  */
 export const words = mysqlTable("words", {
   id: int("id").autoincrement().primaryKey(),
-  korean: varchar("korean", { length: 255 }).notNull(),
+  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
+  // Korean fields
+  korean: varchar("korean", { length: 255 }),
   romanization: varchar("romanization", { length: 255 }).notNull().default(""),
   pos: varchar("pos", { length: 64 }).notNull().default(""),
   meaning: text("meaning").notNull(),
   koreanExample: text("koreanExample"),
   exampleEnglish: text("exampleEnglish"),
-  topikLevel: mysqlEnum("topikLevel", ["beginner", "intermediate", "advanced"]).notNull().default("advanced"),
-  chineseTerm: varchar("chineseTerm", { length: 255 }).notNull().default(""),
+  topikLevel: mysqlEnum("topikLevel", ["beginner", "intermediate", "advanced"]).default("advanced"),
+  // Chinese fields
+  chinese: varchar("chinese", { length: 255 }),
   pinyin: varchar("pinyin", { length: 255 }).notNull().default(""),
+  hskLevel: mysqlEnum("hskLevel", ["1", "2", "3", "4", "5", "6", "7", "8", "9"]),
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
 }, (table) => [
+  index("idx_words_language").on(table.language),
   index("idx_words_korean").on(table.korean),
+  index("idx_words_chinese").on(table.chinese),
   index("idx_words_pos").on(table.pos),
   index("idx_words_topik").on(table.topikLevel),
+  index("idx_words_hsk").on(table.hskLevel),
   index("idx_words_romanization").on(table.romanization),
 ]);
 
@@ -45,12 +53,13 @@ export type Word = typeof words.$inferSelect;
 export type InsertWord = typeof words.$inferInsert;
 
 /**
- * User progress tracking per word.
+ * User progress tracking per word (supports both Korean and Chinese).
  */
 export const userProgress = mysqlTable("user_progress", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   wordId: int("wordId").notNull(),
+  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
   status: mysqlEnum("status", ["new", "reviewing", "learned"]).notNull().default("new"),
   timesReviewed: int("timesReviewed").notNull().default(0),
   timesCorrect: int("timesCorrect").notNull().default(0),
@@ -60,7 +69,9 @@ export const userProgress = mysqlTable("user_progress", {
 }, (table) => [
   index("idx_progress_user").on(table.userId),
   index("idx_progress_word").on(table.wordId),
+  index("idx_progress_language").on(table.language),
   index("idx_progress_user_word").on(table.userId, table.wordId),
+  index("idx_progress_user_lang").on(table.userId, table.language),
   index("idx_progress_status").on(table.userId, table.status),
 ]);
 
@@ -68,11 +79,12 @@ export type UserProgress = typeof userProgress.$inferSelect;
 export type InsertUserProgress = typeof userProgress.$inferInsert;
 
 /**
- * User stats for gamification (XP, streaks, level).
+ * User stats for gamification (XP, streaks, level) - per language.
  */
 export const userStats = mysqlTable("user_stats", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().unique(),
+  userId: int("userId").notNull(),
+  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
   xp: int("xp").notNull().default(0),
   currentStreak: int("currentStreak").notNull().default(0),
   longestStreak: int("longestStreak").notNull().default(0),
@@ -83,6 +95,7 @@ export const userStats = mysqlTable("user_stats", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => [
   index("idx_stats_user").on(table.userId),
+  index("idx_stats_user_lang").on(table.userId, table.language),
 ]);
 
 export type UserStats = typeof userStats.$inferSelect;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
@@ -119,12 +120,18 @@ function SwipeableWordCard({
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
           <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center shrink-0">
-            <span className="text-lg font-black text-foreground">{word.korean.charAt(0)}</span>
+            <span className="text-lg font-black text-foreground">
+              {word.korean ? word.korean.charAt(0) : word.chinese?.charAt(0) || '?'}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="font-bold text-sm text-foreground truncate">{word.korean}</p>
-              <span className="text-xs text-muted-foreground shrink-0">{word.romanization}</span>
+              <p className="font-bold text-sm text-foreground truncate">
+                {word.korean || word.chinese}
+              </p>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {word.romanization || word.pinyin}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
           </div>
@@ -133,10 +140,15 @@ function SwipeableWordCard({
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
             word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
             word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+            word.topikLevel === 'advanced' ? 'bg-accent/20 text-accent' :
+            word.hskLevel === '1' ? 'bg-primary/20 text-primary' :
+            word.hskLevel === '2' ? 'bg-chart-3/20 text-chart-3' :
             'bg-accent/20 text-accent'
           }`}>
             {word.topikLevel === 'beginner' ? 'Beg' :
-             word.topikLevel === 'intermediate' ? 'Int' : 'Adv'}
+             word.topikLevel === 'intermediate' ? 'Int' :
+             word.topikLevel === 'advanced' ? 'Adv' :
+             word.hskLevel ? `HSK${word.hskLevel}` : 'Lvl'}
           </span>
           {word.pos && (
             <span className="text-[10px] text-muted-foreground">{word.pos}</span>
@@ -191,6 +203,7 @@ function StatusFilter({
 /* ─── Main Component ─── */
 export default function WordList() {
   const { isAuthenticated } = useAuth();
+  const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
@@ -222,12 +235,14 @@ export default function WordList() {
   }, [searchQuery]);
 
   const wordsQuery = trpc.words.search.useQuery({
-    query: debouncedQuery || undefined,
+    query: debouncedQuery,
     pos: posFilter !== 'all' ? posFilter : undefined,
-    topikLevel: levelFilter !== 'all' ? levelFilter : undefined,
+    topikLevel: language === 'korean' && levelFilter !== 'all' ? levelFilter : undefined,
+    hskLevel: language === 'chinese' && levelFilter !== 'all' ? levelFilter : undefined,
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
-    pageSize,
+    pageSize: 30,
+    language,
   });
 
   const markWord = trpc.progress.markWord.useMutation({

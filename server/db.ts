@@ -72,15 +72,21 @@ export async function searchWords(params: {
   query?: string;
   pos?: string;
   topikLevel?: string;
+  hskLevel?: string;
   statuses?: string[];
   userId?: number;
   page: number;
   pageSize: number;
+  language?: 'korean' | 'chinese';
 }) {
   const db = await getDb();
   if (!db) return { words: [], total: 0 };
 
   const conditions = [];
+
+  // Language filter (default to korean)
+  const language = params.language || 'korean';
+  conditions.push(eq(words.language, language));
 
   if (params.query && params.query.trim()) {
     const q = `%${params.query.trim()}%`;
@@ -99,6 +105,10 @@ export async function searchWords(params: {
 
   if (params.topikLevel && params.topikLevel !== 'all') {
     conditions.push(eq(words.topikLevel, params.topikLevel as any));
+  }
+
+  if (params.hskLevel && params.hskLevel !== 'all') {
+    conditions.push(eq(words.hskLevel, params.hskLevel as any));
   }
 
   // Status filter: filter by user progress status
@@ -199,7 +209,9 @@ export async function tokenizeAndLookup(sentence: string) {
         .where(inArray(words.korean, chunk))
         .limit(chunk.length);
       for (const r of results) {
-        lookupMap.set(r.korean, { id: r.id, meaning: r.meaning });
+        if (r.korean) {
+          lookupMap.set(r.korean, { id: r.id, meaning: r.meaning });
+        }
       }
     }
   }
@@ -236,18 +248,28 @@ export async function getWordById(id: number) {
 export async function getRandomWords(params: {
   pos?: string;
   topikLevel?: string;
+  hskLevel?: string;
   limit: number;
   excludeIds?: number[];
+  language?: 'korean' | 'chinese';
 }) {
   const db = await getDb();
   if (!db) return [];
 
   const conditions = [];
+  
+  // Language filter (default to korean)
+  const language = params.language || 'korean';
+  conditions.push(eq(words.language, language));
+  
   if (params.pos && params.pos !== 'all') {
     conditions.push(eq(words.pos, params.pos));
   }
   if (params.topikLevel && params.topikLevel !== 'all') {
     conditions.push(eq(words.topikLevel, params.topikLevel as any));
+  }
+  if (params.hskLevel && params.hskLevel !== 'all') {
+    conditions.push(eq(words.hskLevel, params.hskLevel as any));
   }
   if (params.excludeIds && params.excludeIds.length > 0) {
     conditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);

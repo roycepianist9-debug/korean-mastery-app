@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
@@ -224,17 +225,26 @@ function FlashCard({
           </span>
         </div>
 
-        {/* Korean word */}
-        <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.korean}</p>
-        <p className="text-sm text-muted-foreground font-medium mb-3">{word.romanization}</p>
+        {/* Word display - Korean or Chinese */}
+        {word.korean ? (
+          <>
+            <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.korean}</p>
+            <p className="text-sm text-muted-foreground font-medium mb-3">{word.romanization}</p>
+          </>
+        ) : word.chinese ? (
+          <>
+            <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.chinese}</p>
+            <p className="text-sm text-muted-foreground font-medium mb-3">{word.pinyin}</p>
+          </>
+        ) : null}
 
         {/* Meaning */}
         <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
           <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
         </div>
 
-        {/* Example sentence with clickable tokens */}
-        {word.koreanExample && (
+        {/* Example sentence */}
+        {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
             <ClickableExample sentence={word.koreanExample} />
             {translation ? (
@@ -253,7 +263,12 @@ function FlashCard({
               </button>
             ) : null}
           </div>
-        )}
+        ) : word.chineseExample ? (
+          <div className="w-full space-y-1.5 text-center px-1">
+            <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+            <p className="text-xs text-muted-foreground italic leading-relaxed">{word.examplePinyin}</p>
+          </div>
+        ) : null}
 
         {/* Swipe hint */}
         <p className="text-[10px] text-muted-foreground/50 mt-auto pt-2">
@@ -329,6 +344,7 @@ const DECK_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 /* ─── Main Component ─── */
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
@@ -351,8 +367,10 @@ export default function SwipeGame() {
   const wordsQuery = trpc.words.random.useQuery(
     {
       pos: posFilter !== 'all' ? posFilter : undefined,
-      topikLevel: levelFilter !== 'all' ? levelFilter : undefined,
+      topikLevel: language === 'korean' && levelFilter !== 'all' ? levelFilter : undefined,
+      hskLevel: language === 'chinese' && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
+      language,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
   );

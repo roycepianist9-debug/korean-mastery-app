@@ -37,9 +37,11 @@ export const appRouter = router({
         query: z.string().optional(),
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
+        hskLevel: z.string().optional(),
         statuses: z.array(z.string()).optional(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(30),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .query(async ({ input, ctx }) => {
         return searchWords({
@@ -64,15 +66,19 @@ export const appRouter = router({
       .input(z.object({
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
+        hskLevel: z.string().optional(),
         limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .query(async ({ input }) => {
         return getRandomWords({
           pos: input.pos,
           topikLevel: input.topikLevel,
+          hskLevel: input.hskLevel,
           limit: input.limit,
           excludeIds: input.excludeIds,
+          language: input.language,
         });
       }),
 
