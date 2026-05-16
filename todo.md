@@ -48,3 +48,6 @@
 - [x] Vitest tests for progress tracking endpoints
 - [x] Vitest tests for progress.swipe and progress.batchSwipe mutations
 - [x] Vitest tests for progress.getByLevel and progress.getByPos
+
+## Bug Fixes
+- [x] Fix TOPIK level distribution: intermediate has only 1 entry, should have thousands (fixed: 2,545 beginner / 15,001 intermediate / 39,010 advanced)
