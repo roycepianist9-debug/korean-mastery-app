@@ -51,3 +51,10 @@
 
 ## Bug Fixes
 - [x] Fix TOPIK level distribution: intermediate has only 1 entry, should have thousands (fixed: 2,545 beginner / 15,001 intermediate / 39,010 advanced)
+
+## User Requested Changes
+- [x] Selectable card count per session: 10, 20, 50, 100 options
+- [x] One-sided cards: show all info (korean, romanization, meaning, POS, example) on a single face
+- [x] AI-generated English translation of Korean example sentences displayed on each card by default
+- [x] Add error/retry UI for per-card example translation when LLM fails
+- [x] Add vitest coverage for LLM translation endpoint and deck-size up to 100

@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft, Check, X, RotateCcw, Zap, Flame,
-  Trophy, ChevronDown, Sparkles, Volume2, Gamepad2,
+  Trophy, Sparkles, Gamepad2, Info, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +18,73 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import WordDetailSheet from "@/components/WordDetailSheet";
-import { Info } from "lucide-react";
 
 interface SwipeResult {
   wordId: number;
   known: boolean;
 }
 
+/* ─── Inline AI Translation Hook ─── */
+function useExampleTranslation(koreanExample: string | null | undefined, existingEnglish: string | null | undefined) {
+  const translate = trpc.llm.translateExample.useMutation();
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const attempted = useRef<string | null>(null);
+
+  const doTranslate = useCallback((sentence: string) => {
+    setFailed(false);
+    translate.mutate(
+      { koreanSentence: sentence },
+      {
+        onSuccess: (data) => {
+          if (data?.translation) {
+            setTranslation(data.translation);
+          } else {
+            setFailed(true);
+          }
+        },
+        onError: () => {
+          setFailed(true);
+        },
+      }
+    );
+  }, [translate]);
+
+  useEffect(() => {
+    // If we already have an English translation from the DB, use it
+    if (existingEnglish) {
+      setTranslation(existingEnglish);
+      setFailed(false);
+      return;
+    }
+    // If no Korean example, nothing to translate
+    if (!koreanExample) {
+      setTranslation(null);
+      setFailed(false);
+      return;
+    }
+    // Don't re-translate the same sentence
+    if (attempted.current === koreanExample) return;
+    attempted.current = koreanExample;
+    doTranslate(koreanExample);
+  }, [koreanExample, existingEnglish, doTranslate]);
+
+  const retry = useCallback(() => {
+    if (koreanExample) {
+      attempted.current = null;
+      doTranslate(koreanExample);
+    }
+  }, [koreanExample, doTranslate]);
+
+  return {
+    translation,
+    isLoading: translate.isPending && !translation,
+    failed,
+    retry,
+  };
+}
+
+/* ─── One-Sided Flash Card ─── */
 function FlashCard({
   word,
   onSwipe,
@@ -34,13 +94,17 @@ function FlashCard({
   onSwipe: (known: boolean) => void;
   isTop: boolean;
 }) {
-  const [flipped, setFlipped] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [exitDir, setExitDir] = useState<'left' | 'right' | null>(null);
   const startPos = useRef({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
+    isTop ? word.koreanExample : null,
+    isTop ? word.exampleEnglish : null
+  );
 
   const SWIPE_THRESHOLD = 80;
 
@@ -101,14 +165,7 @@ function FlashCard({
     };
   }, [isDragging, handleMove, handleEnd]);
 
-  const handleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (Math.abs(dragX) < 5) {
-      setFlipped(f => !f);
-    }
-  }, [dragX]);
-
   const rotation = dragX * 0.08;
-  const opacity = exitDir ? 0 : 1;
   const swipeIndicator = dragX > 30 ? 'right' : dragX < -30 ? 'left' : null;
 
   const cardStyle: React.CSSProperties = exitDir
@@ -139,7 +196,6 @@ function FlashCard({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       onMouseDown={onMouseDown}
-      onClick={handleTap}
     >
       {/* Swipe indicators */}
       {swipeIndicator === 'right' && (
@@ -153,69 +209,66 @@ function FlashCard({
         </div>
       )}
 
-      <div className="w-full h-full perspective-1000">
-        <div
-          className={`relative w-full h-full transition-transform duration-500 ${flipped ? 'rotate-y-180' : ''}`}
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          {/* Front */}
-          <div className="absolute inset-0 backface-hidden game-card rounded-2xl p-6 flex flex-col items-center justify-center game-card-glow">
-            <div className="absolute top-4 right-4">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-                word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-                'bg-accent/20 text-accent'
-              }`}>
-                {word.topikLevel === 'beginner' ? 'Beginner' :
-                 word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
-              </span>
-            </div>
-            <div className="absolute top-4 left-4">
-              <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
-                {word.pos || 'word'}
-              </span>
-            </div>
-            <p className="text-5xl font-black text-foreground mb-3">{word.korean}</p>
-            <p className="text-lg text-muted-foreground font-medium">{word.romanization}</p>
-            <p className="text-xs text-muted-foreground/60 mt-6">Tap to flip · Swipe to answer</p>
-          </div>
-
-          {/* Back */}
-          <div
-            className="absolute inset-0 backface-hidden game-card rounded-2xl p-6 flex flex-col items-center justify-center game-card-glow"
-            style={{ transform: 'rotateY(180deg)' }}
-          >
-            <div className="absolute top-4 right-4">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-                word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-                'bg-accent/20 text-accent'
-              }`}>
-                {word.topikLevel === 'beginner' ? 'Beginner' :
-                 word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
-              </span>
-            </div>
-            <p className="text-3xl font-black text-foreground mb-1">{word.korean}</p>
-            <p className="text-sm text-muted-foreground mb-4">{word.romanization} · {word.pos}</p>
-            <div className="w-full bg-secondary/50 rounded-xl p-4 mb-4">
-              <p className="text-lg font-bold text-primary text-center">{word.meaning}</p>
-            </div>
-            {word.koreanExample && (
-              <div className="w-full space-y-1 text-center">
-                <p className="text-sm text-foreground/80">{word.koreanExample}</p>
-                {word.exampleEnglish && (
-                  <p className="text-xs text-muted-foreground italic">{word.exampleEnglish}</p>
-                )}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground/60 mt-4">Tap to flip back · Swipe to answer</p>
-          </div>
+      {/* One-sided card showing all info */}
+      <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
+        {/* Level & POS badges */}
+        <div className="absolute top-3 right-3">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+            word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+            word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+            'bg-accent/20 text-accent'
+          }`}>
+            {word.topikLevel === 'beginner' ? 'Beginner' :
+             word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
+          </span>
         </div>
+        <div className="absolute top-3 left-3">
+          <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
+            {word.pos || 'word'}
+          </span>
+        </div>
+
+        {/* Korean word */}
+        <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.korean}</p>
+        <p className="text-sm text-muted-foreground font-medium mb-3">{word.romanization}</p>
+
+        {/* Meaning */}
+        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
+          <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+        </div>
+
+        {/* Example sentence */}
+        {word.koreanExample && (
+          <div className="w-full space-y-1.5 text-center px-1">
+            <p className="text-sm text-foreground/80 leading-relaxed">{word.koreanExample}</p>
+            {translation ? (
+              <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+            ) : translationLoading ? (
+              <div className="flex items-center justify-center gap-1.5">
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Translating...</span>
+              </div>
+            ) : translationFailed ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
+                className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
+              >
+                Tap to translate
+              </button>
+            ) : null}
+          </div>
+        )}
+
+        {/* Swipe hint */}
+        <p className="text-[10px] text-muted-foreground/50 mt-auto pt-2">
+          ← Review · Swipe · Know it →
+        </p>
       </div>
     </div>
   );
 }
 
+/* ─── Session Summary ─── */
 function SessionSummary({
   results,
   onRestart,
@@ -274,6 +327,10 @@ function SessionSummary({
   );
 }
 
+/* ─── Deck Size Options ─── */
+const DECK_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+
+/* ─── Main Component ─── */
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -286,7 +343,11 @@ export default function SwipeGame() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
   const [sessionDone, setSessionDone] = useState(false);
-  const [deckSize] = useState(10);
+  const [deckSize, setDeckSize] = useState<number>(
+    DECK_SIZE_OPTIONS.includes(Number(params.get("size")) as any)
+      ? Number(params.get("size"))
+      : 20
+  );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -315,7 +376,7 @@ export default function SwipeGame() {
         batchSwipe.mutate(
           { results: allResults },
           {
-            onSuccess: (data) => {
+            onSuccess: () => {
               setSessionDone(true);
             },
             onError: () => {
@@ -423,6 +484,26 @@ export default function SwipeGame() {
                   <SelectItem value="adverb">Adverbs</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Deck Size Selector */}
+            <div>
+              <label className="text-sm font-bold text-foreground mb-2 block">Cards per Session</label>
+              <div className="grid grid-cols-4 gap-2">
+                {DECK_SIZE_OPTIONS.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setDeckSize(size)}
+                    className={`py-2.5 rounded-xl text-sm font-bold transition-all duration-200 press-scale ${
+                      deckSize === size
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

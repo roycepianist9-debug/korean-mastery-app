@@ -53,7 +53,7 @@ export const appRouter = router({
       .input(z.object({
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
-        limit: z.number().min(1).max(50).default(10),
+        limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
       }))
       .query(async ({ input }) => {
@@ -226,13 +226,59 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
           });
 
           const content = response.choices?.[0]?.message?.content;
-          if (content) {
+          if (content && typeof content === 'string') {
             return JSON.parse(content);
           }
           return null;
         } catch (error) {
           console.error("[LLM] Failed to generate word tips:", error);
           return null;
+        }
+      }),
+    translateExample: publicProcedure
+      .input(z.object({
+        koreanSentence: z.string(),
+        wordContext: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a Korean-English translator. Translate the given Korean sentence to natural English. Return ONLY a JSON object with a single key "translation" containing the English translation. Be accurate and natural.`
+              },
+              {
+                role: "user",
+                content: `Translate this Korean sentence to English: ${input.koreanSentence}`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "translation",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    translation: { type: "string" },
+                  },
+                  required: ["translation"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const content = response.choices?.[0]?.message?.content;
+          if (content && typeof content === 'string') {
+            const parsed = JSON.parse(content);
+            return { translation: parsed.translation };
+          }
+          return { translation: null };
+        } catch (error) {
+          console.error("[LLM] Failed to translate example:", error);
+          return { translation: null };
         }
       }),
   }),
