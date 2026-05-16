@@ -16,6 +16,7 @@ import {
   getProgressByPos,
   getOrCreateUserStats,
   updateUserStatsAfterSwipe,
+  tokenizeAndLookup,
 } from "./db";
 
 export const appRouter = router({
@@ -36,11 +37,21 @@ export const appRouter = router({
         query: z.string().optional(),
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
+        statuses: z.array(z.string()).optional(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(30),
       }))
+      .query(async ({ input, ctx }) => {
+        return searchWords({
+          ...input,
+          userId: ctx.user?.id,
+        });
+      }),
+
+    tokenize: publicProcedure
+      .input(z.object({ sentence: z.string() }))
       .query(async ({ input }) => {
-        return searchWords(input);
+        return tokenizeAndLookup(input.sentence);
       }),
 
     getById: publicProcedure
@@ -87,6 +98,22 @@ export const appRouter = router({
       .input(z.object({ wordIds: z.array(z.number()) }))
       .query(async ({ ctx, input }) => {
         return getUserProgress(ctx.user.id, input.wordIds);
+      }),
+
+    markWord: protectedProcedure
+      .input(z.object({
+        wordId: z.number(),
+        status: z.enum(['learned', 'reviewing', 'new']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const correct = input.status === 'learned';
+        await upsertWordProgress(ctx.user.id, input.wordId, input.status, correct);
+        if (input.status !== 'new') {
+          const xpGained = input.status === 'learned' ? 10 : 3;
+          const wordsLearned = input.status === 'learned' ? 1 : 0;
+          await updateUserStatsAfterSwipe(ctx.user.id, xpGained, wordsLearned);
+        }
+        return { status: input.status };
       }),
 
     swipe: protectedProcedure

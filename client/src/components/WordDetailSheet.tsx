@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
+import ClickableExample from "./ClickableExample";
 
 interface WordDetailSheetProps {
   word: {
@@ -92,7 +93,7 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
             <p className="text-base font-bold text-foreground">{word.meaning}</p>
           </div>
 
-          {/* Example */}
+          {/* Example with clickable tokens */}
           {(word.koreanExample || word.exampleEnglish) && (
             <div className="game-card p-3.5">
               <div className="flex items-center gap-2 mb-1.5">
@@ -100,7 +101,9 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
                 <span className="text-[10px] font-bold text-chart-3 uppercase tracking-wider">Example</span>
               </div>
               {word.koreanExample && (
-                <p className="text-sm text-foreground">{word.koreanExample}</p>
+                <div className="mb-1">
+                  <ClickableExample sentence={word.koreanExample} />
+                </div>
               )}
               {word.exampleEnglish && (
                 <p className="text-xs text-muted-foreground italic mt-0.5">{word.exampleEnglish}</p>

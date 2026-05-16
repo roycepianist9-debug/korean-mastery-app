@@ -72,6 +72,8 @@ export async function searchWords(params: {
   query?: string;
   pos?: string;
   topikLevel?: string;
+  statuses?: string[];
+  userId?: number;
   page: number;
   pageSize: number;
 }) {
@@ -99,6 +101,30 @@ export async function searchWords(params: {
     conditions.push(eq(words.topikLevel, params.topikLevel as any));
   }
 
+  // Status filter: filter by user progress status
+  if (params.statuses && params.statuses.length > 0 && params.userId) {
+    if (params.statuses.includes('new')) {
+      // "new" means no progress record exists OR status='new'
+      const hasProgressStatuses = params.statuses.filter(s => s !== 'new');
+      if (hasProgressStatuses.length > 0) {
+        // Include words with matching progress status OR no progress at all
+        conditions.push(
+          sql`(${words.id} IN (SELECT wordId FROM user_progress WHERE userId = ${params.userId} AND status IN (${sql.join(hasProgressStatuses.map(s => sql`${s}`), sql`, `)})) OR ${words.id} NOT IN (SELECT wordId FROM user_progress WHERE userId = ${params.userId}))`
+        );
+      } else {
+        // Only "new" selected - words with no progress record
+        conditions.push(
+          sql`${words.id} NOT IN (SELECT wordId FROM user_progress WHERE userId = ${params.userId})`
+        );
+      }
+    } else {
+      // Only non-new statuses
+      conditions.push(
+        sql`${words.id} IN (SELECT wordId FROM user_progress WHERE userId = ${params.userId} AND status IN (${sql.join(params.statuses.map(s => sql`${s}`), sql`, `)}))`
+      );
+    }
+  }
+
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const [results, countResult] = await Promise.all([
@@ -117,6 +143,87 @@ export async function searchWords(params: {
     words: results,
     total: countResult[0]?.total ?? 0,
   };
+}
+
+// ─── Korean Tokenization ────────────────────────────────────
+
+const KOREAN_PARTICLES = [
+  '은', '는', '이', '가', '을', '를', '에', '에서', '에게', '에게서',
+  '으로', '로', '와', '과', '의', '도', '만', '까지', '부터', '마다',
+  '처럼', '같이', '보다', '한테', '한테서', '께', '께서', '이나', '나',
+  '이란', '란', '이라', '라', '이며', '며', '이고', '고', '이요', '요',
+];
+
+function stripParticles(word: string): string[] {
+  const candidates = [word];
+  for (const p of KOREAN_PARTICLES.sort((a, b) => b.length - a.length)) {
+    if (word.endsWith(p) && word.length > p.length) {
+      candidates.push(word.slice(0, -p.length));
+    }
+  }
+  return Array.from(new Set(candidates));
+}
+
+export async function tokenizeAndLookup(sentence: string) {
+  const db = await getDb();
+  if (!db || !sentence) return [];
+
+  const segmenter = new Intl.Segmenter('ko', { granularity: 'word' });
+  const segments = Array.from(segmenter.segment(sentence));
+
+  const tokens: { text: string; isWord: boolean; wordId: number | null; meaning: string | null }[] = [];
+
+  // Collect all candidate forms for batch lookup
+  const allCandidates: string[] = [];
+  const tokenCandidateMap: { text: string; candidates: string[] }[] = [];
+
+  for (const seg of segments) {
+    if (seg.isWordLike) {
+      const candidates = stripParticles(seg.segment);
+      allCandidates.push(...candidates);
+      tokenCandidateMap.push({ text: seg.segment, candidates });
+    } else {
+      tokenCandidateMap.push({ text: seg.segment, candidates: [] });
+    }
+  }
+
+  // Batch lookup all candidates at once
+  let lookupMap = new Map<string, { id: number; meaning: string }>();
+  if (allCandidates.length > 0) {
+    const uniqueCandidates = Array.from(new Set(allCandidates));
+    // Query in chunks of 50 to avoid too-long IN clauses
+    for (let i = 0; i < uniqueCandidates.length; i += 50) {
+      const chunk = uniqueCandidates.slice(i, i + 50);
+      const results = await db.select({ id: words.id, korean: words.korean, meaning: words.meaning })
+        .from(words)
+        .where(inArray(words.korean, chunk))
+        .limit(chunk.length);
+      for (const r of results) {
+        lookupMap.set(r.korean, { id: r.id, meaning: r.meaning });
+      }
+    }
+  }
+
+  // Build token list with matches
+  for (const item of tokenCandidateMap) {
+    if (item.candidates.length > 0) {
+      let match: { id: number; meaning: string } | undefined;
+      for (const c of item.candidates) {
+        match = lookupMap.get(c);
+        if (match) break;
+      }
+      tokens.push({
+        text: item.text,
+        isWord: true,
+        wordId: match?.id ?? null,
+        meaning: match?.meaning ?? null,
+      });
+    } else {
+      tokens.push({ text: item.text, isWord: false, wordId: null, meaning: null });
+    }
+  }
+
+  return tokens;
 }
 
 export async function getWordById(id: number) {

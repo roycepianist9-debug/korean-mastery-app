@@ -58,3 +58,19 @@
 - [x] AI-generated English translation of Korean example sentences displayed on each card by default
 - [x] Add error/retry UI for per-card example translation when LLM fails
 - [x] Add vitest coverage for LLM translation endpoint and deck-size up to 100
+
+## Feature Update - Clickable Tokens, Navigation, Swipe-to-Mark
+- [x] Korean tokenization: server-side tokenizer splits example sentences into words
+- [x] Tokenized words matched to database entries with word IDs
+- [x] Clickable tokens in example sentences open word detail sheet
+- [x] Back button in swipe game to revisit last card
+- [x] Dashboard "Learned" count clickable → navigates to word list filtered by learned status
+- [x] Dashboard "Reviewing" count clickable → navigates to word list filtered by reviewing status
+- [x] Dashboard "Progress by Level" items clickable → navigates to word list filtered by that level
+- [x] Dashboard "Progress by Type" items clickable → navigates to word list filtered by that POS
+- [x] Each filtered list page has a "Swipe" button to enter swipe mode with current filters
+- [x] Swipe-to-mark in word list: swipe right = learned, swipe left = review
+- [x] Visual feedback on swipe-to-mark (green for learned, orange for review)
+- [x] Persistent "Swipe" button on word list page (top, next to filter)
+- [x] Status filter selector in word list: select any combination of learned/new/review
+- [x] Deck size selector available on all swipe entry points

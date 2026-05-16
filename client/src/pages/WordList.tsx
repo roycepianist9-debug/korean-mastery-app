@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X,
+  ArrowLeft, Filter, X, Gamepad2, Check, RotateCcw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,53 +18,214 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import WordDetailSheet from "@/components/WordDetailSheet";
+import { toast } from "sonner";
 
-function WordCard({ word, onClick }: { word: any; onClick: () => void }) {
+/* ─── Swipeable Word Card ─── */
+function SwipeableWordCard({
+  word,
+  onClick,
+  onMarkLearned,
+  onMarkReviewing,
+  isAuthenticated,
+}: {
+  word: any;
+  onClick: () => void;
+  onMarkLearned: () => void;
+  onMarkReviewing: () => void;
+  isAuthenticated: boolean;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const startX = useRef(0);
+  const isDragging = useRef(false);
+  const [dragX, setDragX] = useState(0);
+  const [swiped, setSwiped] = useState<'left' | 'right' | null>(null);
+  const THRESHOLD = 70;
+
+  const handleStart = (clientX: number) => {
+    if (!isAuthenticated) return;
+    isDragging.current = true;
+    startX.current = clientX;
+  };
+
+  const handleMove = (clientX: number) => {
+    if (!isDragging.current) return;
+    setDragX(clientX - startX.current);
+  };
+
+  const handleEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (dragX > THRESHOLD) {
+      setSwiped('right');
+      setTimeout(() => {
+        onMarkLearned();
+        setSwiped(null);
+        setDragX(0);
+      }, 300);
+    } else if (dragX < -THRESHOLD) {
+      setSwiped('left');
+      setTimeout(() => {
+        onMarkReviewing();
+        setSwiped(null);
+        setDragX(0);
+      }, 300);
+    } else {
+      setDragX(0);
+    }
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => handleStart(e.touches[0].clientX);
+  const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX);
+  const onTouchEnd = () => handleEnd();
+  const onMouseDown = (e: React.MouseEvent) => { e.preventDefault(); handleStart(e.clientX); };
+
+  useEffect(() => {
+    if (!isDragging.current) return;
+    const onMove = (e: MouseEvent) => handleMove(e.clientX);
+    const onUp = () => handleEnd();
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  });
+
+  const bgOverlay = dragX > 30
+    ? `rgba(34,197,94,${Math.min(Math.abs(dragX) / 200, 0.15)})`
+    : dragX < -30
+    ? `rgba(249,115,22,${Math.min(Math.abs(dragX) / 200, 0.15)})`
+    : 'transparent';
+
   return (
-    <button
-      onClick={onClick}
-      className="w-full game-card p-3.5 flex items-center gap-3 press-scale text-left"
-    >
-      <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center shrink-0">
-        <span className="text-lg font-black text-foreground">{word.korean.charAt(0)}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-bold text-sm text-foreground truncate">{word.korean}</p>
-          <span className="text-xs text-muted-foreground shrink-0">{word.romanization}</span>
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Swipe background indicators */}
+      {isAuthenticated && (
+        <>
+          <div className="absolute inset-0 bg-primary/20 flex items-center pl-4 rounded-2xl">
+            <Check className="w-5 h-5 text-primary" />
+            <span className="text-xs font-bold text-primary ml-1">Learned</span>
+          </div>
+          <div className="absolute inset-0 bg-chart-3/20 flex items-center justify-end pr-4 rounded-2xl">
+            <span className="text-xs font-bold text-chart-3 mr-1">Reviewing</span>
+            <RotateCcw className="w-5 h-5 text-chart-3" />
+          </div>
+        </>
+      )}
+
+      {/* Card */}
+      <div
+        ref={cardRef}
+        className="relative game-card p-3.5 flex items-center gap-3 select-none"
+        style={{
+          transform: swiped === 'right' ? 'translateX(120%)' : swiped === 'left' ? 'translateX(-120%)' : `translateX(${dragX}px)`,
+          transition: isDragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.23,1,0.32,1)',
+          background: bgOverlay,
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+      >
+        <button
+          onClick={onClick}
+          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+            <span className="text-lg font-black text-foreground">{word.korean.charAt(0)}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-sm text-foreground truncate">{word.korean}</p>
+              <span className="text-xs text-muted-foreground shrink-0">{word.romanization}</span>
+            </div>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
+          </div>
+        </button>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+            word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+            'bg-accent/20 text-accent'
+          }`}>
+            {word.topikLevel === 'beginner' ? 'Beg' :
+             word.topikLevel === 'intermediate' ? 'Int' : 'Adv'}
+          </span>
+          {word.pos && (
+            <span className="text-[10px] text-muted-foreground">{word.pos}</span>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
       </div>
-      <div className="flex flex-col items-end gap-1 shrink-0">
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-          word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-          word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-          'bg-accent/20 text-accent'
-        }`}>
-          {word.topikLevel === 'beginner' ? 'Beg' :
-           word.topikLevel === 'intermediate' ? 'Int' : 'Adv'}
-        </span>
-        {word.pos && (
-          <span className="text-[10px] text-muted-foreground">{word.pos}</span>
-        )}
-      </div>
-    </button>
+    </div>
   );
 }
 
+/* ─── Status Filter Toggle Buttons ─── */
+function StatusFilter({
+  selected,
+  onChange,
+}: {
+  selected: string[];
+  onChange: (statuses: string[]) => void;
+}) {
+  const toggle = (status: string) => {
+    if (selected.includes(status)) {
+      onChange(selected.filter(s => s !== status));
+    } else {
+      onChange([...selected, status]);
+    }
+  };
+
+  const statuses = [
+    { key: 'new', label: 'New', color: 'text-accent bg-accent/20 border-accent/40' },
+    { key: 'reviewing', label: 'Reviewing', color: 'text-chart-3 bg-chart-3/20 border-chart-3/40' },
+    { key: 'learned', label: 'Learned', color: 'text-primary bg-primary/20 border-primary/40' },
+  ];
+
+  return (
+    <div className="flex items-center gap-2">
+      {statuses.map(s => (
+        <button
+          key={s.key}
+          onClick={() => toggle(s.key)}
+          className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all press-scale ${
+            selected.includes(s.key)
+              ? s.color
+              : 'text-muted-foreground bg-secondary border-transparent'
+          }`}
+        >
+          {s.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
 export default function WordList() {
+  const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
+
+  // Initialize from URL params
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [posFilter, setPosFilter] = useState("all");
-  const [levelFilter, setLevelFilter] = useState("all");
+  const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
+  const [levelFilter, setLevelFilter] = useState(params.get("level") || "all");
+  const [statusFilter, setStatusFilter] = useState<string[]>(() => {
+    const s = params.get("statuses");
+    return s ? s.split(",").filter(Boolean) : [];
+  });
   const [page, setPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(
+    !!(params.get("pos") || params.get("level") || params.get("statuses"))
+  );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const pageSize = 30;
 
-  // Proper debounce with useEffect cleanup
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -76,15 +238,31 @@ export default function WordList() {
     query: debouncedQuery || undefined,
     pos: posFilter !== 'all' ? posFilter : undefined,
     topikLevel: levelFilter !== 'all' ? levelFilter : undefined,
+    statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize,
+  });
+
+  const markWord = trpc.progress.markWord.useMutation({
+    onSuccess: () => {
+      wordsQuery.refetch();
+    },
   });
 
   const words = wordsQuery.data?.words ?? [];
   const total = wordsQuery.data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
 
-  const hasActiveFilters = posFilter !== 'all' || levelFilter !== 'all';
+  const hasActiveFilters = posFilter !== 'all' || levelFilter !== 'all' || statusFilter.length > 0;
+
+  // Build swipe game URL with current filters
+  const swipeUrl = useMemo(() => {
+    const p = new URLSearchParams();
+    if (posFilter !== 'all') p.set('pos', posFilter);
+    if (levelFilter !== 'all') p.set('level', levelFilter);
+    const qs = p.toString();
+    return `/play${qs ? '?' + qs : ''}`;
+  }, [posFilter, levelFilter]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -97,9 +275,19 @@ export default function WordList() {
             </button>
             <h1 className="text-xl font-black text-foreground">Dictionary</h1>
           </div>
-          <span className="text-xs text-muted-foreground font-medium">
-            {total.toLocaleString()} words
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">
+              {total.toLocaleString()} words
+            </span>
+            {/* Persistent Swipe button */}
+            <button
+              onClick={() => setLocation(swipeUrl)}
+              className="flex items-center gap-1 bg-primary/20 text-primary px-2.5 py-1.5 rounded-full press-scale"
+            >
+              <Gamepad2 className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-bold">Swipe</span>
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -121,21 +309,26 @@ export default function WordList() {
           )}
         </div>
 
-        {/* Filter toggle */}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full press-scale transition-colors ${
-            hasActiveFilters ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
-          }`}
-        >
-          <Filter className="w-3 h-3" />
-          Filters {hasActiveFilters && '·'}
-          {hasActiveFilters && (
-            <span>{[posFilter !== 'all' && posFilter, levelFilter !== 'all' && levelFilter].filter(Boolean).join(', ')}</span>
+        {/* Filter toggle + status filter row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full press-scale transition-colors ${
+              hasActiveFilters ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'
+            }`}
+          >
+            <Filter className="w-3 h-3" />
+            Filters
+          </button>
+          {isAuthenticated && (
+            <StatusFilter
+              selected={statusFilter}
+              onChange={(s) => { setStatusFilter(s); setPage(1); }}
+            />
           )}
-        </button>
+        </div>
 
-        {/* Filters */}
+        {/* Expanded Filters */}
         {showFilters && (
           <div className="mt-3 game-card p-3 space-y-3 animate-slide-up">
             <div className="grid grid-cols-2 gap-3">
@@ -173,15 +366,24 @@ export default function WordList() {
             </div>
             {hasActiveFilters && (
               <button
-                onClick={() => { setPosFilter('all'); setLevelFilter('all'); setPage(1); }}
+                onClick={() => { setPosFilter('all'); setLevelFilter('all'); setStatusFilter([]); setPage(1); }}
                 className="text-xs text-destructive font-medium"
               >
-                Clear filters
+                Clear all filters
               </button>
             )}
           </div>
         )}
       </div>
+
+      {/* Swipe hint for authenticated users */}
+      {isAuthenticated && words.length > 0 && !wordsQuery.isLoading && (
+        <div className="px-4 mb-2">
+          <p className="text-[10px] text-muted-foreground text-center">
+            Swipe right = <span className="text-primary font-bold">Learned</span> · Swipe left = <span className="text-chart-3 font-bold">Reviewing</span>
+          </p>
+        </div>
+      )}
 
       {/* Word list */}
       <div className="px-4 space-y-2">
@@ -203,10 +405,23 @@ export default function WordList() {
           </div>
         ) : (
           words.map((word: any) => (
-            <WordCard
+            <SwipeableWordCard
               key={word.id}
               word={word}
+              isAuthenticated={isAuthenticated}
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
+              onMarkLearned={() => {
+                markWord.mutate(
+                  { wordId: word.id, status: 'learned' },
+                  { onSuccess: () => toast.success(`${word.korean} marked as learned`) }
+                );
+              }}
+              onMarkReviewing={() => {
+                markWord.mutate(
+                  { wordId: word.id, status: 'reviewing' },
+                  { onSuccess: () => toast.success(`${word.korean} marked for review`) }
+                );
+              }}
             />
           ))
         )}

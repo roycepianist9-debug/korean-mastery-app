@@ -5,8 +5,8 @@ import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
-  ArrowLeft, Check, X, RotateCcw, Zap, Flame,
-  Trophy, Sparkles, Gamepad2, Info, Loader2,
+  ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
+  Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import WordDetailSheet from "@/components/WordDetailSheet";
+import ClickableExample from "@/components/ClickableExample";
 
 interface SwipeResult {
   wordId: number;
@@ -51,19 +52,16 @@ function useExampleTranslation(koreanExample: string | null | undefined, existin
   }, [translate]);
 
   useEffect(() => {
-    // If we already have an English translation from the DB, use it
     if (existingEnglish) {
       setTranslation(existingEnglish);
       setFailed(false);
       return;
     }
-    // If no Korean example, nothing to translate
     if (!koreanExample) {
       setTranslation(null);
       setFailed(false);
       return;
     }
-    // Don't re-translate the same sentence
     if (attempted.current === koreanExample) return;
     attempted.current = koreanExample;
     doTranslate(koreanExample);
@@ -84,7 +82,7 @@ function useExampleTranslation(koreanExample: string | null | undefined, existin
   };
 }
 
-/* ─── One-Sided Flash Card ─── */
+/* ─── One-Sided Flash Card with ClickableExample ─── */
 function FlashCard({
   word,
   onSwipe,
@@ -136,7 +134,6 @@ function FlashCard({
     }
   }, [isDragging, isTop, dragX, onSwipe]);
 
-  // Touch events
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     handleStart(e.touches[0].clientX, e.touches[0].clientY);
   }, [handleStart]);
@@ -147,7 +144,6 @@ function FlashCard({
 
   const onTouchEnd = useCallback(() => handleEnd(), [handleEnd]);
 
-  // Mouse events
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     handleStart(e.clientX, e.clientY);
@@ -237,10 +233,10 @@ function FlashCard({
           <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
         </div>
 
-        {/* Example sentence */}
+        {/* Example sentence with clickable tokens */}
         {word.koreanExample && (
           <div className="w-full space-y-1.5 text-center px-1">
-            <p className="text-sm text-foreground/80 leading-relaxed">{word.koreanExample}</p>
+            <ClickableExample sentence={word.koreanExample} />
             {translation ? (
               <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
             ) : translationLoading ? (
@@ -342,10 +338,11 @@ export default function SwipeGame() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
+  const [history, setHistory] = useState<number[]>([]); // for back/undo
   const [sessionDone, setSessionDone] = useState(false);
   const [deckSize, setDeckSize] = useState<number>(
-    DECK_SIZE_OPTIONS.includes(Number(params.get("size")) as any)
-      ? Number(params.get("size"))
+    DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
+      ? Number(params.get("count"))
       : 20
   );
   const [detailWord, setDetailWord] = useState<any>(null);
@@ -368,17 +365,15 @@ export default function SwipeGame() {
     if (!words[currentIndex]) return;
     const result = { wordId: words[currentIndex].id, known };
     setSwipeResults(prev => [...prev, result]);
+    setHistory(prev => [...prev, currentIndex]);
 
     if (currentIndex + 1 >= words.length) {
-      // Session complete
       const allResults = [...swipeResults, result];
       if (isAuthenticated) {
         batchSwipe.mutate(
           { results: allResults },
           {
-            onSuccess: () => {
-              setSessionDone(true);
-            },
+            onSuccess: () => setSessionDone(true),
             onError: () => {
               toast.error("Failed to save progress");
               setSessionDone(true);
@@ -393,9 +388,19 @@ export default function SwipeGame() {
     }
   }, [currentIndex, words, swipeResults, isAuthenticated, batchSwipe]);
 
+  // Back/Undo: go back to previous card
+  const handleBack = useCallback(() => {
+    if (history.length === 0) return;
+    const prevIndex = history[history.length - 1];
+    setHistory(prev => prev.slice(0, -1));
+    setSwipeResults(prev => prev.slice(0, -1));
+    setCurrentIndex(prevIndex);
+  }, [history]);
+
   const handleRestart = useCallback(() => {
     setCurrentIndex(0);
     setSwipeResults([]);
+    setHistory([]);
     setSessionDone(false);
     setSessionStarted(false);
     setTimeout(() => setSessionStarted(true), 100);
@@ -405,22 +410,6 @@ export default function SwipeGame() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Sparkles className="w-10 h-10 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
-        <div className="text-center space-y-4">
-          <Gamepad2 className="w-12 h-12 text-primary mx-auto" />
-          <h2 className="text-xl font-black">Sign in to Play</h2>
-          <p className="text-muted-foreground text-sm">Track your progress and earn XP</p>
-          <Button onClick={() => window.location.href = getLoginUrl("/play")} className="press-scale">
-            Sign In
-          </Button>
-        </div>
-        <BottomNav />
       </div>
     );
   }
@@ -506,6 +495,17 @@ export default function SwipeGame() {
               </div>
             </div>
           </div>
+
+          {!isAuthenticated && (
+            <button
+              onClick={() => { window.location.href = getLoginUrl("/play"); }}
+              className="w-full game-card p-3 flex items-center gap-2 press-scale"
+            >
+              <LogIn className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-foreground">Sign in to save progress</span>
+              <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
+            </button>
+          )}
 
           <Button
             size="lg"
@@ -599,8 +599,21 @@ export default function SwipeGame() {
         </div>
       </div>
 
-      {/* Bottom buttons */}
-      <div className="px-6 pb-8 flex items-center justify-center gap-6">
+      {/* Bottom buttons with Back/Undo */}
+      <div className="px-6 pb-8 flex items-center justify-center gap-4">
+        {/* Back / Undo button */}
+        <button
+          onClick={handleBack}
+          disabled={history.length === 0}
+          className={`w-12 h-12 rounded-full flex items-center justify-center press-scale transition-all ${
+            history.length > 0
+              ? 'bg-secondary border-2 border-muted-foreground/30 text-foreground'
+              : 'bg-secondary/50 border-2 border-transparent text-muted-foreground/30'
+          }`}
+        >
+          <Undo2 className="w-5 h-5" />
+        </button>
+
         <button
           onClick={() => handleSwipe(false)}
           className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
