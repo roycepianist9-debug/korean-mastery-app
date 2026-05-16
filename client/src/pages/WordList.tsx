@@ -5,7 +5,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X, Gamepad2, Check, RotateCcw,
+  ArrowLeft, Filter, X, Gamepad2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -91,28 +91,15 @@ function SwipeableWordCard({
     };
   });
 
-  const bgOverlay = dragX > 30
-    ? `rgba(34,197,94,${Math.min(Math.abs(dragX) / 200, 0.15)})`
-    : dragX < -30
-    ? `rgba(249,115,22,${Math.min(Math.abs(dragX) / 200, 0.15)})`
+  // Only show subtle border glow while actively dragging past threshold
+  const borderColor = dragX > THRESHOLD
+    ? 'rgba(34,197,94,0.5)'
+    : dragX < -THRESHOLD
+    ? 'rgba(249,115,22,0.5)'
     : 'transparent';
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      {/* Swipe background indicators */}
-      {isAuthenticated && (
-        <>
-          <div className="absolute inset-0 bg-primary/20 flex items-center pl-4 rounded-2xl">
-            <Check className="w-5 h-5 text-primary" />
-            <span className="text-xs font-bold text-primary ml-1">Learned</span>
-          </div>
-          <div className="absolute inset-0 bg-chart-3/20 flex items-center justify-end pr-4 rounded-2xl">
-            <span className="text-xs font-bold text-chart-3 mr-1">Reviewing</span>
-            <RotateCcw className="w-5 h-5 text-chart-3" />
-          </div>
-        </>
-      )}
-
       {/* Card */}
       <div
         ref={cardRef}
@@ -120,7 +107,7 @@ function SwipeableWordCard({
         style={{
           transform: swiped === 'right' ? 'translateX(120%)' : swiped === 'left' ? 'translateX(-120%)' : `translateX(${dragX}px)`,
           transition: isDragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.23,1,0.32,1)',
-          background: bgOverlay,
+          boxShadow: borderColor !== 'transparent' ? `0 0 0 2px ${borderColor}` : 'none',
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}

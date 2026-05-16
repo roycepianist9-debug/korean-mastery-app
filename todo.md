@@ -74,3 +74,8 @@
 - [x] Persistent "Swipe" button on word list page (top, next to filter)
 - [x] Status filter selector in word list: select any combination of learned/new/review
 - [x] Deck size selector available on all swipe entry points
+
+## UI Fix - Word List Card Cleanup
+- [x] Remove "Learned" and "Reviewing" background labels from each word card in swipe-to-mark
+- [x] Restore original card background color (no green/orange tint on cards at rest)
+- [x] Keep only the top instruction hint ("Swipe right = Learned · Swipe left = Reviewing")

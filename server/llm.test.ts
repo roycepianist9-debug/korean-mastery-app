@@ -109,7 +109,7 @@ describe("llm.getWordTips", () => {
     ).rejects.toThrow();
   });
 
-  it("returns tips for authenticated user", async () => {
+  it("returns tips for authenticated user", async () => {  // LLM call can be slow
     const caller = appRouter.createCaller(createAuthContext());
     const result = await caller.llm.getWordTips({
       korean: "가족",
