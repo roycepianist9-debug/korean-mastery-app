@@ -94,5 +94,5 @@
 - [x] Language-aware routing: /play?lang=chinese, /words?lang=chinese, etc.
 - [x] Render Chinese fields in SwipeGame (chinese, pinyin, chineseExample, examplePinyin)
 - [x] Render Chinese fields in WordList (chinese, pinyin, HSK level badges)
-- [ ] Expand Chinese vocabulary: add HSK Level 2-3 words (500+ more words)
-- [ ] Add Chinese tokenization for clickable example sentences
+- [ ] Expand Chinese vocabulary: add HSK Level 2-3 words (500+ more words) [future enhancement]
+- [ ] Add Chinese tokenization for clickable example sentences [future enhancement]
