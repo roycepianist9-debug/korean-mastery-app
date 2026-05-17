@@ -4,6 +4,11 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
+import Stripe from "stripe";
+import { STRIPE_PRODUCTS, FREE_PLAN } from "./stripe-products";
+import { getDb } from "./db";
+import { users } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 import {
   searchWords,
   getWordById,
@@ -118,6 +123,7 @@ export const appRouter = router({
       .input(z.object({
         wordId: z.number(),
         status: z.enum(['learned', 'reviewing', 'new']),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const correct = input.status === 'learned';
@@ -125,7 +131,7 @@ export const appRouter = router({
         if (input.status !== 'new') {
           const xpGained = input.status === 'learned' ? 10 : 3;
           const wordsLearned = input.status === 'learned' ? 1 : 0;
-          await updateUserStatsAfterSwipe(ctx.user.id, xpGained, wordsLearned);
+          await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
         }
         return { status: input.status };
       }),
@@ -134,6 +140,7 @@ export const appRouter = router({
       .input(z.object({
         wordId: z.number(),
         known: z.boolean(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const status = input.known ? 'learned' as const : 'reviewing' as const;
@@ -142,7 +149,7 @@ export const appRouter = router({
         // XP: 10 for learned, 3 for reviewing
         const xpGained = input.known ? 10 : 3;
         const wordsLearned = input.known ? 1 : 0;
-        await updateUserStatsAfterSwipe(ctx.user.id, xpGained, wordsLearned);
+        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
 
         return { status, xpGained };
       }),
@@ -153,6 +160,7 @@ export const appRouter = router({
           wordId: z.number(),
           known: z.boolean(),
         })),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         let totalXp = 0;
@@ -165,7 +173,7 @@ export const appRouter = router({
           if (result.known) totalLearned += 1;
         }
 
-        await updateUserStatsAfterSwipe(ctx.user.id, totalXp, totalLearned);
+        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', totalLearned);
 
         return { totalXp, totalLearned, totalReviewed: input.results.length };
       }),
@@ -196,6 +204,130 @@ export const appRouter = router({
         level,
         levelTitle,
       };
+    }),
+  }),
+
+  subscription: router({
+    getPlans: publicProcedure.query(async () => {
+      return {
+        free: FREE_PLAN,
+        plans: Object.values(STRIPE_PRODUCTS),
+      };
+    }),
+
+    createCheckoutSession: protectedProcedure
+      .input(z.object({
+        priceId: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+
+        try {
+          const session = await stripe.checkout.sessions.create({
+            customer_email: ctx.user.email || undefined,
+            client_reference_id: ctx.user.id.toString(),
+            metadata: {
+              user_id: ctx.user.id.toString(),
+              customer_email: ctx.user.email || "",
+              customer_name: ctx.user.name || "",
+            },
+            line_items: [
+              {
+                price: input.priceId,
+                quantity: 1,
+              },
+            ],
+            mode: "subscription",
+            success_url: `${ctx.req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${ctx.req.headers.origin}/pricing`,
+            allow_promotion_codes: true,
+          });
+
+          return { checkoutUrl: session.url };
+        } catch (error) {
+          console.error("[Stripe] Checkout session creation failed:", error);
+          throw new Error("Failed to create checkout session");
+        }
+      }),
+
+    getSubscriptionStatus: protectedProcedure.query(async ({ ctx }) => {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+
+      try {
+        const db = await getDb();
+        if (!db) {
+          return {
+            status: "free",
+            plan: FREE_PLAN,
+            wordAccessLimit: 100,
+          };
+        }
+
+        // Get user from database to check subscription status
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        const userRecord = userRecords[0];
+
+        if (!userRecord?.stripeSubscriptionId) {
+          return {
+            status: "free",
+            plan: FREE_PLAN,
+            wordAccessLimit: 100,
+          };
+        }
+
+        // Fetch subscription from Stripe
+        const subscription = await stripe.subscriptions.retrieve(
+          userRecord.stripeSubscriptionId
+        );
+
+        const plan = Object.values(STRIPE_PRODUCTS).find(
+          (p) => p.stripePriceId === subscription.items.data[0]?.price.id
+        );
+
+        const periodEnd = (subscription as any).current_period_end || 0;
+        return {
+          status: subscription.status as string,
+          plan: plan || null,
+          wordAccessLimit: userRecord.wordAccessLimit,
+          subscriptionId: subscription.id,
+          currentPeriodEnd: new Date(periodEnd * 1000),
+        };
+      } catch (error) {
+        console.error("[Stripe] Failed to get subscription status:", error);
+        return {
+          status: "free",
+          plan: FREE_PLAN,
+          wordAccessLimit: 100,
+        };
+      }
+    }),
+
+    openCustomerPortal: protectedProcedure.mutation(async ({ ctx }) => {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+
+      try {
+        const db = await getDb();
+        if (!db) {
+          throw new Error("Database not available");
+        }
+
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        const userRecord = userRecords[0];
+
+        if (!userRecord?.stripeCustomerId) {
+          throw new Error("No Stripe customer found");
+        }
+
+        const session = await stripe.billingPortal.sessions.create({
+          customer: userRecord.stripeCustomerId,
+          return_url: `${ctx.req.headers.origin}/dashboard`,
+        });
+
+        return { portalUrl: session.url };
+      } catch (error) {
+        console.error("[Stripe] Failed to create portal session:", error);
+        throw new Error("Failed to open customer portal");
+      }
     }),
   }),
 

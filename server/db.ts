@@ -430,56 +430,58 @@ export async function getProgressByPos(userId: number, language: 'korean' | 'chi
     .groupBy(words.pos, userProgress.status);
 }
 
-// ─── User Stats (Gamification) ──────────────────────────────
-
-export async function getOrCreateUserStats(userId: number) {
+export async function getOrCreateUserStats(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return null;
 
   const existing = await db.select()
     .from(userStats)
-    .where(eq(userStats.userId, userId))
+    .where(and(eq(userStats.userId, userId), eq(userStats.language, language)))
     .limit(1);
 
-  if (existing.length > 0) return existing[0];
+  if (existing.length > 0) {
+    return existing[0];
+  }
 
-  await db.insert(userStats).values({ userId });
-  const created = await db.select()
+  await db.insert(userStats).values({
+    userId,
+    language,
+    xp: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalWordsLearned: 0,
+    totalReviews: 0,
+  });
+
+  const result = await db.select()
     .from(userStats)
-    .where(eq(userStats.userId, userId))
+    .where(and(eq(userStats.userId, userId), eq(userStats.language, language)))
     .limit(1);
-  return created[0] ?? null;
+
+  return result[0] ?? null;
 }
 
-export async function updateUserStatsAfterSwipe(userId: number, xpGained: number, wordsLearned: number) {
+export async function updateUserStatsAfterSwipe(userId: number, language: 'korean' | 'chinese', learnedCount: number) {
   const db = await getDb();
   if (!db) return;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const stats = await getOrCreateUserStats(userId);
+  const stats = await getOrCreateUserStats(userId, language);
   if (!stats) return;
 
-  let newStreak = stats.currentStreak;
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-
-  if (stats.lastStudyDate === today) {
-    // Same day, don't increment streak
-  } else if (stats.lastStudyDate === yesterday) {
-    newStreak += 1;
-  } else {
-    newStreak = 1;
-  }
-
-  const longestStreak = Math.max(stats.longestStreak, newStreak);
+  const today = new Date().toISOString().split('T')[0];
+  const isNewDay = stats.lastStudyDate !== today;
+  const newStreak = isNewDay ? stats.currentStreak + 1 : stats.currentStreak;
+  const longestStreak = Math.max(newStreak, stats.longestStreak);
 
   await db.update(userStats)
     .set({
-      xp: sql`${userStats.xp} + ${xpGained}`,
+      xp: sql`${userStats.xp} + ${learnedCount * 10}`,
       currentStreak: newStreak,
       longestStreak,
       lastStudyDate: today,
-      totalWordsLearned: sql`${userStats.totalWordsLearned} + ${wordsLearned}`,
       totalReviews: sql`${userStats.totalReviews} + 1`,
+      totalWordsLearned: sql`${userStats.totalWordsLearned} + ${learnedCount}`,
+      updatedAt: new Date(),
     })
-    .where(eq(userStats.userId, userId));
+    .where(and(eq(userStats.userId, userId), eq(userStats.language, language)));
 }

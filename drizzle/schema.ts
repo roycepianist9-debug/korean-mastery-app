@@ -11,6 +11,12 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // Stripe subscription fields
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  subscriptionStatus: mysqlEnum("subscriptionStatus", ["active", "trialing", "past_due", "canceled", "unpaid", "none"]).default("none").notNull(),
+  subscriptionPlanId: varchar("subscriptionPlanId", { length: 255 }),
+  wordAccessLimit: int("wordAccessLimit").default(100).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -18,6 +24,27 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * Subscription plans (stored for reference, actual pricing managed in Stripe).
+ */
+export const subscriptionPlans = mysqlTable("subscription_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  stripePriceId: varchar("stripePriceId", { length: 255 }).notNull().unique(),
+  stripeProductId: varchar("stripeProductId", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  priceInCents: int("priceInCents").notNull(),
+  currency: varchar("currency", { length: 3 }).default("usd").notNull(),
+  interval: mysqlEnum("interval", ["month", "year"]).notNull(),
+  wordAccessLimit: int("wordAccessLimit").notNull(),
+  isActive: int("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
 
 /**
  * Dictionary words for both Korean and Chinese.

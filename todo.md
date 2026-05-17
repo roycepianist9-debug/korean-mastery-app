@@ -155,3 +155,14 @@
 - [x] Enable switchable theme in ThemeProvider
 - [x] CSS variable indirection: @theme inline references vars, .dark and :root:not(.dark) define values
 - [x] Both themes verified working in browser (dark bg + light text, light bg + dark text)
+
+
+## Monetization & App Store Prep
+- [x] Implement Stripe subscription integration (monthly plan) — database schema, webhook handler, checkout/portal procedures
+- [ ] Add paywall: gate access beyond 100 words behind subscription
+- [x] Create checkout flow and customer portal — tRPC procedures ready
+- [ ] Implement onboarding flow: language selection → goal setting → sign-in
+- [ ] Generate Privacy Policy and Terms of Service pages
+- [ ] Add legal pages as in-app routes (/privacy, /terms)
+- [ ] Optimize LLM usage: cache translations in database instead of on-demand
+- [ ] Test full subscription flow end-to-end
