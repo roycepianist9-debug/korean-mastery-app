@@ -2,54 +2,54 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant light (&:is(.light *));
 
 @theme inline {
-  --color-background: oklch(0.14 0.01 260);
-  --color-foreground: oklch(0.96 0.01 260);
-  --color-card: oklch(0.18 0.015 260);
-  --color-card-foreground: oklch(0.96 0.01 260);
-  --color-popover: oklch(0.18 0.015 260);
-  --color-popover-foreground: oklch(0.96 0.01 260);
-  --color-primary: oklch(0.72 0.22 145);
-  --color-primary-foreground: oklch(0.14 0.01 260);
-  --color-secondary: oklch(0.24 0.02 260);
-  --color-secondary-foreground: oklch(0.96 0.01 260);
-  --color-muted: oklch(0.22 0.015 260);
-  --color-muted-foreground: oklch(0.65 0.02 260);
-  --color-accent: oklch(0.65 0.25 310);
-  --color-accent-foreground: oklch(0.96 0.01 260);
-  --color-destructive: oklch(0.60 0.22 25);
-  --color-destructive-foreground: oklch(0.96 0.01 260);
-  --color-border: oklch(0.28 0.02 260);
-  --color-input: oklch(0.28 0.02 260);
-  --color-ring: oklch(0.72 0.22 145);
-  --color-chart-1: oklch(0.72 0.22 145);
-  --color-chart-2: oklch(0.65 0.25 310);
-  --color-chart-3: oklch(0.70 0.18 60);
-  --color-chart-4: oklch(0.65 0.20 200);
-  --color-chart-5: oklch(0.60 0.22 25);
-  --color-sidebar: oklch(0.16 0.012 260);
-  --color-sidebar-foreground: oklch(0.96 0.01 260);
-  --color-sidebar-primary: oklch(0.72 0.22 145);
-  --color-sidebar-primary-foreground: oklch(0.14 0.01 260);
-  --color-sidebar-accent: oklch(0.24 0.02 260);
-  --color-sidebar-accent-foreground: oklch(0.96 0.01 260);
-  --color-sidebar-border: oklch(0.28 0.02 260);
-  --color-sidebar-ring: oklch(0.72 0.22 145);
+  /* Warm navy/slate palette — easier on eyes than pure black, cohesive with green accent */
+  --color-background: oklch(0.22 0.02 250);
+  --color-foreground: oklch(0.94 0.005 250);
+  --color-card: oklch(0.27 0.02 250);
+  --color-card-foreground: oklch(0.94 0.005 250);
+  --color-popover: oklch(0.27 0.02 250);
+  --color-popover-foreground: oklch(0.94 0.005 250);
+  --color-primary: oklch(0.72 0.19 155);
+  --color-primary-foreground: oklch(0.18 0.02 250);
+  --color-secondary: oklch(0.32 0.02 250);
+  --color-secondary-foreground: oklch(0.90 0.005 250);
+  --color-muted: oklch(0.30 0.015 250);
+  --color-muted-foreground: oklch(0.65 0.015 250);
+  --color-accent: oklch(0.68 0.18 290);
+  --color-accent-foreground: oklch(0.94 0.005 250);
+  --color-destructive: oklch(0.62 0.20 25);
+  --color-destructive-foreground: oklch(0.94 0.005 250);
+  --color-border: oklch(0.35 0.02 250);
+  --color-input: oklch(0.35 0.02 250);
+  --color-ring: oklch(0.72 0.19 155);
+  --color-chart-1: oklch(0.72 0.19 155);
+  --color-chart-2: oklch(0.68 0.18 290);
+  --color-chart-3: oklch(0.72 0.16 65);
+  --color-chart-4: oklch(0.65 0.18 200);
+  --color-chart-5: oklch(0.62 0.20 25);
+  --color-sidebar: oklch(0.20 0.018 250);
+  --color-sidebar-foreground: oklch(0.94 0.005 250);
+  --color-sidebar-primary: oklch(0.72 0.19 155);
+  --color-sidebar-primary-foreground: oklch(0.18 0.02 250);
+  --color-sidebar-accent: oklch(0.32 0.02 250);
+  --color-sidebar-accent-foreground: oklch(0.94 0.005 250);
+  --color-sidebar-border: oklch(0.35 0.02 250);
+  --color-sidebar-ring: oklch(0.72 0.19 155);
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 
   /* Game-specific colors */
-  --color-xp: oklch(0.72 0.22 145);
-  --color-streak: oklch(0.70 0.18 60);
-  --color-level: oklch(0.65 0.25 310);
-  --color-success: oklch(0.72 0.22 145);
-  --color-review: oklch(0.70 0.18 60);
-  --color-swipe-right: oklch(0.72 0.22 145);
-  --color-swipe-left: oklch(0.60 0.22 25);
+  --color-xp: oklch(0.72 0.19 155);
+  --color-streak: oklch(0.72 0.16 65);
+  --color-level: oklch(0.68 0.18 290);
+  --color-success: oklch(0.72 0.19 155);
+  --color-review: oklch(0.72 0.16 65);
+  --color-swipe-right: oklch(0.72 0.19 155);
+  --color-swipe-left: oklch(0.62 0.20 25);
 }
 
 @layer base {
@@ -74,76 +74,27 @@
 
 @layer utilities {
   .game-card {
-    @apply bg-card rounded-xl border border-border shadow-lg;
-    background: linear-gradient(135deg, oklch(0.20 0.02 260), oklch(0.16 0.015 260));
+    @apply bg-card rounded-xl border border-border;
+    background: linear-gradient(135deg, oklch(0.29 0.02 250), oklch(0.25 0.018 250));
+    box-shadow: 0 2px 8px oklch(0 0 0 / 0.2), 0 1px 3px oklch(0 0 0 / 0.1);
   }
   .game-card-glow {
-    box-shadow: 0 0 20px oklch(0.72 0.22 145 / 0.15), 0 4px 16px oklch(0 0 0 / 0.3);
+    box-shadow: 0 0 20px oklch(0.72 0.19 155 / 0.2), 0 4px 16px oklch(0 0 0 / 0.25);
   }
   .stat-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold;
-    background: linear-gradient(135deg, oklch(0.24 0.02 260), oklch(0.20 0.015 260));
-    border: 1px solid oklch(0.32 0.02 260);
+    background: linear-gradient(135deg, oklch(0.32 0.02 250), oklch(0.28 0.018 250));
+    border: 1px solid oklch(0.38 0.02 250);
   }
   .xp-glow {
-    text-shadow: 0 0 10px oklch(0.72 0.22 145 / 0.5);
+    text-shadow: 0 0 10px oklch(0.72 0.19 155 / 0.5);
   }
   .level-glow {
-    text-shadow: 0 0 10px oklch(0.65 0.25 310 / 0.5);
+    text-shadow: 0 0 10px oklch(0.68 0.18 290 / 0.5);
   }
 }
 
-/* Light theme overrides */
-:root:not(.dark) {
-  --color-background: oklch(0.97 0.005 260);
-  --color-foreground: oklch(0.15 0.02 260);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.15 0.02 260);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.15 0.02 260);
-  --color-primary: oklch(0.60 0.22 145);
-  --color-primary-foreground: oklch(0.98 0 0);
-  --color-secondary: oklch(0.92 0.01 260);
-  --color-secondary-foreground: oklch(0.20 0.02 260);
-  --color-muted: oklch(0.93 0.008 260);
-  --color-muted-foreground: oklch(0.50 0.02 260);
-  --color-accent: oklch(0.55 0.22 310);
-  --color-accent-foreground: oklch(0.98 0 0);
-  --color-destructive: oklch(0.55 0.22 25);
-  --color-destructive-foreground: oklch(0.98 0 0);
-  --color-border: oklch(0.88 0.01 260);
-  --color-input: oklch(0.88 0.01 260);
-  --color-ring: oklch(0.60 0.22 145);
-  --color-chart-1: oklch(0.60 0.22 145);
-  --color-chart-2: oklch(0.55 0.22 310);
-  --color-chart-3: oklch(0.62 0.18 60);
-  --color-chart-4: oklch(0.55 0.20 200);
-  --color-chart-5: oklch(0.55 0.22 25);
-  --color-xp: oklch(0.60 0.22 145);
-  --color-streak: oklch(0.62 0.18 60);
-  --color-level: oklch(0.55 0.22 310);
-  --color-success: oklch(0.60 0.22 145);
-  --color-review: oklch(0.62 0.18 60);
-  --color-swipe-right: oklch(0.60 0.22 145);
-  --color-swipe-left: oklch(0.55 0.22 25);
-}
-
-:root:not(.dark) .game-card {
-  background: linear-gradient(135deg, oklch(1 0 0), oklch(0.97 0.005 260)) !important;
-  border-color: oklch(0.88 0.01 260) !important;
-  box-shadow: 0 2px 12px oklch(0 0 0 / 0.06), 0 1px 3px oklch(0 0 0 / 0.04) !important;
-}
-
-:root:not(.dark) .stat-badge {
-  background: linear-gradient(135deg, oklch(0.95 0.008 260), oklch(0.92 0.01 260)) !important;
-  border-color: oklch(0.85 0.01 260) !important;
-}
-
-:root:not(.dark) ::-webkit-scrollbar-thumb {
-  background: oklch(0.80 0.01 260);
-}
-
-/* Korean font support */
+/* Korean & Chinese font support */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
 
 body {
@@ -223,7 +174,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent);
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.04), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -259,7 +210,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.32 0.02 260);
+  background: oklch(0.40 0.02 250);
   border-radius: 2px;
 }
 

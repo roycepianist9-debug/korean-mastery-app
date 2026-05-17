@@ -140,3 +140,10 @@
 - [x] Light mode: white cards, soft shadows, adjusted primary/accent colors
 - [x] Move swipe icon in Words page: between instruction hint and first word card
 - [x] Make swipe icon bigger (w-11 h-11 circle with w-6 h-6 ArrowLeftRight icon, with Review/Learned labels and directional lines)
+
+## Fixes - Light Theme & Words Page
+- [x] Remove broken light theme toggle (sun/moon button) and :root:not(.dark) overrides
+- [x] Replace dark theme with warm navy/slate palette (lighter than pure black, cohesive with green accent)
+- [x] All elements (cards, badges, text, buttons) use consistent oklch color tokens
+- [x] Remove duplicated swipe indicator in Words page (the ArrowLeftRight circle with labels)
+- [x] Move the "Swipe Mode" button to sit directly below the instruction hint text (bigger, more prominent)

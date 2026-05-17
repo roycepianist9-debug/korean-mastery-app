@@ -6,13 +6,13 @@ import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, Star, BookOpen, Zap, Target,
-  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon,
+  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
-import { useTheme } from "@/contexts/ThemeContext";
+
 
 
 export default function Home() {
@@ -20,7 +20,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { language } = useLanguage();
   const { play: sfx, muted, toggleMute } = useSound();
-  const { theme, toggleTheme } = useTheme();
+
 
   const isChinese = language === 'chinese';
 
@@ -120,24 +120,13 @@ export default function Home() {
       <div className="px-4 pt-6 pb-2">
         <div className="flex items-center justify-between mb-4">
           <LanguageToggle />
-          <div className="flex items-center gap-2">
-            {toggleTheme && (
-              <button
-                onClick={() => { sfx.pop(); toggleTheme(); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
-              </button>
-            )}
-            <button
-              onClick={() => { sfx.tap(); toggleMute(); }}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
-              aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
-            >
-              {muted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-foreground" />}
-            </button>
-          </div>
+          <button
+            onClick={() => { sfx.tap(); toggleMute(); }}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
+            aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {muted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-foreground" />}
+          </button>
         </div>
         <div className="flex items-center justify-between">
           <div>
