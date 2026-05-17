@@ -124,3 +124,11 @@
 - [x] Add swipe-left tone sound (review) to SwipeGame
 - [x] Add session-complete victory jingle to SwipeGame summary screen
 - [x] Graceful handling: autoplay-blocked errors silently ignored (browser policy compliant)
+
+## Sound Overhaul & Fixes
+- [x] Replace swipe sounds with short 0.15s "cling" effects (Web Audio API synthesized)
+- [x] Create SoundContext with mute/unmute state persisted in localStorage
+- [x] Add mute/unmute toggle button on main screen (Home page)
+- [x] Add sounds to buttons/actions: nav taps, language toggle pop, session start whoosh, back button pop, info button tap
+- [x] Keep session-complete victory jingle (already working)
+- [x] Fix Chinese play mode showing "Topik Level" instead of "HSK Level" — now shows HSK 1-4 options

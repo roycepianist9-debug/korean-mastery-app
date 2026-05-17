@@ -6,17 +6,19 @@ import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, Star, BookOpen, Zap, Target,
-  ChevronRight, TrendingUp, Gamepad2, LogIn,
+  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSound } from "@/contexts/SoundContext";
 
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const { language } = useLanguage();
+  const { play: sfx, muted, toggleMute } = useSound();
 
   const isChinese = language === 'chinese';
 
@@ -116,6 +118,13 @@ export default function Home() {
       <div className="px-4 pt-6 pb-2">
         <div className="flex items-center justify-between mb-4">
           <LanguageToggle />
+          <button
+            onClick={() => { sfx.tap(); toggleMute(); }}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
+            aria-label={muted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {muted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-foreground" />}
+          </button>
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -192,7 +201,7 @@ export default function Home() {
 
         {/* Quick Start */}
         <Button
-          onClick={() => setLocation(isChinese ? '/play?lang=chinese' : '/play')}
+          onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
           className="w-full h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
         >
           <Gamepad2 className="w-6 h-6 mr-2" />
@@ -203,21 +212,21 @@ export default function Home() {
         {isAuthenticated && ps && (
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => setLocation(`/words?statuses=learned${langParam}`)}
+              onClick={() => { sfx.tap(); setLocation(`/words?statuses=learned${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-primary">{ps.learned}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Learned</p>
             </button>
             <button
-              onClick={() => setLocation(`/words?statuses=reviewing${langParam}`)}
+              onClick={() => { sfx.tap(); setLocation(`/words?statuses=reviewing${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-chart-3">{ps.reviewing}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Reviewing</p>
             </button>
             <button
-              onClick={() => setLocation(`/words?statuses=new${langParam}`)}
+              onClick={() => { sfx.tap(); setLocation(`/words?statuses=new${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-accent">{(ws?.total ?? 0) - ps.learned - ps.reviewing}</p>
@@ -237,7 +246,7 @@ export default function Home() {
               {levelData.map(item => (
                 <button
                   key={item.level}
-                  onClick={() => setLocation(levelFilterParam(item.level))}
+                  onClick={() => { sfx.tap(); setLocation(levelFilterParam(item.level)); }}
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -269,7 +278,7 @@ export default function Home() {
               {posData.map(item => (
                 <button
                   key={item.pos}
-                  onClick={() => setLocation(`/words?pos=${item.pos}${langParam}`)}
+                  onClick={() => { sfx.tap(); setLocation(`/words?pos=${item.pos}${langParam}`); }}
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">

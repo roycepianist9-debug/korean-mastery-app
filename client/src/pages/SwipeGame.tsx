@@ -20,36 +20,11 @@ import {
 import { toast } from "sonner";
 import WordDetailSheet from "@/components/WordDetailSheet";
 import ClickableExample from "@/components/ClickableExample";
+import { useSound } from "@/contexts/SoundContext";
 
 interface SwipeResult {
   wordId: number;
   known: boolean;
-}
-
-/* ─── Sound Hook ─── */
-function useSounds() {
-  const audioCache = useRef<Record<string, HTMLAudioElement>>({});
-
-  const play = useCallback((src: string, volume = 0.45) => {
-    try {
-      let audio = audioCache.current[src];
-      if (!audio) {
-        audio = new Audio(src);
-        audioCache.current[src] = audio;
-      }
-      audio.currentTime = 0;
-      audio.volume = volume;
-      audio.play().catch(() => {/* autoplay blocked — silently ignore */});
-    } catch {
-      // ignore any audio errors
-    }
-  }, []);
-
-  return {
-    playRight: () => play('/manus-storage/swipe-right_0a58dc58.mp3', 0.5),
-    playLeft: () => play('/manus-storage/swipe-left_b7367a84.mp3', 0.4),
-    playVictory: () => play('/manus-storage/session-complete_972bd950.mp3', 0.55),
-  };
 }
 
 /* ─── Inline AI Translation Hook ─── */
@@ -348,6 +323,7 @@ function SessionSummary({
   onRestart: () => void;
   onHome: () => void;
   playVictory: () => void;
+  // Note: playVictory is now passed from the SoundContext
 }) {
   const hasPlayed = useRef(false);
   useEffect(() => {
@@ -450,14 +426,14 @@ export default function SwipeGame() {
   );
 
   const batchSwipe = trpc.progress.batchSwipe.useMutation();
-  const { playRight, playLeft, playVictory } = useSounds();
+  const { play: sfx } = useSound();
 
   const words = wordsQuery.data ?? [];
 
   const handleSwipe = useCallback((known: boolean) => {
     if (!words[currentIndex]) return;
     // Play swipe sound immediately for snappy feedback
-    if (known) playRight(); else playLeft();
+    if (known) sfx.swipeRight(); else sfx.swipeLeft();
     const result = { wordId: words[currentIndex].id, known };
     setSwipeResults(prev => [...prev, result]);
     setHistory(prev => [...prev, currentIndex]);
@@ -521,7 +497,7 @@ export default function SwipeGame() {
         }}
         onRestart={handleRestart}
         onHome={() => setLocation("/")}
-        playVictory={playVictory}
+        playVictory={sfx.victory}
       />
     );
   }
@@ -530,7 +506,7 @@ export default function SwipeGame() {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="px-4 pt-6 pb-4">
-          <button onClick={() => setLocation("/")} className="flex items-center gap-1 text-muted-foreground mb-4 press-scale">
+          <button onClick={() => { sfx.tap(); setLocation("/"); }} className="flex items-center gap-1 text-muted-foreground mb-4 press-scale">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
           </button>
@@ -541,16 +517,27 @@ export default function SwipeGame() {
         <div className="px-4 space-y-4">
           <div className="game-card p-4 space-y-4">
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">TOPIK Level</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : 'TOPIK Level'}</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
+                  {isChinese ? (
+                    <>
+                      <SelectItem value="1">HSK 1</SelectItem>
+                      <SelectItem value="2">HSK 2</SelectItem>
+                      <SelectItem value="3">HSK 3</SelectItem>
+                      <SelectItem value="4">HSK 4</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -606,7 +593,7 @@ export default function SwipeGame() {
           <Button
             size="lg"
             className="w-full h-14 text-lg font-black press-scale bg-gradient-to-r from-primary to-primary/80"
-            onClick={() => setSessionStarted(true)}
+            onClick={() => { sfx.whoosh(); setSessionStarted(true); }}
           >
             <Gamepad2 className="w-6 h-6 mr-2" />
             Start ({deckSize} cards)
@@ -699,7 +686,7 @@ export default function SwipeGame() {
       <div className="px-6 pb-8 flex items-center justify-center gap-4">
         {/* Back / Undo button */}
         <button
-          onClick={handleBack}
+          onClick={() => { sfx.pop(); handleBack(); }}
           disabled={history.length === 0}
           className={`w-12 h-12 rounded-full flex items-center justify-center press-scale transition-all ${
             history.length > 0
@@ -717,7 +704,7 @@ export default function SwipeGame() {
           <X className="w-7 h-7 text-destructive" />
         </button>
         <button
-          onClick={() => { setDetailWord(currentWord); setDetailOpen(true); }}
+          onClick={() => { sfx.tap(); setDetailWord(currentWord); setDetailOpen(true); }}
           className="w-12 h-12 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center press-scale transition-transform"
         >
           <Info className="w-5 h-5 text-accent" />

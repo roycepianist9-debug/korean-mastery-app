@@ -1,8 +1,10 @@
 import { useLocation } from "wouter";
 import { Home, BookOpen, Gamepad2 } from "lucide-react";
+import { useSound } from "@/contexts/SoundContext";
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
+  const { play: sfx } = useSound();
 
   const tabs = [
     { path: "/", icon: Home, label: "Home" },
@@ -18,7 +20,7 @@ export default function BottomNav() {
           return (
             <button
               key={tab.path}
-              onClick={() => setLocation(tab.path)}
+              onClick={() => { sfx.tap(); setLocation(tab.path); }}
               className={`flex flex-col items-center gap-0.5 px-6 py-2 rounded-xl transition-all duration-200 press-scale ${
                 isActive
                   ? "text-primary"

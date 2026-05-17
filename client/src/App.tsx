@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { SoundProvider } from "./contexts/SoundContext";
 import Home from "./pages/Home";
 import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
@@ -28,10 +29,12 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <LanguageProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
+          <SoundProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </SoundProvider>
         </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
