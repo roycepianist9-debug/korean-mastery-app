@@ -132,3 +132,11 @@
 - [x] Add sounds to buttons/actions: nav taps, language toggle pop, session start whoosh, back button pop, info button tap
 - [x] Keep session-complete victory jingle (already working)
 - [x] Fix Chinese play mode showing "Topik Level" instead of "HSK Level" — now shows HSK 1-4 options
+
+## Light Theme & UI Fixes
+- [x] Add light theme CSS variables to index.css (overrides for :root:not(.dark))
+- [x] Add theme toggle button (sun/moon icon) on Home page header
+- [x] Persist theme preference in localStorage (ThemeProvider switchable=true)
+- [x] Light mode: white cards, soft shadows, adjusted primary/accent colors
+- [x] Move swipe icon in Words page: between instruction hint and first word card
+- [x] Make swipe icon bigger (w-11 h-11 circle with w-6 h-6 ArrowLeftRight icon, with Review/Learned labels and directional lines)

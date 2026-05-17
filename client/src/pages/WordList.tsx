@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X, Gamepad2,
+  ArrowLeft, Filter, X, Gamepad2, ArrowLeftRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -402,12 +402,26 @@ export default function WordList() {
         )}
       </div>
 
-      {/* Swipe hint for authenticated users */}
+      {/* Swipe hint + icon for authenticated users */}
       {isAuthenticated && words.length > 0 && !wordsQuery.isLoading && (
-        <div className="px-4 mb-2">
+        <div className="px-4 mb-3">
           <p className="text-[10px] text-muted-foreground text-center">
             Swipe right = <span className="text-primary font-bold">Learned</span> · Swipe left = <span className="text-chart-3 font-bold">Reviewing</span>
           </p>
+          {/* Central swipe icon — the core interaction */}
+          <div className="flex items-center justify-center gap-3 mt-2.5">
+            <div className="flex items-center gap-1.5">
+              <div className="w-8 h-0.5 rounded-full bg-chart-3/60" />
+              <span className="text-[9px] font-bold text-chart-3 uppercase tracking-wide">Review</span>
+            </div>
+            <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center shadow-md border border-border">
+              <ArrowLeftRight className="w-6 h-6 text-foreground" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-bold text-primary uppercase tracking-wide">Learned</span>
+              <div className="w-8 h-0.5 rounded-full bg-primary/60" />
+            </div>
+          </div>
         </div>
       )}
 
