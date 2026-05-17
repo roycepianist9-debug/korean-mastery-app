@@ -147,3 +147,11 @@
 - [x] All elements (cards, badges, text, buttons) use consistent oklch color tokens
 - [x] Remove duplicated swipe indicator in Words page (the ArrowLeftRight circle with labels)
 - [x] Move the "Swipe Mode" button to sit directly below the instruction hint text (bigger, more prominent)
+
+## Theme Revert & Proper Light Theme
+- [x] Revert dark theme to previous version (before warm navy/slate change)
+- [x] Add proper light theme: light gray background, white cards, dark text, green accent
+- [x] Add theme toggle button (sun/moon) back to Home page header
+- [x] Enable switchable theme in ThemeProvider
+- [x] CSS variable indirection: @theme inline references vars, .dark and :root:not(.dark) define values
+- [x] Both themes verified working in browser (dark bg + light text, light bg + dark text)
