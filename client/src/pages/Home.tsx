@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 
@@ -19,11 +18,13 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { language } = useLanguage();
 
-  const wordStats = trpc.words.stats.useQuery();
+  const isChinese = language === 'chinese';
+
+  const wordStats = trpc.words.stats.useQuery({ language });
   const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressStats = trpc.progress.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressByLevel = trpc.progress.getByLevel.useQuery(undefined, { enabled: isAuthenticated });
-  const progressByPos = trpc.progress.getByPos.useQuery(undefined, { enabled: isAuthenticated });
+  const progressStats = trpc.progress.getStats.useQuery({ language }, { enabled: isAuthenticated });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language }, { enabled: isAuthenticated });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language }, { enabled: isAuthenticated });
 
   const gs = gameStats.data;
   const ps = progressStats.data;
@@ -37,12 +38,29 @@ export default function Home() {
   // Aggregate progress by level
   const levelData = (() => {
     if (!progressByLevel.data || !ws) return [];
+
+    if (isChinese) {
+      const hskLevels = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      const levelTotals: Record<string, number> = {};
+      for (const item of ws.byLevel) {
+        if (item.level) levelTotals[item.level] = item.count;
+      }
+      return hskLevels
+        .filter(level => levelTotals[level] && levelTotals[level] > 0)
+        .map(level => {
+          const total = levelTotals[level] ?? 0;
+          const learned = progressByLevel.data
+            .filter((r: any) => r.hskLevel === level && r.status === 'learned')
+            .reduce((sum: number, r: any) => sum + r.count, 0);
+          return { level, total, learned };
+        });
+    }
+
+    // Korean
     const levels = ['beginner', 'intermediate', 'advanced'] as const;
     const levelTotals: Record<string, number> = {};
     for (const item of ws.byLevel) {
-      if (item.level) {
-        levelTotals[item.level] = item.count;
-      }
+      if (item.level) levelTotals[item.level] = item.count;
     }
     return levels.map(level => {
       const total = levelTotals[level] ?? 0;
@@ -70,8 +88,25 @@ export default function Home() {
     }).filter(p => p.total > 0);
   })();
 
-  const levelLabel = (l: string) => l === 'beginner' ? 'Beginner' : l === 'intermediate' ? 'Intermediate' : 'Advanced';
-  const levelColor = (l: string) => l === 'beginner' ? 'text-primary' : l === 'intermediate' ? 'text-chart-3' : 'text-accent';
+  const levelLabel = (l: string) => {
+    if (isChinese) return `HSK ${l}`;
+    return l === 'beginner' ? 'Beginner' : l === 'intermediate' ? 'Intermediate' : 'Advanced';
+  };
+
+  const levelColor = (l: string) => {
+    if (isChinese) {
+      const n = parseInt(l);
+      if (n <= 2) return 'text-primary';
+      if (n <= 4) return 'text-chart-3';
+      return 'text-accent';
+    }
+    return l === 'beginner' ? 'text-primary' : l === 'intermediate' ? 'text-chart-3' : 'text-accent';
+  };
+
+  const levelFilterParam = (l: string) => {
+    if (isChinese) return `/words?hskLevel=${l}`;
+    return `/words?level=${l}`;
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -83,10 +118,15 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-foreground">
-              {isAuthenticated ? `Welcome back!` : language === 'korean' ? 'Korean Mastery' : 'Chinese Mastery'}
+              {isAuthenticated ? `Welcome back!` : isChinese ? 'Chinese Mastery' : 'Korean Mastery'}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {isAuthenticated ? 'Ready to learn?' : language === 'korean' ? 'Master 56,000+ Korean words' : 'Master 11,000+ Chinese words'}
+              {isAuthenticated
+                ? 'Ready to learn?'
+                : isChinese
+                  ? `Master ${ws?.total ? ws.total.toLocaleString() : ''} Chinese words`
+                  : `Master ${ws?.total ? ws.total.toLocaleString() : '56,000+'} Korean words`
+              }
             </p>
           </div>
           {isAuthenticated && gs && (
@@ -195,7 +235,7 @@ export default function Home() {
               {levelData.map(item => (
                 <button
                   key={item.level}
-                  onClick={() => setLocation(`/words?level=${item.level}`)}
+                  onClick={() => setLocation(levelFilterParam(item.level))}
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -203,7 +243,7 @@ export default function Home() {
                       {levelLabel(item.level)} ({item.learned}/{item.total})
                     </span>
                     <span className="text-xs font-bold text-muted-foreground">
-                      {item.total > 0 ? Math.round((item.learned / item.total) * 100) : 0}
+                      {item.total > 0 ? Math.round((item.learned / item.total) * 100) : 0}%
                     </span>
                   </div>
                   <Progress
@@ -235,7 +275,7 @@ export default function Home() {
                       {item.pos} ({item.learned}/{item.total})
                     </span>
                     <span className="text-xs font-bold text-muted-foreground">
-                      {item.total > 0 ? Math.round((item.learned / item.total) * 100) : 0}
+                      {item.total > 0 ? Math.round((item.learned / item.total) * 100) : 0}%
                     </span>
                   </div>
                   <Progress

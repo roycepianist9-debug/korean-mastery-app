@@ -19,13 +19,19 @@ import ClickableExample from "./ClickableExample";
 interface WordDetailSheetProps {
   word: {
     id: number;
-    korean: string;
-    romanization: string;
+    language?: string;
+    korean?: string | null;
+    romanization?: string;
+    chinese?: string | null;
+    pinyin?: string | null;
     pos: string;
     meaning: string;
     koreanExample?: string | null;
     exampleEnglish?: string | null;
-    topikLevel: string;
+    chineseExample?: string | null;
+    examplePinyin?: string | null;
+    topikLevel?: string | null;
+    hskLevel?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,14 +43,20 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   const [tipsRequested, setTipsRequested] = useState(false);
   const tipsMutation = trpc.llm.getWordTips.useMutation();
 
+  const isChinese = word?.language === 'chinese';
+  const headword = isChinese ? (word?.chinese ?? '') : (word?.korean ?? '');
+  const subtext = isChinese ? (word?.pinyin ?? '') : (word?.romanization ?? '');
+  const exampleSentence = isChinese ? word?.chineseExample : word?.koreanExample;
+  const exampleTranslation = isChinese ? word?.examplePinyin : word?.exampleEnglish;
+
   const handleGetTips = () => {
     if (!word || !isAuthenticated) return;
     setTipsRequested(true);
     tipsMutation.mutate({
-      korean: word.korean,
+      korean: headword,
       meaning: word.meaning,
       pos: word.pos,
-      koreanExample: word.koreanExample || undefined,
+      koreanExample: exampleSentence || undefined,
     });
   };
 
@@ -60,27 +72,36 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
 
   const tips = tipsMutation.data;
 
+  // Level badge
+  const levelLabel = isChinese
+    ? (word.hskLevel ? `HSK ${word.hskLevel}` : null)
+    : (word.topikLevel === 'beginner' ? 'Beginner' :
+       word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced');
+
+  const levelClass = isChinese
+    ? 'bg-primary/20 text-primary'
+    : (word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+       word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+       'bg-accent/20 text-accent');
+
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="bg-card border-border rounded-t-2xl max-h-[85vh] overflow-y-auto">
         <SheetHeader className="text-center pb-2">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-              word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-              word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-              'bg-accent/20 text-accent'
-            }`}>
-              {word.topikLevel === 'beginner' ? 'Beginner' :
-               word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
-            </span>
+            {levelLabel && (
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${levelClass}`}>
+                {levelLabel}
+              </span>
+            )}
             {word.pos && (
               <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
                 {word.pos}
               </span>
             )}
           </div>
-          <SheetTitle className="text-4xl font-black text-foreground">{word.korean}</SheetTitle>
-          <p className="text-base text-muted-foreground font-medium">{word.romanization}</p>
+          <SheetTitle className="text-4xl font-black text-foreground">{headword}</SheetTitle>
+          <p className="text-base text-muted-foreground font-medium">{subtext}</p>
         </SheetHeader>
 
         <div className="space-y-3 pt-2 pb-4">
@@ -93,20 +114,24 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
             <p className="text-base font-bold text-foreground">{word.meaning}</p>
           </div>
 
-          {/* Example with clickable tokens */}
-          {(word.koreanExample || word.exampleEnglish) && (
+          {/* Example */}
+          {(exampleSentence || exampleTranslation) && (
             <div className="game-card p-3.5">
               <div className="flex items-center gap-2 mb-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-chart-3" />
                 <span className="text-[10px] font-bold text-chart-3 uppercase tracking-wider">Example</span>
               </div>
-              {word.koreanExample && (
+              {exampleSentence && (
                 <div className="mb-1">
-                  <ClickableExample sentence={word.koreanExample} />
+                  {isChinese ? (
+                    <p className="text-base font-bold text-foreground">{exampleSentence}</p>
+                  ) : (
+                    <ClickableExample sentence={exampleSentence} />
+                  )}
                 </div>
               )}
-              {word.exampleEnglish && (
-                <p className="text-xs text-muted-foreground italic mt-0.5">{word.exampleEnglish}</p>
+              {exampleTranslation && (
+                <p className="text-xs text-muted-foreground italic mt-0.5">{exampleTranslation}</p>
               )}
             </div>
           )}

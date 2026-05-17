@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import {
   ArrowLeft, Sparkles, BookOpen, MessageSquare,
-  Lightbulb, Loader2, Volume2,
+  Lightbulb, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,14 +26,20 @@ export default function WordDetail() {
 
   const word = wordQuery.data;
 
+  const isChinese = word?.language === 'chinese';
+  const headword = isChinese ? (word?.chinese ?? '') : (word?.korean ?? '');
+  const subtext = isChinese ? (word?.pinyin ?? '') : (word?.romanization ?? '');
+  const exampleSentence = isChinese ? word?.chineseExample : word?.koreanExample;
+  const exampleTranslation = isChinese ? word?.examplePinyin : word?.exampleEnglish;
+
   const handleGetTips = () => {
     if (!word || !isAuthenticated) return;
     setTipsRequested(true);
     tipsMutation.mutate({
-      korean: word.korean || "",
+      korean: headword,
       meaning: word.meaning,
       pos: word.pos,
-      koreanExample: word.koreanExample || undefined,
+      koreanExample: exampleSentence || undefined,
     });
   };
 
@@ -65,6 +71,18 @@ export default function WordDetail() {
 
   const tips = tipsMutation.data;
 
+  // Level badge
+  const levelLabel = isChinese
+    ? (word.hskLevel ? `HSK ${word.hskLevel}` : null)
+    : (word.topikLevel === 'beginner' ? 'Beginner' :
+       word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced');
+
+  const levelClass = isChinese
+    ? 'bg-primary/20 text-primary'
+    : (word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+       word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+       'bg-accent/20 text-accent');
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -78,22 +96,19 @@ export default function WordDetail() {
       {/* Word Header */}
       <div className="px-4 text-center mb-6">
         <div className="inline-flex items-center gap-2 mb-3">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-            word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-            word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-            'bg-accent/20 text-accent'
-          }`}>
-            {word.topikLevel === 'beginner' ? 'Beginner' :
-             word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
-          </span>
+          {levelLabel && (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${levelClass}`}>
+              {levelLabel}
+            </span>
+          )}
           {word.pos && (
             <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
               {word.pos}
             </span>
           )}
         </div>
-        <h1 className="text-5xl font-black text-foreground mb-2">{word.korean}</h1>
-        <p className="text-lg text-muted-foreground font-medium">{word.romanization}</p>
+        <h1 className="text-5xl font-black text-foreground mb-2">{headword}</h1>
+        <p className="text-lg text-muted-foreground font-medium">{subtext}</p>
       </div>
 
       {/* Meaning */}
@@ -108,18 +123,18 @@ export default function WordDetail() {
       </div>
 
       {/* Example Sentences */}
-      {(word.koreanExample || word.exampleEnglish) && (
+      {(exampleSentence || exampleTranslation) && (
         <div className="px-4 mb-4">
           <div className="game-card p-4">
             <div className="flex items-center gap-2 mb-2">
               <MessageSquare className="w-4 h-4 text-chart-3" />
               <span className="text-xs font-bold text-chart-3 uppercase tracking-wider">Example</span>
             </div>
-            {word.koreanExample && (
-              <p className="text-sm text-foreground mb-1">{word.koreanExample}</p>
+            {exampleSentence && (
+              <p className="text-sm text-foreground mb-1">{exampleSentence}</p>
             )}
-            {word.exampleEnglish && (
-              <p className="text-sm text-muted-foreground italic">{word.exampleEnglish}</p>
+            {exampleTranslation && (
+              <p className="text-sm text-muted-foreground italic">{exampleTranslation}</p>
             )}
           </div>
         </div>
@@ -153,7 +168,6 @@ export default function WordDetail() {
           </div>
         ) : tips ? (
           <div className="space-y-3 animate-slide-up">
-            {/* Grammar Tip */}
             <div className="game-card p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Lightbulb className="w-4 h-4 text-accent" />
@@ -162,7 +176,6 @@ export default function WordDetail() {
               <p className="text-sm text-foreground/90">{tips.grammarTip}</p>
             </div>
 
-            {/* Additional Examples */}
             {tips.examples && tips.examples.length > 0 && (
               <div className="game-card p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -180,7 +193,6 @@ export default function WordDetail() {
               </div>
             )}
 
-            {/* Usage Note */}
             <div className="game-card p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-chart-3" />

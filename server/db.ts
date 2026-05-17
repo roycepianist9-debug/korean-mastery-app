@@ -284,26 +284,42 @@ export async function getRandomWords(params: {
     .limit(params.limit);
 }
 
-export async function getWordStats() {
+export async function getWordStats(language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return { total: 0, byLevel: [], byPos: [] };
 
+  const langCondition = eq(words.language, language);
+
+  if (language === 'chinese') {
+    const [totalResult, byLevel, byPos] = await Promise.all([
+      db.select({ total: count() }).from(words).where(langCondition),
+      db.select({ level: words.hskLevel, count: count() })
+        .from(words)
+        .where(langCondition)
+        .groupBy(words.hskLevel),
+      db.select({ pos: words.pos, count: count() })
+        .from(words)
+        .where(langCondition)
+        .groupBy(words.pos)
+        .orderBy(desc(count())),
+    ]);
+    return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
+  }
+
   const [totalResult, byLevel, byPos] = await Promise.all([
-    db.select({ total: count() }).from(words),
+    db.select({ total: count() }).from(words).where(langCondition),
     db.select({ level: words.topikLevel, count: count() })
       .from(words)
+      .where(langCondition)
       .groupBy(words.topikLevel),
     db.select({ pos: words.pos, count: count() })
       .from(words)
+      .where(langCondition)
       .groupBy(words.pos)
       .orderBy(desc(count())),
   ]);
 
-  return {
-    total: totalResult[0]?.total ?? 0,
-    byLevel,
-    byPos,
-  };
+  return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
 }
 
 // ─── Progress Queries ───────────────────────────────────────
@@ -349,7 +365,7 @@ export async function upsertWordProgress(userId: number, wordId: number, status:
   }
 }
 
-export async function getUserProgressStats(userId: number) {
+export async function getUserProgressStats(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return { new: 0, reviewing: 0, learned: 0, total: 0 };
 
@@ -358,7 +374,8 @@ export async function getUserProgressStats(userId: number) {
     count: count(),
   })
     .from(userProgress)
-    .where(eq(userProgress.userId, userId))
+    .innerJoin(words, eq(userProgress.wordId, words.id))
+    .where(and(eq(userProgress.userId, userId), eq(words.language, language)))
     .groupBy(userProgress.status);
 
   const stats = { new: 0, reviewing: 0, learned: 0, total: 0 };
@@ -371,9 +388,21 @@ export async function getUserProgressStats(userId: number) {
   return stats;
 }
 
-export async function getProgressByLevel(userId: number) {
+export async function getProgressByLevel(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return [];
+
+  if (language === 'chinese') {
+    return db.select({
+      hskLevel: words.hskLevel,
+      status: userProgress.status,
+      count: count(),
+    })
+      .from(userProgress)
+      .innerJoin(words, eq(userProgress.wordId, words.id))
+      .where(and(eq(userProgress.userId, userId), eq(words.language, 'chinese')))
+      .groupBy(words.hskLevel, userProgress.status);
+  }
 
   return db.select({
     topikLevel: words.topikLevel,
@@ -382,11 +411,11 @@ export async function getProgressByLevel(userId: number) {
   })
     .from(userProgress)
     .innerJoin(words, eq(userProgress.wordId, words.id))
-    .where(eq(userProgress.userId, userId))
+    .where(and(eq(userProgress.userId, userId), eq(words.language, 'korean')))
     .groupBy(words.topikLevel, userProgress.status);
 }
 
-export async function getProgressByPos(userId: number) {
+export async function getProgressByPos(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return [];
 
@@ -397,7 +426,7 @@ export async function getProgressByPos(userId: number) {
   })
     .from(userProgress)
     .innerJoin(words, eq(userProgress.wordId, words.id))
-    .where(eq(userProgress.userId, userId))
+    .where(and(eq(userProgress.userId, userId), eq(words.language, language)))
     .groupBy(words.pos, userProgress.status);
 }
 

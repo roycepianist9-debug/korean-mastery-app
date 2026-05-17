@@ -82,23 +82,31 @@ export const appRouter = router({
         });
       }),
 
-    stats: publicProcedure.query(async () => {
-      return getWordStats();
-    }),
+    stats: publicProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .query(async ({ input }) => {
+        return getWordStats(input?.language || 'korean');
+      }),
   }),
 
   progress: router({
-    getStats: protectedProcedure.query(async ({ ctx }) => {
-      return getUserProgressStats(ctx.user.id);
-    }),
+    getStats: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return getUserProgressStats(ctx.user.id, input?.language || 'korean');
+      }),
 
-    getByLevel: protectedProcedure.query(async ({ ctx }) => {
-      return getProgressByLevel(ctx.user.id);
-    }),
+    getByLevel: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return getProgressByLevel(ctx.user.id, input?.language || 'korean');
+      }),
 
-    getByPos: protectedProcedure.query(async ({ ctx }) => {
-      return getProgressByPos(ctx.user.id);
-    }),
+    getByPos: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return getProgressByPos(ctx.user.id, input?.language || 'korean');
+      }),
 
     getForWords: protectedProcedure
       .input(z.object({ wordIds: z.array(z.number()) }))

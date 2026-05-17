@@ -94,5 +94,18 @@
 - [x] Language-aware routing: /play?lang=chinese, /words?lang=chinese, etc.
 - [x] Render Chinese fields in SwipeGame (chinese, pinyin, chineseExample, examplePinyin)
 - [x] Render Chinese fields in WordList (chinese, pinyin, HSK level badges)
-- [ ] Expand Chinese vocabulary: add HSK Level 2-3 words (500+ more words) [future enhancement]
+- [x] Expand Chinese vocabulary: HSK 1-4 fully seeded (1,932 words) [done]
 - [ ] Add Chinese tokenization for clickable example sentences [future enhancement]
+
+## Language-Specific Stats & Chinese HSK 1-4
+- [x] Make getUserProgressStats filter by language
+- [x] Make getProgressByLevel filter by language (return HSK levels for Chinese)
+- [x] Make getProgressByPos filter by language
+- [x] Update progress router procedures to accept language parameter
+- [x] Update Home page stats to pass language and show HSK levels for Chinese
+- [x] Scrape HSK 1-4 vocabulary from Mandarin Bean (1,932 words total)
+- [x] Seed HSK 1-4 words into database
+- [x] Generate LLM example sentences for all 1,932 Chinese words (batched 10/call, 0 errors)
+- [x] Home page shows correct word count per language
+- [x] WordDetailSheet supports both Korean and Chinese
+- [x] WordDetail page supports both Korean and Chinese
