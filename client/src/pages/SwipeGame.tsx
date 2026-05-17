@@ -27,7 +27,7 @@ interface SwipeResult {
 }
 
 /* ─── Inline AI Translation Hook ─── */
-function useExampleTranslation(koreanExample: string | null | undefined, existingEnglish: string | null | undefined) {
+function useExampleTranslation(koreanExample: string | null | undefined, existingEnglish: string | null | undefined, language?: 'korean' | 'chinese') {
   const translate = trpc.llm.translateExample.useMutation();
   const [translation, setTranslation] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -36,7 +36,7 @@ function useExampleTranslation(koreanExample: string | null | undefined, existin
   const doTranslate = useCallback((sentence: string) => {
     setFailed(false);
     translate.mutate(
-      { koreanSentence: sentence },
+      { koreanSentence: sentence, language },
       {
         onSuccess: (data) => {
           if (data?.translation) {
@@ -100,9 +100,14 @@ function FlashCard({
   const startPos = useRef({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const isChinese = !!word.chinese && !word.korean;
+  // For Chinese: translate the Chinese example sentence; for Korean: translate the Korean example
+  const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
+  const existingTranslation = isChinese ? null : word.exampleEnglish; // for Chinese we always want AI translation
   const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
-    isTop ? word.koreanExample : null,
-    isTop ? word.exampleEnglish : null
+    isTop ? exampleForTranslation : null,
+    isTop ? existingTranslation : null,
+    isChinese ? 'chinese' : 'korean'
   );
 
   const SWIPE_THRESHOLD = 80;
@@ -210,14 +215,24 @@ function FlashCard({
       <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
         {/* Level & POS badges */}
         <div className="absolute top-3 right-3">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-            word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-            word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-            'bg-accent/20 text-accent'
-          }`}>
-            {word.topikLevel === 'beginner' ? 'Beginner' :
-             word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
-          </span>
+          {word.hskLevel ? (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              parseInt(word.hskLevel) <= 2 ? 'bg-primary/20 text-primary' :
+              parseInt(word.hskLevel) <= 4 ? 'bg-chart-3/20 text-chart-3' :
+              'bg-accent/20 text-accent'
+            }`}>
+              HSK {word.hskLevel}
+            </span>
+          ) : (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+              word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+              'bg-accent/20 text-accent'
+            }`}>
+              {word.topikLevel === 'beginner' ? 'Beginner' :
+               word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
+            </span>
+          )}
         </div>
         <div className="absolute top-3 left-3">
           <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
@@ -266,7 +281,24 @@ function FlashCard({
         ) : word.chineseExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
             <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
-            <p className="text-xs text-muted-foreground italic leading-relaxed">{word.examplePinyin}</p>
+            {word.examplePinyin && (
+              <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
+            )}
+            {translation ? (
+              <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+            ) : translationLoading ? (
+              <div className="flex items-center justify-center gap-1.5">
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Translating...</span>
+              </div>
+            ) : translationFailed ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
+                className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
+              >
+                Tap to translate
+              </button>
+            ) : null}
           </div>
         ) : null}
 
@@ -349,8 +381,12 @@ export default function SwipeGame() {
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
+  const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
-  const [levelFilter, setLevelFilter] = useState(params.get("level") || "all");
+  // hskLevel from URL for Chinese, level for Korean
+  const [levelFilter, setLevelFilter] = useState(
+    params.get("hskLevel") || params.get("level") || "all"
+  );
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
@@ -367,8 +403,8 @@ export default function SwipeGame() {
   const wordsQuery = trpc.words.random.useQuery(
     {
       pos: posFilter !== 'all' ? posFilter : undefined,
-      topikLevel: language === 'korean' && levelFilter !== 'all' ? levelFilter : undefined,
-      hskLevel: language === 'chinese' && levelFilter !== 'all' ? levelFilter : undefined,
+      topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
       language,
     },

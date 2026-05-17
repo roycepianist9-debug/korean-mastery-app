@@ -103,8 +103,10 @@ export default function Home() {
     return l === 'beginner' ? 'text-primary' : l === 'intermediate' ? 'text-chart-3' : 'text-accent';
   };
 
+  const langParam = isChinese ? '&lang=chinese' : '';
+
   const levelFilterParam = (l: string) => {
-    if (isChinese) return `/words?hskLevel=${l}`;
+    if (isChinese) return `/words?hskLevel=${l}&lang=chinese`;
     return `/words?level=${l}`;
   };
 
@@ -190,7 +192,7 @@ export default function Home() {
 
         {/* Quick Start */}
         <Button
-          onClick={() => setLocation("/play")}
+          onClick={() => setLocation(isChinese ? '/play?lang=chinese' : '/play')}
           className="w-full h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
         >
           <Gamepad2 className="w-6 h-6 mr-2" />
@@ -201,21 +203,21 @@ export default function Home() {
         {isAuthenticated && ps && (
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => setLocation("/words?statuses=learned")}
+              onClick={() => setLocation(`/words?statuses=learned${langParam}`)}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-primary">{ps.learned}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Learned</p>
             </button>
             <button
-              onClick={() => setLocation("/words?statuses=reviewing")}
+              onClick={() => setLocation(`/words?statuses=reviewing${langParam}`)}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-chart-3">{ps.reviewing}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">Reviewing</p>
             </button>
             <button
-              onClick={() => setLocation("/words?statuses=new")}
+              onClick={() => setLocation(`/words?statuses=new${langParam}`)}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-accent">{(ws?.total ?? 0) - ps.learned - ps.reviewing}</p>
@@ -267,7 +269,7 @@ export default function Home() {
               {posData.map(item => (
                 <button
                   key={item.pos}
-                  onClick={() => setLocation(`/words?pos=${item.pos}`)}
+                  onClick={() => setLocation(`/words?pos=${item.pos}${langParam}`)}
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">

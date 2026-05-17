@@ -109,3 +109,12 @@
 - [x] Home page shows correct word count per language
 - [x] WordDetailSheet supports both Korean and Chinese
 - [x] WordDetail page supports both Korean and Chinese
+
+## Chinese UX Fixes
+- [x] Fix HSK level filter: Chinese dashboard "HSK 1/2/3/4" clicks navigate to /words?lang=chinese&hskLevel=1 etc
+- [x] Fix WordList to read hskLevel URL param and filter Chinese words by HSK level
+- [x] Fix SwipeGame to read hskLevel URL param and filter Chinese words by HSK level
+- [x] Add AI English translation on Chinese swipe cards (alongside pinyin, like Korean)
+- [x] Show both pinyin and AI English translation on Chinese flashcards
+- [x] translateExample server procedure handles both Korean and Chinese sentences
+- [x] HSK level badges on Chinese swipe cards (HSK 1-9 color-coded)

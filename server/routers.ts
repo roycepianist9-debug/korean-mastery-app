@@ -280,18 +280,21 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
       .input(z.object({
         koreanSentence: z.string(),
         wordContext: z.string().optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ input }) => {
+        const isChinese = input.language === 'chinese';
+        const langLabel = isChinese ? 'Chinese' : 'Korean';
         try {
           const response = await invokeLLM({
             messages: [
               {
                 role: "system",
-                content: `You are a Korean-English translator. Translate the given Korean sentence to natural English. Return ONLY a JSON object with a single key "translation" containing the English translation. Be accurate and natural.`
+                content: `You are a ${langLabel}-English translator. Translate the given ${langLabel} sentence to natural English. Return ONLY a JSON object with a single key "translation" containing the English translation. Be accurate and natural.`
               },
               {
                 role: "user",
-                content: `Translate this Korean sentence to English: ${input.koreanSentence}`
+                content: `Translate this ${langLabel} sentence to English: ${input.koreanSentence}`
               }
             ],
             response_format: {

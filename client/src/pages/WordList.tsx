@@ -211,15 +211,19 @@ export default function WordList() {
   // Initialize from URL params
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
-  const [levelFilter, setLevelFilter] = useState(params.get("level") || "all");
+  // hskLevel from URL for Chinese, level for Korean
+  const [levelFilter, setLevelFilter] = useState(
+    params.get("hskLevel") || params.get("level") || "all"
+  );
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     const s = params.get("statuses");
     return s ? s.split(",").filter(Boolean) : [];
   });
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(
-    !!(params.get("pos") || params.get("level") || params.get("statuses"))
+    !!(params.get("pos") || params.get("level") || params.get("hskLevel") || params.get("statuses"))
   );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -237,8 +241,8 @@ export default function WordList() {
   const wordsQuery = trpc.words.search.useQuery({
     query: debouncedQuery,
     pos: posFilter !== 'all' ? posFilter : undefined,
-    topikLevel: language === 'korean' && levelFilter !== 'all' ? levelFilter : undefined,
-    hskLevel: language === 'chinese' && levelFilter !== 'all' ? levelFilter : undefined,
+    topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+    hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
@@ -261,10 +265,14 @@ export default function WordList() {
   const swipeUrl = useMemo(() => {
     const p = new URLSearchParams();
     if (posFilter !== 'all') p.set('pos', posFilter);
-    if (levelFilter !== 'all') p.set('level', levelFilter);
+    if (levelFilter !== 'all') {
+      if (isChinese) p.set('hskLevel', levelFilter);
+      else p.set('level', levelFilter);
+    }
+    if (isChinese) p.set('lang', 'chinese');
     const qs = p.toString();
     return `/play${qs ? '?' + qs : ''}`;
-  }, [posFilter, levelFilter]);
+  }, [posFilter, levelFilter, isChinese]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -342,9 +350,25 @@ export default function WordList() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="beginner">Beginner</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="advanced">Advanced</SelectItem>
+                    {isChinese ? (
+                      <>
+                        <SelectItem value="1">HSK 1</SelectItem>
+                        <SelectItem value="2">HSK 2</SelectItem>
+                        <SelectItem value="3">HSK 3</SelectItem>
+                        <SelectItem value="4">HSK 4</SelectItem>
+                        <SelectItem value="5">HSK 5</SelectItem>
+                        <SelectItem value="6">HSK 6</SelectItem>
+                        <SelectItem value="7">HSK 7</SelectItem>
+                        <SelectItem value="8">HSK 8</SelectItem>
+                        <SelectItem value="9">HSK 9</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="advanced">Advanced</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
