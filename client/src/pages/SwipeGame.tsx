@@ -26,6 +26,32 @@ interface SwipeResult {
   known: boolean;
 }
 
+/* ─── Sound Hook ─── */
+function useSounds() {
+  const audioCache = useRef<Record<string, HTMLAudioElement>>({});
+
+  const play = useCallback((src: string, volume = 0.45) => {
+    try {
+      let audio = audioCache.current[src];
+      if (!audio) {
+        audio = new Audio(src);
+        audioCache.current[src] = audio;
+      }
+      audio.currentTime = 0;
+      audio.volume = volume;
+      audio.play().catch(() => {/* autoplay blocked — silently ignore */});
+    } catch {
+      // ignore any audio errors
+    }
+  }, []);
+
+  return {
+    playRight: () => play('/manus-storage/swipe-right_0a58dc58.mp3', 0.5),
+    playLeft: () => play('/manus-storage/swipe-left_b7367a84.mp3', 0.4),
+    playVictory: () => play('/manus-storage/session-complete_972bd950.mp3', 0.55),
+  };
+}
+
 /* ─── Inline AI Translation Hook ─── */
 function useExampleTranslation(koreanExample: string | null | undefined, existingEnglish: string | null | undefined, language?: 'korean' | 'chinese') {
   const translate = trpc.llm.translateExample.useMutation();
@@ -316,11 +342,23 @@ function SessionSummary({
   results,
   onRestart,
   onHome,
+  playVictory,
 }: {
   results: { totalXp: number; totalLearned: number; totalReviewed: number };
   onRestart: () => void;
   onHome: () => void;
+  playVictory: () => void;
 }) {
+  const hasPlayed = useRef(false);
+  useEffect(() => {
+    if (!hasPlayed.current) {
+      hasPlayed.current = true;
+      // Small delay so the screen transition completes first
+      const t = setTimeout(() => playVictory(), 200);
+      return () => clearTimeout(t);
+    }
+  }, [playVictory]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="text-center space-y-6 max-w-sm w-full">
@@ -412,11 +450,14 @@ export default function SwipeGame() {
   );
 
   const batchSwipe = trpc.progress.batchSwipe.useMutation();
+  const { playRight, playLeft, playVictory } = useSounds();
 
   const words = wordsQuery.data ?? [];
 
   const handleSwipe = useCallback((known: boolean) => {
     if (!words[currentIndex]) return;
+    // Play swipe sound immediately for snappy feedback
+    if (known) playRight(); else playLeft();
     const result = { wordId: words[currentIndex].id, known };
     setSwipeResults(prev => [...prev, result]);
     setHistory(prev => [...prev, currentIndex]);
@@ -480,6 +521,7 @@ export default function SwipeGame() {
         }}
         onRestart={handleRestart}
         onHome={() => setLocation("/")}
+        playVictory={playVictory}
       />
     );
   }

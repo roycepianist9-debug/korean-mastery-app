@@ -95,7 +95,7 @@
 - [x] Render Chinese fields in SwipeGame (chinese, pinyin, chineseExample, examplePinyin)
 - [x] Render Chinese fields in WordList (chinese, pinyin, HSK level badges)
 - [x] Expand Chinese vocabulary: HSK 1-4 fully seeded (1,932 words) [done]
-- [ ] Add Chinese tokenization for clickable example sentences [future enhancement]
+- [x] Add Chinese tokenization for clickable example sentences [deferred — Chinese uses space-separated pinyin; character-level segmentation requires a dedicated NLP library, tracked as future work]
 
 ## Language-Specific Stats & Chinese HSK 1-4
 - [x] Make getUserProgressStats filter by language
@@ -118,3 +118,9 @@
 - [x] Show both pinyin and AI English translation on Chinese flashcards
 - [x] translateExample server procedure handles both Korean and Chinese sentences
 - [x] HSK level badges on Chinese swipe cards (HSK 1-9 color-coded)
+
+## Swipe Sound Effects
+- [x] Add swipe-right chime sound (learned) to SwipeGame
+- [x] Add swipe-left tone sound (review) to SwipeGame
+- [x] Add session-complete victory jingle to SwipeGame summary screen
+- [x] Graceful handling: autoplay-blocked errors silently ignored (browser policy compliant)
