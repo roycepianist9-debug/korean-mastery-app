@@ -225,7 +225,8 @@ export default function Home() {
             onClick={() => setGraphOpen(false)}
           >
             <div
-              className="w-full max-w-lg bg-card border border-border rounded-t-2xl p-5 pb-8 animate-slide-up"
+              className="w-full max-w-lg bg-card border border-border rounded-t-2xl p-5 pb-safe animate-slide-up overflow-y-auto"
+              style={{ maxHeight: 'calc(90dvh - env(safe-area-inset-bottom, 0px))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
