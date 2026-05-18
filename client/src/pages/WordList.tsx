@@ -58,20 +58,7 @@ function WordCard({
           </div>
           <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
         </div>
-        {/* Level badge only — no POS label */}
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-          word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-          word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-          word.topikLevel === 'advanced' ? 'bg-accent/20 text-accent' :
-          word.hskLevel === '1' ? 'bg-primary/20 text-primary' :
-          word.hskLevel === '2' ? 'bg-chart-3/20 text-chart-3' :
-          'bg-accent/20 text-accent'
-        }`}>
-          {word.topikLevel === 'beginner' ? 'Beg' :
-           word.topikLevel === 'intermediate' ? 'Int' :
-           word.topikLevel === 'advanced' ? 'Adv' :
-           word.hskLevel ? `HSK${word.hskLevel}` : 'Lvl'}
-        </span>
+
       </button>
 
       {/* Action buttons — only shown when authenticated */}

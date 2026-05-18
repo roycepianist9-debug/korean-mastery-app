@@ -175,3 +175,7 @@
 - [x] Swipe session start screen: add filter buttons (New only / Review only / Learned only)
 - [x] Swipe session: add AI translation toggle above card (on/off to save API calls)
 - [x] Swipe session: save progress after each individual card swipe (not only on session complete)
+- [x] Dashboard: replace third stat card with "Today" (words learned today, per language)
+- [x] Dashboard: tapping Today card opens 30-day bar chart with daily avg and total
+- [x] Words view: remove remaining level/POS tags (Adv/Int/Beg/HSK) from card rows
+- [x] Chinese popup: restore pinyin below characters, AI translation below pinyin

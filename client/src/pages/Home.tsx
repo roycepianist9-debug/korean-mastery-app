@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
@@ -5,14 +6,17 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
-  Flame, Trophy, Star, BookOpen, Zap, Target,
-  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon,
+  Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
+  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 
 
 
@@ -31,10 +35,17 @@ export default function Home() {
   const progressStats = trpc.progress.getStats.useQuery({ language }, { enabled: isAuthenticated });
   const progressByLevel = trpc.progress.getByLevel.useQuery({ language }, { enabled: isAuthenticated });
   const progressByPos = trpc.progress.getByPos.useQuery({ language }, { enabled: isAuthenticated });
+  const todayCount = trpc.progress.todayCount.useQuery({ language }, { enabled: isAuthenticated });
+  const [graphOpen, setGraphOpen] = useState(false);
+  const dailyHistory = trpc.progress.dailyHistory.useQuery(
+    { language, days: 30 },
+    { enabled: isAuthenticated && graphOpen }
+  );
 
   const gs = gameStats.data;
   const ps = progressStats.data;
   const ws = wordStats.data;
+  const todayWords = todayCount.data?.count ?? 0;
 
   // Calculate level progress
   const xpForNextLevel = gs ? (gs.level * 100) : 100;
@@ -195,10 +206,128 @@ export default function Home() {
               <p className="text-lg font-black text-foreground">Lv.{gs.level}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">{gs.levelTitle}</p>
             </div>
-            <div className="game-card p-3 text-center">
-              <Star className="w-5 h-5 text-primary mx-auto mb-1" />
-              <p className="text-lg font-black text-foreground">{gs.totalWordsLearned}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">Learned</p>
+            {/* Today card — opens daily graph */}
+            <button
+              onClick={() => { sfx.tap(); setGraphOpen(true); }}
+              className="game-card p-3 text-center press-scale"
+            >
+              <CalendarDays className="w-5 h-5 text-primary mx-auto mb-1" />
+              <p className="text-lg font-black text-foreground">{todayWords}</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase">Today</p>
+            </button>
+          </div>
+        )}
+
+        {/* Daily Graph Dialog */}
+        {graphOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setGraphOpen(false)}
+          >
+            <div
+              className="w-full max-w-lg bg-card border border-border rounded-t-2xl p-5 pb-8 animate-slide-up"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-black text-foreground">Words Learned</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Last 30 days · {isChinese ? 'Chinese' : 'Korean'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setGraphOpen(false)}
+                  className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center press-scale"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              {dailyHistory.isLoading ? (
+                <div className="h-40 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : dailyHistory.data ? (
+                <>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={dailyHistory.data}
+                        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                      >
+                        <XAxis
+                          dataKey="day"
+                          tickFormatter={(v: string) => {
+                            const d = new Date(v + 'T00:00:00');
+                            return `${d.getMonth() + 1}/${d.getDate()}`;
+                          }}
+                          tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                          tickLine={false}
+                          axisLine={false}
+                          interval={4}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                          tickLine={false}
+                          axisLine={false}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'hsl(var(--secondary))' }}
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = new Date(label + 'T00:00:00');
+                            return (
+                              <div className="bg-card border border-border rounded-xl px-3 py-2 shadow-lg">
+                                <p className="text-[10px] text-muted-foreground">
+                                  {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                </p>
+                                <p className="text-sm font-black text-primary">
+                                  {payload[0].value} learned
+                                </p>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {dailyHistory.data.map((entry, i) => {
+                            const isToday = i === dailyHistory.data!.length - 1;
+                            return (
+                              <Cell
+                                key={entry.day}
+                                fill={isToday
+                                  ? 'hsl(var(--primary))'
+                                  : entry.count > 0
+                                    ? 'hsl(var(--primary) / 0.5)'
+                                    : 'hsl(var(--secondary))'
+                                }
+                              />
+                            );
+                          })}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 px-1">
+                    <div className="text-center">
+                      <p className="text-lg font-black text-primary">{todayWords}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">Today</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-black text-foreground">
+                        {dailyHistory.data.reduce((s, d) => s + d.count, 0)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">30-day total</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-black text-chart-3">
+                        {Math.round(dailyHistory.data.reduce((s, d) => s + d.count, 0) / 30)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">Daily avg</p>
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         )}

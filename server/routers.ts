@@ -22,6 +22,8 @@ import {
   getOrCreateUserStats,
   updateUserStatsAfterSwipe,
   tokenizeAndLookup,
+  getDailyLearnedHistory,
+  getTodayLearnedCount,
 } from "./db";
 
 export const appRouter = router({
@@ -179,6 +181,26 @@ export const appRouter = router({
         await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', totalLearned);
 
         return { totalXp, totalLearned, totalReviewed: input.results.length };
+      }),
+
+    todayCount: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const count = await getTodayLearnedCount(ctx.user.id, input?.language || 'korean');
+        return { count };
+      }),
+
+    dailyHistory: protectedProcedure
+      .input(z.object({
+        language: z.enum(['korean', 'chinese']).optional(),
+        days: z.number().min(7).max(90).default(30),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return getDailyLearnedHistory(
+          ctx.user.id,
+          input?.language || 'korean',
+          input?.days || 30
+        );
       }),
   }),
 

@@ -177,7 +177,13 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
                   )}
                 </div>
               )}
-              {/* AI translation shown automatically below example */}
+              {/* For Chinese: show pinyin below characters, then AI translation below pinyin */}
+              {isChinese && word?.examplePinyin && (
+                <p className="text-xs text-muted-foreground font-medium mb-1 leading-relaxed">
+                  {word.examplePinyin}
+                </p>
+              )}
+              {/* AI translation shown automatically below example (and below pinyin for Chinese) */}
               {autoTranslation.isLoading ? (
                 <div className="flex items-center gap-1.5 mt-1">
                   <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />

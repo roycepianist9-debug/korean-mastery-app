@@ -536,3 +536,76 @@ export async function updateUserStatsAfterSwipe(userId: number, language: 'korea
     })
     .where(and(eq(userStats.userId, userId), eq(userStats.language, language)));
 }
+
+/**
+ * Returns the count of words first marked as 'learned' per calendar day
+ * for the last N days, for a given user and language.
+ * Uses updatedAt as the proxy for when a word was learned.
+ */
+export async function getDailyLearnedHistory(
+  userId: number,
+  language: 'korean' | 'chinese' = 'korean',
+  days: number = 30
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Build date range: today back N days
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  cutoff.setHours(0, 0, 0, 0);
+
+  const rows = await db.select({
+    day: sql<string>`DATE(${userProgress.updatedAt})`,
+    count: count(),
+  })
+    .from(userProgress)
+    .innerJoin(words, eq(userProgress.wordId, words.id))
+    .where(and(
+      eq(userProgress.userId, userId),
+      eq(userProgress.status, 'learned'),
+      eq(words.language, language),
+      sql`${userProgress.updatedAt} >= ${cutoff}`
+    ))
+    .groupBy(sql`DATE(${userProgress.updatedAt})`)
+    .orderBy(sql`DATE(${userProgress.updatedAt})`);
+
+  // Fill in missing days with 0
+  const map = new Map<string, number>();
+  for (const row of rows) map.set(row.day, row.count);
+
+  const result: { day: string; count: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    result.push({ day: key, count: map.get(key) ?? 0 });
+  }
+  return result;
+}
+
+/**
+ * Returns the count of words learned today for a given user and language.
+ */
+export async function getTodayLearnedCount(
+  userId: number,
+  language: 'korean' | 'chinese' = 'korean'
+) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const rows = await db.select({ count: count() })
+    .from(userProgress)
+    .innerJoin(words, eq(userProgress.wordId, words.id))
+    .where(and(
+      eq(userProgress.userId, userId),
+      eq(userProgress.status, 'learned'),
+      eq(words.language, language),
+      sql`${userProgress.updatedAt} >= ${today}`
+    ));
+
+  return rows[0]?.count ?? 0;
+}
