@@ -1,0 +1,1 @@
+ALTER TABLE `users` MODIFY COLUMN `wordAccessLimit` int NOT NULL DEFAULT 150;

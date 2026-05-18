@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import WordDetailSheet from "@/components/WordDetailSheet";
 import ClickableExample from "@/components/ClickableExample";
 import { useSound } from "@/contexts/SoundContext";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface SwipeResult {
   wordId: number;
@@ -449,6 +450,15 @@ export default function SwipeGame() {
   // Per-swipe progress mutation
   const swipeMutation = trpc.progress.swipe.useMutation();
   const { play: sfx } = useSound();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallInfo, setPaywallInfo] = useState<{ learnedCount: number; limit: number } | null>(null);
+  // Track learned count locally to pre-check paywall without waiting for server
+  const localLearnedCount = useRef(0);
+  const subscriptionQuery = trpc.subscription.getSubscriptionStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
+  const wordLimit = subscriptionQuery.data?.wordAccessLimit ?? 150;
 
   const words = wordsQuery.data ?? [];
 
@@ -457,6 +467,14 @@ export default function SwipeGame() {
 
   const handleSwipe = useCallback((known: boolean) => {
     if (!words[currentIndex]) return;
+
+    // Pre-check paywall: if marking as known and at limit, block immediately
+    if (known && isAuthenticated && localLearnedCount.current >= wordLimit) {
+      setPaywallInfo({ learnedCount: localLearnedCount.current, limit: wordLimit });
+      setPaywallOpen(true);
+      return; // Don't advance the card
+    }
+
     if (known) sfx.swipeRight(); else sfx.swipeLeft();
 
     const wordId = words[currentIndex].id;
@@ -464,12 +482,23 @@ export default function SwipeGame() {
     setSwipeResults(prev => [...prev, result]);
     setHistory(prev => [...prev, currentIndex]);
 
+    // Track locally
+    if (known) localLearnedCount.current += 1;
+
     // Save progress immediately after each swipe
     if (isAuthenticated) {
       persistedWordIds.current.add(wordId);
       swipeMutation.mutate(
         { wordId, known, language },
         {
+          onSuccess: (data) => {
+            if (data.status === 'paywall_blocked') {
+              // Server confirmed block — show modal and revert local count
+              localLearnedCount.current -= 1;
+              setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
+              setPaywallOpen(true);
+            }
+          },
           onError: () => toast.error("Failed to save this card's progress"),
         }
       );
@@ -480,7 +509,7 @@ export default function SwipeGame() {
     } else {
       setCurrentIndex(prev => prev + 1);
     }
-  }, [currentIndex, words, isAuthenticated, swipeMutation, language, sfx]);
+  }, [currentIndex, words, isAuthenticated, swipeMutation, language, sfx, wordLimit]);
 
   // Undo is only allowed for cards not yet persisted (unauthenticated) or the very last card
   // if already persisted, undo is disabled to avoid double-counting
@@ -789,6 +818,13 @@ export default function SwipeGame() {
         word={detailWord}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+      />
+
+      <UpgradeModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        learnedCount={paywallInfo?.learnedCount}
+        limit={paywallInfo?.limit}
       />
     </div>
   );

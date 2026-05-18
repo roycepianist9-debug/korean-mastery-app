@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import WordDetailSheet from "@/components/WordDetailSheet";
+import UpgradeModal from "@/components/UpgradeModal";
 import { toast } from "sonner";
 
 /* ─── Word Card Row ─── */
@@ -175,8 +176,16 @@ export default function WordList() {
     language,
   });
 
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallInfo, setPaywallInfo] = useState<{ learnedCount: number; limit: number } | null>(null);
+
   const markWord = trpc.progress.markWord.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if ((data as any).status === 'paywall_blocked') {
+        setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
+        setPaywallOpen(true);
+        return;
+      }
       wordsQuery.refetch();
     },
   });
@@ -346,7 +355,11 @@ export default function WordList() {
               onMarkLearned={() => {
                 markWord.mutate(
                   { wordId: word.id, status: 'learned', language },
-                  { onSuccess: () => toast.success(`${word.korean || word.chinese} marked as learned ✓`) }
+                  { onSuccess: (data) => {
+                    if ((data as any).status !== 'paywall_blocked') {
+                      toast.success(`${word.korean || word.chinese} marked as learned ✓`);
+                    }
+                  }}
                 );
               }}
               onMarkReviewing={() => {
@@ -391,6 +404,13 @@ export default function WordList() {
         word={detailWord}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+      />
+
+      <UpgradeModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        learnedCount={paywallInfo?.learnedCount}
+        limit={paywallInfo?.limit}
       />
 
       <BottomNav />

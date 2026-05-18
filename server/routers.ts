@@ -5,7 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import Stripe from "stripe";
-import { STRIPE_PRODUCTS, FREE_PLAN } from "./stripe-products";
+import { STRIPE_PRODUCTS, FREE_PLAN, FREE_WORD_LIMIT } from "./stripe-products";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -131,6 +131,16 @@ export const appRouter = router({
         language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Paywall check: count learned words for this language
+        if (input.status === 'learned') {
+          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
+          const db = await getDb();
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
+          const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
+          if (stats.learned >= limit) {
+            return { status: 'paywall_blocked' as const, learnedCount: stats.learned, limit };
+          }
+        }
         const correct = input.status === 'learned';
         await upsertWordProgress(ctx.user.id, input.wordId, input.status, correct);
         if (input.status !== 'new') {
@@ -148,6 +158,17 @@ export const appRouter = router({
         language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Paywall check for "learned" swipes
+        if (input.known) {
+          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
+          const db = await getDb();
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
+          const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
+          if (stats.learned >= limit) {
+            return { status: 'paywall_blocked' as const, xpGained: 0, learnedCount: stats.learned, limit };
+          }
+        }
+
         const status = input.known ? 'learned' as const : 'reviewing' as const;
         await upsertWordProgress(ctx.user.id, input.wordId, status, input.known);
 
@@ -263,8 +284,8 @@ export const appRouter = router({
               },
             ],
             mode: "subscription",
-            success_url: `${ctx.req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${ctx.req.headers.origin}/pricing`,
+            success_url: `${ctx.req.headers.origin}/?upgraded=true`,
+            cancel_url: `${ctx.req.headers.origin}/`,
             allow_promotion_codes: true,
           });
 
@@ -284,7 +305,7 @@ export const appRouter = router({
           return {
             status: "free",
             plan: FREE_PLAN,
-            wordAccessLimit: 100,
+            wordAccessLimit: FREE_WORD_LIMIT,
           };
         }
 
@@ -296,7 +317,7 @@ export const appRouter = router({
           return {
             status: "free",
             plan: FREE_PLAN,
-            wordAccessLimit: 100,
+            wordAccessLimit: FREE_WORD_LIMIT,
           };
         }
 
@@ -322,7 +343,7 @@ export const appRouter = router({
         return {
           status: "free",
           plan: FREE_PLAN,
-          wordAccessLimit: 100,
+          wordAccessLimit: FREE_WORD_LIMIT,
         };
       }
     }),

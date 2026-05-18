@@ -16,7 +16,7 @@ export const users = mysqlTable("users", {
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
   subscriptionStatus: mysqlEnum("subscriptionStatus", ["active", "trialing", "past_due", "canceled", "unpaid", "none"]).default("none").notNull(),
   subscriptionPlanId: varchar("subscriptionPlanId", { length: 255 }),
-  wordAccessLimit: int("wordAccessLimit").default(100).notNull(),
+  wordAccessLimit: int("wordAccessLimit").notNull().default(150),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

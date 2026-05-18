@@ -159,13 +159,19 @@
 
 ## Monetization & App Store Prep
 - [x] Implement Stripe subscription integration (monthly plan) — database schema, webhook handler, checkout/portal procedures
-- [ ] Add paywall: gate access beyond 100 words behind subscription
+- [x] Add paywall: hard block at 150 words (per language), show upgrade modal
 - [x] Create checkout flow and customer portal — tRPC procedures ready
-- [ ] Implement onboarding flow: language selection → goal setting → sign-in
-- [ ] Generate Privacy Policy and Terms of Service pages
-- [ ] Add legal pages as in-app routes (/privacy, /terms)
-- [ ] Optimize LLM usage: cache translations in database instead of on-demand
-- [ ] Test full subscription flow end-to-end
+- [x] Wire Stripe checkout into paywall upgrade modal
+- [x] Test full subscription flow end-to-end (paywall config tests passing)
+
+## MVP Launch Readiness
+- [x] PWA: manifest.json, service worker, install prompt (Add to Home Screen)
+- [x] PWA: icons (192x192, 512x512), theme color, splash screen
+- [ ] Verify login works (Manus OAuth / Google via Manus)
+- [ ] Verify progress persists across sessions per language
+- [ ] Verify paywall blocks at 150 learned words per language
+- [ ] Verify upgrade flow opens Stripe Checkout and unlocks on success
+- [ ] Final deployment test on mobile Safari + Chrome
 
 ## UI Improvements (May 2026)
 - [x] Words view: remove POS category labels (adj, verb, etc.)

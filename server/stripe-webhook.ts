@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { getDb } from "./db";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { FREE_WORD_LIMIT } from "./stripe-products";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -51,7 +52,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                 stripeSubscriptionId: subscription.id,
                 subscriptionStatus: subscription.status as any,
                 subscriptionPlanId: subscription.items.data[0]?.price.id,
-                wordAccessLimit: 10000, // Unlimited for paid users
+                wordAccessLimit: 999999, // Unlimited for paid users
                 updatedAt: new Date(),
               })
               .where(eq(users.id, parseInt(userId)));
@@ -81,7 +82,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
           .set({
             subscriptionStatus: subscription.status as any,
             subscriptionPlanId: subscription.items.data[0]?.price.id,
-            wordAccessLimit: subscription.status === "active" ? 10000 : 100,
+            wordAccessLimit: subscription.status === "active" ? 999999 : FREE_WORD_LIMIT,
             updatedAt: new Date(),
           })
           .where(eq(users.id, userRecord.id));
@@ -111,7 +112,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
           .set({
             subscriptionStatus: "canceled",
             subscriptionPlanId: null,
-            wordAccessLimit: 100,
+            wordAccessLimit: FREE_WORD_LIMIT,
             updatedAt: new Date(),
           })
           .where(eq(users.id, userRecord.id));
