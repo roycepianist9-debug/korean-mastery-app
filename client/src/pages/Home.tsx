@@ -366,6 +366,23 @@ export default function Home() {
                     </div>
                   </button>
 
+                  {/* Sign Out */}
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => {
+                        sfx.tap();
+                        setMenuOpen(false);
+                        logoutMutation.mutate();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-destructive/10 transition-all press-scale text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-destructive/15 flex items-center justify-center">
+                        <LogOut className="w-4 h-4 text-destructive" />
+                      </div>
+                      <p className="text-sm font-bold text-destructive">Sign Out</p>
+                    </button>
+                  )}
+
                   {/* Guest Sign In */}
                   {!isAuthenticated && (
                     <button
@@ -387,25 +404,6 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-
-                {/* Logout */}
-                {isAuthenticated && (
-                  <div className="px-3 pb-8 border-t border-border pt-3">
-                    <button
-                      onClick={() => {
-                        sfx.tap();
-                        setMenuOpen(false);
-                        logoutMutation.mutate();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-destructive/10 transition-all press-scale text-left"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-destructive/15 flex items-center justify-center">
-                        <LogOut className="w-4 h-4 text-destructive" />
-                      </div>
-                      <p className="text-sm font-bold text-destructive">Sign Out</p>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           )}

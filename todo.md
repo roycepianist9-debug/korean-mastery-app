@@ -223,3 +223,4 @@
 - [x] Move "Sign in to track progress" card below Dictionary Stats, replace with "Learn languages by swiping!" tagline
 - [x] Menu: add "Rules" item → navigates to /rules page explaining how to use the app
 - [x] Menu: add "Guest Sign up/in" item for unauthenticated users (standard OAuth login flow)
+- [x] Menu: move Sign Out button up into main menu items (no longer buried at bottom)
