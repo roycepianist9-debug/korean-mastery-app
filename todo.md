@@ -185,3 +185,11 @@
 - [x] Dashboard: tapping Today card opens 30-day bar chart with daily avg and total
 - [x] Words view: remove remaining level/POS tags (Adv/Int/Beg/HSK) from card rows
 - [x] Chinese popup: restore pinyin below characters, AI translation below pinyin
+
+## Admin Settings (May 2026)
+- [x] Admin-only Settings tab in bottom nav (visible only when role=admin)
+- [x] /admin route with AdminSettings page
+- [x] Admin bypass toggle: switch between 150-word cap and unlimited access
+- [x] Pricing display: shows current Pro Monthly and Annual prices
+- [x] Account info section: name, email, word access limit
+- [x] App info section: word counts, live URL

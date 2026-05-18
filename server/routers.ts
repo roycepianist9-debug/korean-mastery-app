@@ -504,6 +504,43 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         }
       }),
   }),
+
+  admin: router({
+    // Get current pricing config and admin status
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      // Only the owner (OWNER_OPEN_ID) can access admin config
+      const { ENV } = await import('./_core/env');
+      if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+        throw new Error('Unauthorized');
+      }
+      const db = await getDb();
+      const userRecord = db
+        ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
+        : null;
+      return {
+        proMonthlyPriceCents: parseInt(process.env.ADMIN_PRO_MONTHLY_CENTS || '999'),
+        proAnnualPriceCents: parseInt(process.env.ADMIN_PRO_ANNUAL_CENTS || '9999'),
+        adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
+        wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
+        isOwner: true,
+      };
+    }),
+
+    // Toggle unlimited access for the owner
+    toggleAdminBypass: protectedProcedure
+      .input(z.object({ enabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        const newLimit = input.enabled ? 999999 : 150;
+        await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.user.id));
+        return { success: true, wordAccessLimit: newLimit };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

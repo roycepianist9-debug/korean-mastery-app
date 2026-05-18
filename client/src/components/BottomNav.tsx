@@ -1,15 +1,21 @@
 import { useLocation } from "wouter";
-import { Home, BookOpen, Gamepad2 } from "lucide-react";
+import { Home, BookOpen, Gamepad2, Settings } from "lucide-react";
 import { useSound } from "@/contexts/SoundContext";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
   const { play: sfx } = useSound();
+  const { user } = useAuth();
+
+  // Show Settings tab only for admin users
+  const isAdmin = user?.role === "admin";
 
   const tabs = [
     { path: "/", icon: Home, label: "Home" },
     { path: "/play", icon: Gamepad2, label: "Play" },
     { path: "/words", icon: BookOpen, label: "Words" },
+    ...(isAdmin ? [{ path: "/admin", icon: Settings, label: "Settings" }] : []),
   ];
 
   return (
