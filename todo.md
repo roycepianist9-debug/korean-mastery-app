@@ -224,4 +224,4 @@
 - [x] Menu: add "Rules" item → navigates to /rules page explaining how to use the app
 - [x] Menu: add "Guest Sign up/in" item for unauthenticated users (standard OAuth login flow)
 - [x] Menu: move Sign Out button up into main menu items (no longer buried at bottom)
-- [x] Fix Stripe checkout failure: set STRIPE_PRICE_PRO_MONTHLY and STRIPE_PRICE_PRO_ANNUAL env vars (was falling back to test IDs)
+- [x] Fix Stripe checkout failure: Updated to LIVE Stripe keys (pk_live_, sk_live_) and verified LIVE product/price IDs (prod_UXeVGiiQsUm8fg, price_1TYZClK1SjGQ7gS6EVuarqby, price_1TYZCrK1SjGQ7gS6BY5YWF5a). All 64 tests passing. Cache cleared and server restarted with fresh dependencies.
