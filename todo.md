@@ -193,3 +193,12 @@
 - [x] Pricing display: shows current Pro Monthly and Annual prices
 - [x] Account info section: name, email, word access limit
 - [x] App info section: word counts, live URL
+
+## Milestone Card Feature (May 2026)
+- [x] Add milestone card component below Dictionary Stats on Dashboard
+- [x] Korean: TOPIK 1-6 milestones with official word counts (1K, 2K, 4K, 6K, 8K, 10K)
+- [x] Chinese: HSK 1-6 milestones with official word counts (150, 300, 600, 1.2K, 2.5K, 5K)
+- [x] Visual indicators: ✓ (completed), ◐ (in progress with %), ○ (locked)
+- [x] Progress bar shows % toward current milestone
+- [x] Non-clickable motivational card (read-only)
+- [x] Language-aware: shows TOPIK for Korean, HSK for Chinese

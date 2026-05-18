@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
-  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X,
+  ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,6 +19,90 @@ import {
 } from "recharts";
 
 
+
+// ─── Milestone Data ─────────────────────────────────────────────────────────
+
+const KOREAN_MILESTONES = [
+  { level: 'TOPIK 1', words: 1000, label: 'Basic Understanding' },
+  { level: 'TOPIK 2', words: 2000, label: 'Conversational Fluency' },
+  { level: 'TOPIK 3', words: 4000, label: 'Advanced Comprehension' },
+  { level: 'TOPIK 4', words: 6000, label: 'Professional Proficiency' },
+  { level: 'TOPIK 5', words: 8000, label: 'Advanced Proficiency' },
+  { level: 'TOPIK 6', words: 10000, label: 'Near-Native Fluency' },
+];
+
+const CHINESE_MILESTONES = [
+  { level: 'HSK 1', words: 300, label: 'Elementary' },
+  { level: 'HSK 2', words: 600, label: 'Elementary+' },
+  { level: 'HSK 3', words: 900, label: 'Intermediate' },
+  { level: 'HSK 4', words: 1200, label: 'Intermediate+' },
+  { level: 'HSK 5', words: 2500, label: 'Advanced Proficiency' },
+  { level: 'HSK 6', words: 5000, label: 'Advanced Fluency' },
+  { level: 'HSK 7-9', words: 11000, label: 'Near-Native Proficiency' },
+];
+
+function MilestoneCard({ language, learnedCount }: { language: string; learnedCount: number }) {
+  const milestones = language === 'chinese' ? CHINESE_MILESTONES : KOREAN_MILESTONES;
+  const title = language === 'chinese' ? 'HSK Milestones' : 'TOPIK Milestones';
+
+  return (
+    <div className="game-card p-3.5">
+      <div className="flex items-center gap-2 mb-3">
+        <Award className="w-4 h-4 text-chart-3" />
+        <span className="text-sm font-black text-foreground">{title}</span>
+      </div>
+      <div className="space-y-3">
+        {milestones.map((m, i) => {
+          const prev = i === 0 ? 0 : milestones[i - 1].words;
+          const completed = learnedCount >= m.words;
+          const inProgress = !completed && learnedCount > prev;
+          const pct = inProgress
+            ? Math.round(((learnedCount - prev) / (m.words - prev)) * 100)
+            : 0;
+
+          return (
+            <div key={m.level} className="space-y-1">
+              <div className="flex items-center gap-2">
+                {completed ? (
+                  <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                ) : inProgress ? (
+                  <div className="w-4 h-4 flex-shrink-0 relative">
+                    <Circle className="w-4 h-4 text-chart-3 absolute inset-0" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-chart-3" />
+                    </div>
+                  </div>
+                ) : (
+                  <Circle className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-bold ${completed ? 'text-primary' : inProgress ? 'text-chart-3' : 'text-muted-foreground/60'}`}>
+                      {m.level} · {m.words.toLocaleString()} words
+                    </span>
+                    {inProgress && (
+                      <span className="text-[10px] font-bold text-chart-3">{pct}%</span>
+                    )}
+                  </div>
+                  <span className={`text-[10px] ${completed ? 'text-muted-foreground' : inProgress ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>
+                    {m.label}
+                  </span>
+                </div>
+              </div>
+              {inProgress && (
+                <div className="ml-6">
+                  <Progress value={pct} className="h-1.5" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -442,6 +526,11 @@ export default function Home() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Milestone Card — always visible when authenticated */}
+        {isAuthenticated && (
+          <MilestoneCard language={language} learnedCount={ps?.learned ?? 0} />
         )}
 
         {/* Word Stats (unauthenticated) */}
