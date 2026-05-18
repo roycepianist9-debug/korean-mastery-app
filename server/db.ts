@@ -1,6 +1,6 @@
 import { eq, and, like, or, sql, desc, asc, inArray, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, words, userProgress, userStats } from "../drizzle/schema";
+import { InsertUser, users, words, userProgress, userStats, appConfig } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -608,4 +608,18 @@ export async function getTodayLearnedCount(
     ));
 
   return rows[0]?.count ?? 0;
+}
+
+// App config helpers
+export async function getAppConfig(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(appConfig).where(eq(appConfig.key, key)).limit(1);
+  return result[0]?.value ?? null;
+}
+
+export async function setAppConfig(key: string, value: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(appConfig).values({ key, value }).onDuplicateKeyUpdate({ set: { value } });
 }

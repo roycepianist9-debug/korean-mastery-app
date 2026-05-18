@@ -24,6 +24,8 @@ import {
   tokenizeAndLookup,
   getDailyLearnedHistory,
   getTodayLearnedCount,
+  getAppConfig,
+  setAppConfig,
 } from "./db";
 
 export const appRouter = router({
@@ -539,6 +541,21 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         const newLimit = input.enabled ? 999999 : 150;
         await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.user.id));
         return { success: true, wordAccessLimit: newLimit };
+      }),
+
+    updatePricing: protectedProcedure
+      .input(z.object({
+        proMonthlyPriceCents: z.number().min(50),
+        proAnnualPriceCents: z.number().min(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        await setAppConfig('proMonthlyPriceCents', input.proMonthlyPriceCents.toString());
+        await setAppConfig('proAnnualPriceCents', input.proAnnualPriceCents.toString());
+        return { success: true, ...input };
       }),
   }),
 });

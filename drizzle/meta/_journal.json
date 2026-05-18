@@ -36,6 +36,13 @@
       "when": 1779127697050,
       "tag": "0004_grey_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1779131607448,
+      "tag": "0005_black_wonder_man",
+      "breakpoints": true
     }
   ]
 }

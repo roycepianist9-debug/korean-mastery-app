@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
-import { Settings, Zap, ZapOff, DollarSign, User, Shield } from "lucide-react";
+import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X } from "lucide-react";
 
 export default function AdminSettings() {
   const { user, isAuthenticated } = useAuth();
   const config = trpc.admin.getConfig.useQuery(undefined, { enabled: isAuthenticated });
+  const [monthlyPrice, setMonthlyPrice] = useState<string>("");
+  const [annualPrice, setAnnualPrice] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Populate price fields when config loads
+  useEffect(() => {
+    if (config.data) {
+      setMonthlyPrice((config.data.proMonthlyPriceCents / 100).toFixed(2));
+      setAnnualPrice((config.data.proAnnualPriceCents / 100).toFixed(2));
+    }
+  }, [config.data]);
+
   const toggleBypass = trpc.admin.toggleAdminBypass.useMutation({
     onSuccess: (data) => {
       toast.success(data.wordAccessLimit >= 999999 ? "Admin mode ON — unlimited access" : "Admin mode OFF — 150 word cap");
@@ -15,6 +27,28 @@ export default function AdminSettings() {
     },
     onError: () => toast.error("Failed to update"),
   });
+
+  const updatePricing = trpc.admin.updatePricing.useMutation({
+    onSuccess: () => {
+      toast.success("Pricing updated!");
+      setIsEditing(false);
+      config.refetch();
+    },
+    onError: () => toast.error("Failed to update pricing"),
+  });
+
+  const handleSavePricing = () => {
+    const monthly = parseFloat(monthlyPrice);
+    const annual = parseFloat(annualPrice);
+    if (isNaN(monthly) || isNaN(annual) || monthly < 0.50 || annual < 5) {
+      toast.error("Invalid prices. Min: $0.50/mo, $5.00/yr");
+      return;
+    }
+    updatePricing.mutate({
+      proMonthlyPriceCents: Math.round(monthly * 100),
+      proAnnualPriceCents: Math.round(annual * 100),
+    });
+  };
 
   const isUnlimited = (config.data?.wordAccessLimit ?? 0) >= 999999;
 
@@ -100,38 +134,85 @@ export default function AdminSettings() {
           </p>
         </div>
 
-        {/* Pricing Info */}
+        {/* Pricing Config */}
         <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <DollarSign className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">Subscription Pricing</span>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Pro Monthly</span>
-              <span className="text-sm font-bold text-foreground">
-                ${((config.data?.proMonthlyPriceCents ?? 999) / 100).toFixed(2)}/mo
-              </span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Subscription Pricing</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Pro Annual</span>
-              <span className="text-sm font-bold text-foreground">
-                ${((config.data?.proAnnualPriceCents ?? 9999) / 100).toFixed(2)}/yr
-              </span>
-            </div>
+            {!isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Edit
+              </button>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-            To change prices, update your Stripe product in the{" "}
-            <a
-              href="https://dashboard.stripe.com/products"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline"
-            >
-              Stripe Dashboard
-            </a>
-            {" "}and update the price IDs in Management UI → Settings → Secrets.
-          </p>
+
+          {isEditing ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Pro Monthly ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.50"
+                  value={monthlyPrice}
+                  onChange={(e) => setMonthlyPrice(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Pro Annual ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="5.00"
+                  value={annualPrice}
+                  onChange={(e) => setAnnualPrice(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleSavePricing}
+                  disabled={updatePricing.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setMonthlyPrice((config.data?.proMonthlyPriceCents ?? 999) / 100 + "");
+                    setAnnualPrice((config.data?.proAnnualPriceCents ?? 9999) / 100 + "");
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Pro Monthly</span>
+                <span className="text-sm font-bold text-foreground">
+                  ${((config.data?.proMonthlyPriceCents ?? 999) / 100).toFixed(2)}/mo
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Pro Annual</span>
+                <span className="text-sm font-bold text-foreground">
+                  ${((config.data?.proAnnualPriceCents ?? 9999) / 100).toFixed(2)}/yr
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* App Info */}

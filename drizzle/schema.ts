@@ -127,3 +127,16 @@ export const userStats = mysqlTable("user_stats", {
 
 export type UserStats = typeof userStats.$inferSelect;
 export type InsertUserStats = typeof userStats.$inferInsert;
+
+/**
+ * App configuration (admin-settable prices, etc.)
+ */
+export const appConfig = mysqlTable("app_config", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AppConfig = typeof appConfig.$inferSelect;
+export type InsertAppConfig = typeof appConfig.$inferInsert;
