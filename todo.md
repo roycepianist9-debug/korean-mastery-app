@@ -209,3 +209,9 @@
 - [x] Manage Subscription opens Stripe customer portal (or upgrade modal if not subscribed)
 - [x] Fix swipe session defaults: level=HSK1/Beginner, type=All, count=10, status=New
 - [x] Generate LLM example sentences for HSK 5-6 words (batch process running in background)
+
+## Fixes (May 2026 - Round 2)
+- [x] Victory music: shorten to 5 seconds (currently ~30s) — already implemented (fade out at 4.5s, stop at 5s)
+- [x] Words page: restore swipe button between filters and first card — restored with Gamepad2 icon, passes filters to swipe session
+- [x] Swipe directions: LEFT = learned, RIGHT = review (reversed from current) — reversed in SwipeGame.tsx, labels updated
+- [x] Fix Stripe checkout: "Failed to start checkout" error on upgrade modal — verified working with live keys, session creation successful

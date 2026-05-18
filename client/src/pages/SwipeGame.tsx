@@ -130,8 +130,8 @@ function FlashCard({
     if (!isDragging || !isTop) return;
     setIsDragging(false);
     if (Math.abs(dragX) > SWIPE_THRESHOLD) {
-      const known = dragX > 0;
-      setExitDir(known ? 'right' : 'left');
+      const known = dragX < 0; // LEFT = Learned (known=true), RIGHT = Review (known=false)
+      setExitDir(known ? 'left' : 'right');
       setTimeout(() => onSwipe(known), 300);
     } else {
       setDragX(0);
@@ -189,12 +189,12 @@ function FlashCard({
       onMouseDown={onMouseDown}
     >
       {/* Swipe indicators */}
-      {swipeIndicator === 'right' && (
+      {swipeIndicator === 'left' && (
         <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg] animate-xp-pop">
-          <span className="text-primary font-black text-lg">KNOW IT ✓</span>
+          <span className="text-primary font-black text-lg">LEARNED ✓</span>
         </div>
       )}
-      {swipeIndicator === 'left' && (
+      {swipeIndicator === 'right' && (
         <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[12deg] animate-xp-pop">
           <span className="text-destructive font-black text-lg">REVIEW ✗</span>
         </div>

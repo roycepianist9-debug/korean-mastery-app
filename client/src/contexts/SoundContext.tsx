@@ -101,12 +101,23 @@ function playWhoosh(volume: number) {
   source.start(ctx.currentTime);
 }
 
-/** Play the session-complete mp3 jingle */
+/** Play the session-complete mp3 jingle — capped at 5 seconds */
 function playVictoryJingle(volume: number) {
   try {
     const audio = new Audio("/manus-storage/session-complete_972bd950.mp3");
     audio.volume = volume * 0.55;
     audio.play().catch(() => {});
+    // Fade out and stop after 5 seconds
+    setTimeout(() => {
+      const fadeOut = setInterval(() => {
+        if (audio.volume > 0.05) {
+          audio.volume = Math.max(0, audio.volume - 0.05);
+        } else {
+          audio.pause();
+          clearInterval(fadeOut);
+        }
+      }, 50);
+    }, 4500);
   } catch {
     // ignore
   }

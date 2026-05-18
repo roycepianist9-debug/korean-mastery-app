@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X, Check, RotateCcw,
+  ArrowLeft, Filter, X, Check, RotateCcw, Gamepad2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -324,6 +324,24 @@ export default function WordList() {
               </button>
             )}
           </div>
+        )}
+
+        {/* Swipe Mode Button */}
+        {isAuthenticated && words.length > 0 && (
+          <button
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (levelFilter !== 'all') params.set(isChinese ? 'hskLevel' : 'level', levelFilter);
+              if (posFilter !== 'all') params.set('pos', posFilter);
+              if (statusFilter.length > 0) params.set('statuses', statusFilter.join(','));
+              if (isChinese) params.set('lang', 'chinese');
+              setLocation(`/play?${params.toString()}`);
+            }}
+            className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/20 border border-primary/40 text-primary font-bold text-sm press-scale transition-colors hover:bg-primary/30"
+          >
+            <Gamepad2 className="w-4 h-4" />
+            Swipe Mode
+          </button>
         )}
       </div>
 
