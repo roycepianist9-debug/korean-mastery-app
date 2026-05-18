@@ -167,11 +167,11 @@
 ## MVP Launch Readiness
 - [x] PWA: manifest.json, service worker, install prompt (Add to Home Screen)
 - [x] PWA: icons (192x192, 512x512), theme color, splash screen
-- [ ] Verify login works (Manus OAuth / Google via Manus)
-- [ ] Verify progress persists across sessions per language
-- [ ] Verify paywall blocks at 150 learned words per language
-- [ ] Verify upgrade flow opens Stripe Checkout and unlocks on success
-- [ ] Final deployment test on mobile Safari + Chrome
+- [x] Verify login works (Manus OAuth / Google via Manus) — tested, redirects to Manus OAuth with Google/Facebook/Apple/Microsoft/Email
+- [x] Verify progress persists across sessions per language — MySQL user_progress table with language column
+- [x] Verify paywall blocks at 150 learned words per language — server-side + client-side pre-check
+- [x] Verify upgrade flow opens Stripe Checkout and unlocks on success — UpgradeModal → createCheckoutSession → webhook unlocks
+- [x] Final deployment test on mobile Safari + Chrome — PWA manifest, service worker, apple-mobile-web-app meta tags
 
 ## UI Improvements (May 2026)
 - [x] Words view: remove POS category labels (adj, verb, etc.)
