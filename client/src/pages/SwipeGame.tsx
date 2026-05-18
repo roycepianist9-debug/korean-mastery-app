@@ -511,11 +511,17 @@ export default function SwipeGame() {
     }
   }, [currentIndex, words, isAuthenticated, swipeMutation, language, sfx, wordLimit]);
 
-  // Undo is only allowed for cards not yet persisted (unauthenticated) or the very last card
-  // if already persisted, undo is disabled to avoid double-counting
+  // Undo is allowed only if the card being undone hasn't been persisted to the database
+  // For authenticated users: undo is disabled for cards in persistedWordIds (already saved)
+  // For unauthenticated users: undo is always allowed (no persistence)
   const canUndo = history.length > 0 && (
     !isAuthenticated || !persistedWordIds.current.has(words[history[history.length - 1]]?.id)
   );
+
+  // Tooltip for disabled undo
+  const undoTooltip = !canUndo && isAuthenticated && history.length > 0
+    ? "Can't undo — this card's progress has been saved"
+    : undefined;
 
   const handleBack = useCallback(() => {
     if (!canUndo) return;
@@ -785,6 +791,7 @@ export default function SwipeGame() {
         <button
           onClick={() => { sfx.pop(); handleBack(); }}
           disabled={!canUndo}
+          title={undoTooltip}
           className={`w-12 h-12 rounded-full flex items-center justify-center press-scale transition-all ${
             canUndo
               ? 'bg-secondary border-2 border-muted-foreground/30 text-foreground'
