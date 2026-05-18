@@ -11,6 +11,7 @@ import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
 import WordDetail from "./pages/WordDetail";
 import AdminSettings from "./pages/AdminSettings";
+import Rules from "./pages/Rules";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/play" component={SwipeGame} />
       <Route path="/word/:id" component={WordDetail} />
       <Route path="/admin" component={AdminSettings} />
+      <Route path="/rules" component={Rules} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

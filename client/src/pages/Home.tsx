@@ -330,6 +330,25 @@ export default function Home() {
                     </button>
                   )}
 
+                  {/* Rules */}
+                  <button
+                    onClick={() => {
+                      sfx.tap();
+                      setMenuOpen(false);
+                      setLocation('/rules');
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center">
+                      <BookOpen className="w-4 h-4 text-chart-3" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Rules</p>
+                      <p className="text-xs text-muted-foreground">How to use the app</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                  </button>
+
                   {/* About */}
                   <button
                     onClick={() => {
@@ -346,6 +365,27 @@ export default function Home() {
                       <p className="text-xs text-muted-foreground">Version 1.0 · Korean & Chinese</p>
                     </div>
                   </button>
+
+                  {/* Guest Sign In */}
+                  {!isAuthenticated && (
+                    <button
+                      onClick={() => {
+                        sfx.tap();
+                        setMenuOpen(false);
+                        window.location.href = getLoginUrl();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <LogIn className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">Sign up / Sign in</p>
+                        <p className="text-xs text-muted-foreground">Save progress & unlock features</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Logout */}
@@ -373,14 +413,15 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-foreground">
-              {isAuthenticated ? `Welcome back!` : isChinese ? 'Chinese Mastery' : 'Korean Mastery'}
+              {isAuthenticated
+                ? (gs && gs.xp > 0 ? 'Welcome back!' : 'Welcome!')
+                : isChinese ? 'Chinese Mastery' : 'Korean Mastery'
+              }
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               {isAuthenticated
-                ? 'Ready to learn?'
-                : isChinese
-                  ? `Master ${ws?.total ? ws.total.toLocaleString() : ''} Chinese words`
-                  : `Master ${ws?.total ? ws.total.toLocaleString() : '56,000+'} Korean words`
+                ? (gs && gs.xp > 0 ? 'Ready to learn more?' : 'Learn languages by swiping!')
+                : 'Learn languages by swiping!'
               }
             </p>
           </div>
@@ -394,22 +435,6 @@ export default function Home() {
       </div>
 
       <div className="px-4 space-y-3 mt-2">
-        {/* Sign in prompt */}
-        {!authLoading && !isAuthenticated && (
-          <button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            className="w-full game-card p-4 flex items-center gap-3 press-scale"
-          >
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <LogIn className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-bold text-sm text-foreground">Sign in to track progress</p>
-              <p className="text-xs text-muted-foreground">Save your XP, streaks, and learned words</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-        )}
 
         {/* Game Stats Row */}
         {isAuthenticated && gs && (
@@ -683,6 +708,23 @@ export default function Home() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Sign in prompt — below dictionary stats */}
+        {!authLoading && !isAuthenticated && (
+          <button
+            onClick={() => { window.location.href = getLoginUrl(); }}
+            className="w-full game-card p-4 flex items-center gap-3 press-scale"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <LogIn className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-bold text-sm text-foreground">Sign in to track progress</p>
+              <p className="text-xs text-muted-foreground">Save your XP, streaks, and learned words</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
         )}
       </div>
 

@@ -215,3 +215,11 @@
 - [x] Words page: restore swipe button between filters and first card — restored with Gamepad2 icon, passes filters to swipe session
 - [x] Swipe directions: LEFT = learned, RIGHT = review (reversed from current) — reversed in SwipeGame.tsx, labels updated
 - [x] Fix Stripe checkout: "Failed to start checkout" error on upgrade modal — verified working with live keys, session creation successful
+
+## Fixes & Features (May 2026 - Round 3)
+- [x] Fix Stripe payment: invalid_request_error on /v1/payment_links — NOT from our code; it's a stale payment link on the Stripe account (our app uses checkout.sessions.create correctly)
+- [x] Fix OAuth callback failure from different devices — fixed state decoding in sdk.ts to handle JSON payloads with returnPath
+- [x] Dashboard: add welcome message ("Welcome!" first time, "Welcome back!" returning) — uses ps.learned > 0 to detect returning users
+- [x] Move "Sign in to track progress" card below Dictionary Stats, replace with "Learn languages by swiping!" tagline
+- [x] Menu: add "Rules" item → navigates to /rules page explaining how to use the app
+- [x] Menu: add "Guest Sign up/in" item for unauthenticated users (standard OAuth login flow)
