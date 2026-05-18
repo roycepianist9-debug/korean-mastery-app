@@ -75,8 +75,9 @@ export const appRouter = router({
         limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
         language: z.enum(['korean', 'chinese']).optional(),
+        statuses: z.array(z.string()).optional(),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         return getRandomWords({
           pos: input.pos,
           topikLevel: input.topikLevel,
@@ -84,6 +85,8 @@ export const appRouter = router({
           limit: input.limit,
           excludeIds: input.excludeIds,
           language: input.language,
+          statuses: input.statuses,
+          userId: ctx.user?.id,
         });
       }),
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -15,6 +15,44 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import ClickableExample from "./ClickableExample";
+
+/* ─── Auto-translation hook for the detail sheet ─── */
+function useAutoTranslation(
+  sentence: string | null | undefined,
+  existingTranslation: string | null | undefined,
+  language: 'korean' | 'chinese',
+  enabled: boolean
+) {
+  const translate = trpc.llm.translateExample.useMutation();
+  const [translation, setTranslation] = useState<string | null>(null);
+  const attempted = useRef(false);
+
+  const doTranslate = useCallback((s: string) => {
+    translate.mutate(
+      { koreanSentence: s, language },
+      {
+        onSuccess: (data) => { if (data?.translation) setTranslation(data.translation); },
+        onError: () => {},
+      }
+    );
+  }, [translate, language]);
+
+  useEffect(() => {
+    if (!enabled || attempted.current) return;
+    if (existingTranslation) { setTranslation(existingTranslation); return; }
+    if (!sentence) return;
+    attempted.current = true;
+    doTranslate(sentence);
+  }, [enabled, sentence, existingTranslation, doTranslate]);
+
+  // Reset when sheet closes
+  const reset = useCallback(() => {
+    setTranslation(null);
+    attempted.current = false;
+  }, []);
+
+  return { translation, isLoading: translate.isPending && !translation, reset };
+}
 
 interface WordDetailSheetProps {
   word: {
@@ -60,10 +98,19 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
     });
   };
 
+  // For Chinese: exampleTranslation is pinyin, not English — always request AI English translation
+  const autoTranslation = useAutoTranslation(
+    exampleSentence,
+    isChinese ? null : exampleTranslation, // don't use pinyin as translation
+    isChinese ? 'chinese' : 'korean',
+    open && !!exampleSentence
+  );
+
   const handleOpenChange = (v: boolean) => {
     if (!v) {
       setTipsRequested(false);
       tipsMutation.reset();
+      autoTranslation.reset();
     }
     onOpenChange(v);
   };
@@ -130,9 +177,17 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
                   )}
                 </div>
               )}
-              {exampleTranslation && (
-                <p className="text-xs text-muted-foreground italic mt-0.5">{exampleTranslation}</p>
-              )}
+              {/* AI translation shown automatically below example */}
+              {autoTranslation.isLoading ? (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Translating...</span>
+                </div>
+              ) : autoTranslation.translation ? (
+                <p className="text-xs text-muted-foreground italic mt-1 leading-relaxed">
+                  {autoTranslation.translation}
+                </p>
+              ) : null}
             </div>
           )}
 

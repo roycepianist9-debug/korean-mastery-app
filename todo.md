@@ -166,3 +166,12 @@
 - [ ] Add legal pages as in-app routes (/privacy, /terms)
 - [ ] Optimize LLM usage: cache translations in database instead of on-demand
 - [ ] Test full subscription flow end-to-end
+
+## UI Improvements (May 2026)
+- [x] Words view: remove POS category labels (adj, verb, etc.)
+- [x] Words view: add green "Learned" button and red "Review" button per card row
+- [x] Words view: tapping left side of card opens popup with AI translation shown below example sentence
+- [x] Words view: remove swipe icon in top-right corner
+- [x] Swipe session start screen: add filter buttons (New only / Review only / Learned only)
+- [x] Swipe session: add AI translation toggle above card (on/off to save API calls)
+- [x] Swipe session: save progress after each individual card swipe (not only on session complete)

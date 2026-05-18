@@ -252,25 +252,76 @@ export async function getRandomWords(params: {
   limit: number;
   excludeIds?: number[];
   language?: 'korean' | 'chinese';
+  userId?: number;
+  statuses?: string[];
 }) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions = [];
-  
-  // Language filter (default to korean)
   const language = params.language || 'korean';
-  conditions.push(eq(words.language, language));
-  
-  if (params.pos && params.pos !== 'all') {
-    conditions.push(eq(words.pos, params.pos));
+
+  // If filtering by status, join with user_progress
+  // 'new' means: no progress row at all OR status = 'new'
+  if (params.statuses && params.statuses.length > 0 && params.userId) {
+    const statusList = params.statuses;
+    const hasNew = statusList.includes('new');
+    const otherStatuses = statusList.filter(s => s !== 'new');
+    const userId = params.userId;
+
+    const baseConditions: any[] = [eq(words.language, language)];
+    if (params.pos && params.pos !== 'all') baseConditions.push(eq(words.pos, params.pos));
+    if (params.topikLevel && params.topikLevel !== 'all') baseConditions.push(eq(words.topikLevel, params.topikLevel as any));
+    if (params.hskLevel && params.hskLevel !== 'all') baseConditions.push(eq(words.hskLevel, params.hskLevel as any));
+    if (params.excludeIds && params.excludeIds.length > 0) {
+      baseConditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
+    }
+
+    if (hasNew && otherStatuses.length === 0) {
+      // Only 'new': words with no progress row for this user
+      const rows = await db.select({ word: words })
+        .from(words)
+        .leftJoin(
+          userProgress,
+          and(eq(words.id, userProgress.wordId), eq(userProgress.userId, userId))
+        )
+        .where(and(...baseConditions, sql`${userProgress.id} IS NULL`))
+        .orderBy(sql`RAND()`)
+        .limit(params.limit);
+      return rows.map(r => r.word);
+    } else if (!hasNew && otherStatuses.length > 0) {
+      // Only reviewing/learned: inner join
+      const rows = await db.select({ word: words })
+        .from(words)
+        .innerJoin(
+          userProgress,
+          and(eq(words.id, userProgress.wordId), eq(userProgress.userId, userId))
+        )
+        .where(and(...baseConditions, inArray(userProgress.status, otherStatuses as any[])))
+        .orderBy(sql`RAND()`)
+        .limit(params.limit);
+      return rows.map(r => r.word);
+    } else {
+      // Mix of new + others: left join, filter (no row OR status in list)
+      const rows = await db.select({ word: words })
+        .from(words)
+        .leftJoin(
+          userProgress,
+          and(eq(words.id, userProgress.wordId), eq(userProgress.userId, userId))
+        )
+        .where(and(
+          ...baseConditions,
+          sql`(${userProgress.id} IS NULL OR ${userProgress.status} IN (${sql.join(otherStatuses.map(s => sql`${s}`), sql`, `)}))`,
+        ))
+        .orderBy(sql`RAND()`)
+        .limit(params.limit);
+      return rows.map(r => r.word);
+    }
   }
-  if (params.topikLevel && params.topikLevel !== 'all') {
-    conditions.push(eq(words.topikLevel, params.topikLevel as any));
-  }
-  if (params.hskLevel && params.hskLevel !== 'all') {
-    conditions.push(eq(words.hskLevel, params.hskLevel as any));
-  }
+
+  const conditions: any[] = [eq(words.language, language)];
+  if (params.pos && params.pos !== 'all') conditions.push(eq(words.pos, params.pos));
+  if (params.topikLevel && params.topikLevel !== 'all') conditions.push(eq(words.topikLevel, params.topikLevel as any));
+  if (params.hskLevel && params.hskLevel !== 'all') conditions.push(eq(words.hskLevel, params.hskLevel as any));
   if (params.excludeIds && params.excludeIds.length > 0) {
     conditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
   }

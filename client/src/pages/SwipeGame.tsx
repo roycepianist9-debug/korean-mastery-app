@@ -8,6 +8,7 @@ import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
   Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
+  BookOpen, Star, Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,54 +28,50 @@ interface SwipeResult {
   known: boolean;
 }
 
+type CardFilter = 'all' | 'new' | 'reviewing' | 'learned';
+
 /* ─── Inline AI Translation Hook ─── */
-function useExampleTranslation(koreanExample: string | null | undefined, existingEnglish: string | null | undefined, language?: 'korean' | 'chinese') {
+function useExampleTranslation(
+  sentence: string | null | undefined,
+  existingEnglish: string | null | undefined,
+  language: 'korean' | 'chinese' | undefined,
+  enabled: boolean
+) {
   const translate = trpc.llm.translateExample.useMutation();
   const [translation, setTranslation] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const attempted = useRef<string | null>(null);
 
-  const doTranslate = useCallback((sentence: string) => {
+  const doTranslate = useCallback((s: string) => {
     setFailed(false);
     translate.mutate(
-      { koreanSentence: sentence, language },
+      { koreanSentence: s, language },
       {
         onSuccess: (data) => {
-          if (data?.translation) {
-            setTranslation(data.translation);
-          } else {
-            setFailed(true);
-          }
+          if (data?.translation) setTranslation(data.translation);
+          else setFailed(true);
         },
-        onError: () => {
-          setFailed(true);
-        },
+        onError: () => setFailed(true),
       }
     );
-  }, [translate]);
+  }, [translate, language]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (existingEnglish) {
       setTranslation(existingEnglish);
       setFailed(false);
       return;
     }
-    if (!koreanExample) {
-      setTranslation(null);
-      setFailed(false);
-      return;
-    }
-    if (attempted.current === koreanExample) return;
-    attempted.current = koreanExample;
-    doTranslate(koreanExample);
-  }, [koreanExample, existingEnglish, doTranslate]);
+    if (!sentence) { setTranslation(null); setFailed(false); return; }
+    if (attempted.current === sentence) return;
+    attempted.current = sentence;
+    doTranslate(sentence);
+  }, [enabled, sentence, existingEnglish, doTranslate]);
 
   const retry = useCallback(() => {
-    if (koreanExample) {
-      attempted.current = null;
-      doTranslate(koreanExample);
-    }
-  }, [koreanExample, doTranslate]);
+    if (sentence) { attempted.current = null; doTranslate(sentence); }
+  }, [sentence, doTranslate]);
 
   return {
     translation,
@@ -84,15 +81,17 @@ function useExampleTranslation(koreanExample: string | null | undefined, existin
   };
 }
 
-/* ─── One-Sided Flash Card with ClickableExample ─── */
+/* ─── Flash Card ─── */
 function FlashCard({
   word,
   onSwipe,
   isTop,
+  aiEnabled,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
+  aiEnabled: boolean;
 }) {
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
@@ -102,13 +101,14 @@ function FlashCard({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const isChinese = !!word.chinese && !word.korean;
-  // For Chinese: translate the Chinese example sentence; for Korean: translate the Korean example
   const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
-  const existingTranslation = isChinese ? null : word.exampleEnglish; // for Chinese we always want AI translation
+  const existingTranslation = isChinese ? null : word.exampleEnglish;
+
   const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
-    isTop ? exampleForTranslation : null,
-    isTop ? existingTranslation : null,
-    isChinese ? 'chinese' : 'korean'
+    isTop && aiEnabled ? exampleForTranslation : null,
+    isTop && aiEnabled ? existingTranslation : null,
+    isChinese ? 'chinese' : 'korean',
+    isTop && aiEnabled
   );
 
   const SWIPE_THRESHOLD = 80;
@@ -121,16 +121,13 @@ function FlashCard({
 
   const handleMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging || !isTop) return;
-    const dx = clientX - startPos.current.x;
-    const dy = clientY - startPos.current.y;
-    setDragX(dx);
-    setDragY(dy * 0.3);
+    setDragX(clientX - startPos.current.x);
+    setDragY((clientY - startPos.current.y) * 0.3);
   }, [isDragging, isTop]);
 
   const handleEnd = useCallback(() => {
     if (!isDragging || !isTop) return;
     setIsDragging(false);
-
     if (Math.abs(dragX) > SWIPE_THRESHOLD) {
       const known = dragX > 0;
       setExitDir(known ? 'right' : 'left');
@@ -141,20 +138,10 @@ function FlashCard({
     }
   }, [isDragging, isTop, dragX, onSwipe]);
 
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    handleStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, [handleStart]);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    handleMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, [handleMove]);
-
+  const onTouchStart = useCallback((e: React.TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY), [handleStart]);
+  const onTouchMove = useCallback((e: React.TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY), [handleMove]);
   const onTouchEnd = useCallback(() => handleEnd(), [handleEnd]);
-
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    handleStart(e.clientX, e.clientY);
-  }, [handleStart]);
+  const onMouseDown = useCallback((e: React.MouseEvent) => { e.preventDefault(); handleStart(e.clientX, e.clientY); }, [handleStart]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -212,9 +199,9 @@ function FlashCard({
         </div>
       )}
 
-      {/* One-sided card showing all info */}
+      {/* Card content */}
       <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
-        {/* Level & POS badges */}
+        {/* Level badge top-right only (no POS) */}
         <div className="absolute top-3 right-3">
           {word.hskLevel ? (
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -235,13 +222,8 @@ function FlashCard({
             </span>
           )}
         </div>
-        <div className="absolute top-3 left-3">
-          <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
-            {word.pos || 'word'}
-          </span>
-        </div>
 
-        {/* Word display - Korean or Chinese */}
+        {/* Word display */}
         {word.korean ? (
           <>
             <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.korean}</p>
@@ -263,20 +245,22 @@ function FlashCard({
         {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
             <ClickableExample sentence={word.koreanExample} />
-            {translation ? (
-              <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-            ) : translationLoading ? (
-              <div className="flex items-center justify-center gap-1.5">
-                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Translating...</span>
-              </div>
-            ) : translationFailed ? (
-              <button
-                onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
-                className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
-              >
-                Tap to translate
-              </button>
+            {aiEnabled ? (
+              translation ? (
+                <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+              ) : translationLoading ? (
+                <div className="flex items-center justify-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Translating...</span>
+                </div>
+              ) : translationFailed ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
+                  className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
+                >
+                  Tap to translate
+                </button>
+              ) : null
             ) : null}
           </div>
         ) : word.chineseExample ? (
@@ -285,25 +269,26 @@ function FlashCard({
             {word.examplePinyin && (
               <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
             )}
-            {translation ? (
-              <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-            ) : translationLoading ? (
-              <div className="flex items-center justify-center gap-1.5">
-                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Translating...</span>
-              </div>
-            ) : translationFailed ? (
-              <button
-                onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
-                className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
-              >
-                Tap to translate
-              </button>
+            {aiEnabled ? (
+              translation ? (
+                <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+              ) : translationLoading ? (
+                <div className="flex items-center justify-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Translating...</span>
+                </div>
+              ) : translationFailed ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
+                  className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
+                >
+                  Tap to translate
+                </button>
+              ) : null
             ) : null}
           </div>
         ) : null}
 
-        {/* Swipe hint */}
         <p className="text-[10px] text-muted-foreground/50 mt-auto pt-2">
           ← Review · Swipe · Know it →
         </p>
@@ -323,13 +308,11 @@ function SessionSummary({
   onRestart: () => void;
   onHome: () => void;
   playVictory: () => void;
-  // Note: playVictory is now passed from the SoundContext
 }) {
   const hasPlayed = useRef(false);
   useEffect(() => {
     if (!hasPlayed.current) {
       hasPlayed.current = true;
-      // Small delay so the screen transition completes first
       const t = setTimeout(() => playVictory(), 200);
       return () => clearTimeout(t);
     }
@@ -362,20 +345,11 @@ function SessionSummary({
         </div>
 
         <div className="space-y-3">
-          <Button
-            size="lg"
-            className="w-full font-bold press-scale"
-            onClick={onRestart}
-          >
+          <Button size="lg" className="w-full font-bold press-scale" onClick={onRestart}>
             <Sparkles className="w-5 h-5 mr-2" />
             Play Again
           </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full font-bold press-scale"
-            onClick={onHome}
-          >
+          <Button size="lg" variant="outline" className="w-full font-bold press-scale" onClick={onHome}>
             Back to Home
           </Button>
         </div>
@@ -387,6 +361,34 @@ function SessionSummary({
 /* ─── Deck Size Options ─── */
 const DECK_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
+/* ─── Card Filter Options ─── */
+const CARD_FILTER_OPTIONS: { key: CardFilter; label: string; icon: React.ReactNode; desc: string }[] = [
+  {
+    key: 'new',
+    label: 'New',
+    icon: <Plus className="w-4 h-4" />,
+    desc: 'Only unseen words',
+  },
+  {
+    key: 'reviewing',
+    label: 'Review',
+    icon: <RotateCcw className="w-4 h-4" />,
+    desc: 'Words to review',
+  },
+  {
+    key: 'learned',
+    label: 'Learned',
+    icon: <Star className="w-4 h-4" />,
+    desc: 'Reinforce learned',
+  },
+  {
+    key: 'all',
+    label: 'Mixed',
+    icon: <BookOpen className="w-4 h-4" />,
+    desc: 'All words',
+  },
+];
+
 /* ─── Main Component ─── */
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -397,14 +399,14 @@ export default function SwipeGame() {
 
   const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
-  // hskLevel from URL for Chinese, level for Korean
   const [levelFilter, setLevelFilter] = useState(
     params.get("hskLevel") || params.get("level") || "all"
   );
+  const [cardFilter, setCardFilter] = useState<CardFilter>('all');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
-  const [history, setHistory] = useState<number[]>([]); // for back/undo
+  const [history, setHistory] = useState<number[]>([]);
   const [sessionDone, setSessionDone] = useState(false);
   const [deckSize, setDeckSize] = useState<number>(
     DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
@@ -413,6 +415,24 @@ export default function SwipeGame() {
   );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // AI translation toggle — persisted in localStorage
+  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem('swipe-ai-translation') !== 'off'; } catch { return true; }
+  });
+
+  const toggleAi = useCallback(() => {
+    setAiEnabled(prev => {
+      const next = !prev;
+      try { localStorage.setItem('swipe-ai-translation', next ? 'on' : 'off'); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Build statuses array from cardFilter for the random query
+  const statusesForQuery = useMemo<string[] | undefined>(() => {
+    if (cardFilter === 'all') return undefined;
+    return [cardFilter];
+  }, [cardFilter]);
 
   const wordsQuery = trpc.words.random.useQuery(
     {
@@ -421,52 +441,60 @@ export default function SwipeGame() {
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
       language,
+      statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
   );
 
-  const batchSwipe = trpc.progress.batchSwipe.useMutation();
+  // Per-swipe progress mutation
+  const swipeMutation = trpc.progress.swipe.useMutation();
   const { play: sfx } = useSound();
 
   const words = wordsQuery.data ?? [];
 
+  // Track which wordIds have been persisted so undo can't revert saved progress
+  const persistedWordIds = useRef<Set<number>>(new Set());
+
   const handleSwipe = useCallback((known: boolean) => {
     if (!words[currentIndex]) return;
-    // Play swipe sound immediately for snappy feedback
     if (known) sfx.swipeRight(); else sfx.swipeLeft();
-    const result = { wordId: words[currentIndex].id, known };
+
+    const wordId = words[currentIndex].id;
+    const result = { wordId, known };
     setSwipeResults(prev => [...prev, result]);
     setHistory(prev => [...prev, currentIndex]);
 
+    // Save progress immediately after each swipe
+    if (isAuthenticated) {
+      persistedWordIds.current.add(wordId);
+      swipeMutation.mutate(
+        { wordId, known, language },
+        {
+          onError: () => toast.error("Failed to save this card's progress"),
+        }
+      );
+    }
+
     if (currentIndex + 1 >= words.length) {
-      const allResults = [...swipeResults, result];
-      if (isAuthenticated) {
-        batchSwipe.mutate(
-          { results: allResults },
-          {
-            onSuccess: () => setSessionDone(true),
-            onError: () => {
-              toast.error("Failed to save progress");
-              setSessionDone(true);
-            },
-          }
-        );
-      } else {
-        setSessionDone(true);
-      }
+      setSessionDone(true);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
-  }, [currentIndex, words, swipeResults, isAuthenticated, batchSwipe]);
+  }, [currentIndex, words, isAuthenticated, swipeMutation, language, sfx]);
 
-  // Back/Undo: go back to previous card
+  // Undo is only allowed for cards not yet persisted (unauthenticated) or the very last card
+  // if already persisted, undo is disabled to avoid double-counting
+  const canUndo = history.length > 0 && (
+    !isAuthenticated || !persistedWordIds.current.has(words[history[history.length - 1]]?.id)
+  );
+
   const handleBack = useCallback(() => {
-    if (history.length === 0) return;
+    if (!canUndo) return;
     const prevIndex = history[history.length - 1];
     setHistory(prev => prev.slice(0, -1));
     setSwipeResults(prev => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
-  }, [history]);
+  }, [history, canUndo]);
 
   const handleRestart = useCallback(() => {
     setCurrentIndex(0);
@@ -490,11 +518,7 @@ export default function SwipeGame() {
     const totalLearned = swipeResults.filter(r => r.known).length;
     return (
       <SessionSummary
-        results={{
-          totalXp: batchSwipe.data?.totalXp ?? totalXp,
-          totalLearned: batchSwipe.data?.totalLearned ?? totalLearned,
-          totalReviewed: batchSwipe.data?.totalReviewed ?? swipeResults.length,
-        }}
+        results={{ totalXp, totalLearned, totalReviewed: swipeResults.length }}
         onRestart={handleRestart}
         onHome={() => setLocation("/")}
         playVictory={sfx.victory}
@@ -502,6 +526,7 @@ export default function SwipeGame() {
     );
   }
 
+  /* ─── Session Start Screen ─── */
   if (!sessionStarted) {
     return (
       <div className="min-h-screen bg-background pb-24">
@@ -558,7 +583,7 @@ export default function SwipeGame() {
               </Select>
             </div>
 
-            {/* Deck Size Selector */}
+            {/* Deck Size */}
             <div>
               <label className="text-sm font-bold text-foreground mb-2 block">Cards per Session</label>
               <div className="grid grid-cols-4 gap-2">
@@ -577,6 +602,35 @@ export default function SwipeGame() {
                 ))}
               </div>
             </div>
+
+            {/* Card Filter — New / Review / Learned / Mixed */}
+            {isAuthenticated && (
+              <div>
+                <label className="text-sm font-bold text-foreground mb-2 block">Word Selection</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {CARD_FILTER_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setCardFilter(opt.key)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 press-scale border ${
+                        cardFilter === opt.key
+                          ? opt.key === 'new' ? 'bg-accent/20 text-accent border-accent/40' :
+                            opt.key === 'reviewing' ? 'bg-chart-3/20 text-chart-3 border-chart-3/40' :
+                            opt.key === 'learned' ? 'bg-primary/20 text-primary border-primary/40' :
+                            'bg-secondary text-foreground border-border'
+                          : 'bg-secondary/50 text-muted-foreground border-transparent hover:bg-secondary'
+                      }`}
+                    >
+                      {opt.icon}
+                      <div className="text-left">
+                        <p className="text-xs font-bold leading-none">{opt.label}</p>
+                        <p className="text-[10px] font-normal opacity-70 mt-0.5">{opt.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {!isAuthenticated && (
@@ -619,7 +673,7 @@ export default function SwipeGame() {
   if (!words.length) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
-        <p className="text-muted-foreground">No words found for this filter. Try different settings.</p>
+        <p className="text-muted-foreground text-center">No words found for this filter. Try different settings.</p>
         <Button variant="outline" className="mt-4" onClick={() => setSessionStarted(false)}>
           Change Filters
         </Button>
@@ -628,7 +682,7 @@ export default function SwipeGame() {
   }
 
   const currentWord = words[currentIndex];
-  const progress = ((currentIndex) / words.length) * 100;
+  const progress = (currentIndex / words.length) * 100;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -651,7 +705,7 @@ export default function SwipeGame() {
       </div>
 
       {/* Progress bar */}
-      <div className="px-4 mb-4">
+      <div className="px-4 mb-2">
         <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-300"
@@ -660,36 +714,50 @@ export default function SwipeGame() {
         </div>
       </div>
 
+      {/* AI Translation toggle */}
+      <div className="px-4 mb-3 flex justify-center">
+        <button
+          onClick={toggleAi}
+          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all press-scale ${
+            aiEnabled
+              ? 'bg-accent/20 text-accent border-accent/40'
+              : 'bg-secondary text-muted-foreground border-transparent'
+          }`}
+        >
+          <Sparkles className="w-3 h-3" />
+          {aiEnabled ? 'AI Translation: ON' : 'AI Translation: OFF'}
+        </button>
+      </div>
+
       {/* Card area */}
       <div className="flex-1 px-6 pb-6 flex items-center justify-center">
         <div className="relative w-full max-w-[360px] aspect-[3/4]">
-          {/* Next card (behind) */}
           {currentIndex + 1 < words.length && (
             <FlashCard
               key={`next-${words[currentIndex + 1].id}`}
               word={words[currentIndex + 1]}
               onSwipe={() => {}}
               isTop={false}
+              aiEnabled={aiEnabled}
             />
           )}
-          {/* Current card */}
           <FlashCard
             key={`card-${currentWord.id}-${currentIndex}`}
             word={currentWord}
             onSwipe={handleSwipe}
             isTop={true}
+            aiEnabled={aiEnabled}
           />
         </div>
       </div>
 
-      {/* Bottom buttons with Back/Undo */}
+      {/* Bottom buttons */}
       <div className="px-6 pb-8 flex items-center justify-center gap-4">
-        {/* Back / Undo button */}
         <button
           onClick={() => { sfx.pop(); handleBack(); }}
-          disabled={history.length === 0}
+          disabled={!canUndo}
           className={`w-12 h-12 rounded-full flex items-center justify-center press-scale transition-all ${
-            history.length > 0
+            canUndo
               ? 'bg-secondary border-2 border-muted-foreground/30 text-foreground'
               : 'bg-secondary/50 border-2 border-transparent text-muted-foreground/30'
           }`}

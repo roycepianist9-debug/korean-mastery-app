@@ -6,7 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X, Gamepad2,
+  ArrowLeft, Filter, X, Check, RotateCcw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import WordDetailSheet from "@/components/WordDetailSheet";
 import { toast } from "sonner";
 
-/* ─── Swipeable Word Card ─── */
-function SwipeableWordCard({
+/* ─── Word Card Row ─── */
+function WordCard({
   word,
   onClick,
   onMarkLearned,
@@ -35,126 +35,66 @@ function SwipeableWordCard({
   onMarkReviewing: () => void;
   isAuthenticated: boolean;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const startX = useRef(0);
-  const isDragging = useRef(false);
-  const [dragX, setDragX] = useState(0);
-  const [swiped, setSwiped] = useState<'left' | 'right' | null>(null);
-  const THRESHOLD = 70;
-
-  const handleStart = (clientX: number) => {
-    if (!isAuthenticated) return;
-    isDragging.current = true;
-    startX.current = clientX;
-  };
-
-  const handleMove = (clientX: number) => {
-    if (!isDragging.current) return;
-    setDragX(clientX - startX.current);
-  };
-
-  const handleEnd = () => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    if (dragX > THRESHOLD) {
-      setSwiped('right');
-      setTimeout(() => {
-        onMarkLearned();
-        setSwiped(null);
-        setDragX(0);
-      }, 300);
-    } else if (dragX < -THRESHOLD) {
-      setSwiped('left');
-      setTimeout(() => {
-        onMarkReviewing();
-        setSwiped(null);
-        setDragX(0);
-      }, 300);
-    } else {
-      setDragX(0);
-    }
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => handleStart(e.touches[0].clientX);
-  const onTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX);
-  const onTouchEnd = () => handleEnd();
-  const onMouseDown = (e: React.MouseEvent) => { e.preventDefault(); handleStart(e.clientX); };
-
-  useEffect(() => {
-    if (!isDragging.current) return;
-    const onMove = (e: MouseEvent) => handleMove(e.clientX);
-    const onUp = () => handleEnd();
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-  });
-
-  // Only show subtle border glow while actively dragging past threshold
-  const borderColor = dragX > THRESHOLD
-    ? 'rgba(34,197,94,0.5)'
-    : dragX < -THRESHOLD
-    ? 'rgba(249,115,22,0.5)'
-    : 'transparent';
-
   return (
-    <div className="relative overflow-hidden rounded-2xl">
-      {/* Card */}
-      <div
-        ref={cardRef}
-        className="relative game-card p-3.5 flex items-center gap-3 select-none"
-        style={{
-          transform: swiped === 'right' ? 'translateX(120%)' : swiped === 'left' ? 'translateX(-120%)' : `translateX(${dragX}px)`,
-          transition: isDragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.23,1,0.32,1)',
-          boxShadow: borderColor !== 'transparent' ? `0 0 0 2px ${borderColor}` : 'none',
-        }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onMouseDown={onMouseDown}
+    <div className="game-card rounded-2xl flex items-center overflow-hidden">
+      {/* Left tappable area → opens popup */}
+      <button
+        onClick={onClick}
+        className="flex items-center gap-3 flex-1 min-w-0 text-left p-3.5"
       >
-        <button
-          onClick={onClick}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left"
-        >
-          <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center shrink-0">
-            <span className="text-lg font-black text-foreground">
-              {word.korean ? word.korean.charAt(0) : word.chinese?.charAt(0) || '?'}
+        <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+          <span className="text-base font-black text-foreground">
+            {word.korean ? word.korean.charAt(0) : word.chinese?.charAt(0) || '?'}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-sm text-foreground truncate">
+              {word.korean || word.chinese}
+            </p>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {word.romanization || word.pinyin}
             </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-bold text-sm text-foreground truncate">
-                {word.korean || word.chinese}
-              </p>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {word.romanization || word.pinyin}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
-          </div>
-        </button>
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-            word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
-            word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
-            word.topikLevel === 'advanced' ? 'bg-accent/20 text-accent' :
-            word.hskLevel === '1' ? 'bg-primary/20 text-primary' :
-            word.hskLevel === '2' ? 'bg-chart-3/20 text-chart-3' :
-            'bg-accent/20 text-accent'
-          }`}>
-            {word.topikLevel === 'beginner' ? 'Beg' :
-             word.topikLevel === 'intermediate' ? 'Int' :
-             word.topikLevel === 'advanced' ? 'Adv' :
-             word.hskLevel ? `HSK${word.hskLevel}` : 'Lvl'}
-          </span>
-          {word.pos && (
-            <span className="text-[10px] text-muted-foreground">{word.pos}</span>
-          )}
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
         </div>
-      </div>
+        {/* Level badge only — no POS label */}
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+          word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+          word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+          word.topikLevel === 'advanced' ? 'bg-accent/20 text-accent' :
+          word.hskLevel === '1' ? 'bg-primary/20 text-primary' :
+          word.hskLevel === '2' ? 'bg-chart-3/20 text-chart-3' :
+          'bg-accent/20 text-accent'
+        }`}>
+          {word.topikLevel === 'beginner' ? 'Beg' :
+           word.topikLevel === 'intermediate' ? 'Int' :
+           word.topikLevel === 'advanced' ? 'Adv' :
+           word.hskLevel ? `HSK${word.hskLevel}` : 'Lvl'}
+        </span>
+      </button>
+
+      {/* Action buttons — only shown when authenticated */}
+      {isAuthenticated && (
+        <div className="flex items-center gap-1.5 pr-3 shrink-0">
+          {/* Red = Review */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onMarkReviewing(); }}
+            className="w-9 h-9 rounded-xl bg-destructive/15 border border-destructive/30 flex items-center justify-center press-scale transition-colors hover:bg-destructive/25 active:scale-95"
+            title="Mark for review"
+          >
+            <RotateCcw className="w-4 h-4 text-destructive" />
+          </button>
+          {/* Green = Learned */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onMarkLearned(); }}
+            className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center press-scale transition-colors hover:bg-primary/25 active:scale-95"
+            title="Mark as learned"
+          >
+            <Check className="w-4 h-4 text-primary" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -213,7 +153,6 @@ export default function WordList() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
-  // hskLevel from URL for Chinese, level for Korean
   const [levelFilter, setLevelFilter] = useState(
     params.get("hskLevel") || params.get("level") || "all"
   );
@@ -285,19 +224,9 @@ export default function WordList() {
             </button>
             <h1 className="text-xl font-black text-foreground">Dictionary</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium">
-              {total.toLocaleString()} words
-            </span>
-            {/* Persistent Swipe button */}
-            <button
-              onClick={() => setLocation(swipeUrl)}
-              className="flex items-center gap-1 bg-primary/20 text-primary px-2.5 py-1.5 rounded-full press-scale"
-            >
-              <Gamepad2 className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-bold">Swipe</span>
-            </button>
-          </div>
+          <span className="text-xs text-muted-foreground font-medium">
+            {total.toLocaleString()} words
+          </span>
         </div>
 
         {/* Search */}
@@ -402,31 +331,12 @@ export default function WordList() {
         )}
       </div>
 
-      {/* Swipe hint for authenticated users */}
-      {isAuthenticated && words.length > 0 && !wordsQuery.isLoading && (
-        <div className="px-4 mb-3">
-          <p className="text-[10px] text-muted-foreground text-center">
-            Swipe right = <span className="text-primary font-bold">Learned</span> · Swipe left = <span className="text-chart-3 font-bold">Reviewing</span>
-          </p>
-          {/* Swipe button — central action, placed below instruction */}
-          <div className="flex justify-center mt-2.5">
-            <button
-              onClick={() => setLocation(swipeUrl)}
-              className="flex items-center gap-2 bg-primary/15 hover:bg-primary/25 text-primary px-5 py-2.5 rounded-full press-scale transition-colors border border-primary/30"
-            >
-              <Gamepad2 className="w-5 h-5" />
-              <span className="text-sm font-bold">Swipe Mode</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Word list */}
       <div className="px-4 space-y-2">
         {wordsQuery.isLoading ? (
           Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="game-card p-3.5 flex items-center gap-3">
-              <Skeleton className="w-12 h-12 rounded-xl" />
+              <Skeleton className="w-11 h-11 rounded-xl" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3 w-40" />
@@ -441,21 +351,21 @@ export default function WordList() {
           </div>
         ) : (
           words.map((word: any) => (
-            <SwipeableWordCard
+            <WordCard
               key={word.id}
               word={word}
               isAuthenticated={isAuthenticated}
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'learned' },
-                  { onSuccess: () => toast.success(`${word.korean} marked as learned`) }
+                  { wordId: word.id, status: 'learned', language },
+                  { onSuccess: () => toast.success(`${word.korean || word.chinese} marked as learned ✓`) }
                 );
               }}
               onMarkReviewing={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'reviewing' },
-                  { onSuccess: () => toast.success(`${word.korean} marked for review`) }
+                  { wordId: word.id, status: 'reviewing', language },
+                  { onSuccess: () => toast.success(`${word.korean || word.chinese} added to review`) }
                 );
               }}
             />
