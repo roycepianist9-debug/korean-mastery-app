@@ -401,9 +401,10 @@ export default function SwipeGame() {
   const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
   const [levelFilter, setLevelFilter] = useState(
-    params.get("hskLevel") || params.get("level") || "all"
+    params.get("hskLevel") || params.get("level") ||
+    (language === 'chinese' ? '1' : 'beginner')
   );
-  const [cardFilter, setCardFilter] = useState<CardFilter>('all');
+  const [cardFilter, setCardFilter] = useState<CardFilter>('new');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
@@ -412,7 +413,7 @@ export default function SwipeGame() {
   const [deckSize, setDeckSize] = useState<number>(
     DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
       ? Number(params.get("count"))
-      : 20
+      : 10
   );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -590,6 +591,8 @@ export default function SwipeGame() {
                       <SelectItem value="2">HSK 2</SelectItem>
                       <SelectItem value="3">HSK 3</SelectItem>
                       <SelectItem value="4">HSK 4</SelectItem>
+                      <SelectItem value="5">HSK 5</SelectItem>
+                      <SelectItem value="6">HSK 6</SelectItem>
                     </>
                   ) : (
                     <>

@@ -202,3 +202,10 @@
 - [x] Progress bar shows % toward current milestone
 - [x] Non-clickable motivational card (read-only)
 - [x] Language-aware: shows TOPIK for Korean, HSK for Chinese
+
+## Hamburger Menu & Swipe Defaults (May 2026)
+- [x] Add hamburger menu (☰) to Home page header
+- [x] Menu items: Manage Subscription, Settings (admin), About, Logout
+- [x] Manage Subscription opens Stripe customer portal (or upgrade modal if not subscribed)
+- [x] Fix swipe session defaults: level=HSK1/Beginner, type=All, count=10, status=New
+- [x] Generate LLM example sentences for HSK 5-6 words (batch process running in background)

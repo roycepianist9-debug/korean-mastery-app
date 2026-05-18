@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
+import UpgradeModal from "@/components/UpgradeModal";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
   ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
+  Menu, Settings, CreditCard, Info, LogOut, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -121,6 +123,23 @@ export default function Home() {
   const progressByPos = trpc.progress.getByPos.useQuery({ language }, { enabled: isAuthenticated });
   const todayCount = trpc.progress.todayCount.useQuery({ language }, { enabled: isAuthenticated });
   const [graphOpen, setGraphOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const openPortalMutation = trpc.subscription.openCustomerPortal.useMutation({
+    onSuccess: (data) => {
+      if (data.portalUrl) window.open(data.portalUrl, '_blank');
+    },
+    onError: () => {
+      // No Stripe customer yet → show upgrade flow
+      setUpgradeOpen(true);
+    },
+  });
+
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => { window.location.href = '/'; },
+  });
   const dailyHistory = trpc.progress.dailyHistory.useQuery(
     { language, days: 30 },
     { enabled: isAuthenticated && graphOpen }
@@ -234,7 +253,122 @@ export default function Home() {
             >
               {muted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-foreground" />}
             </button>
+            <button
+              onClick={() => { sfx.tap(); setMenuOpen(true); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
+              aria-label="Open menu"
+            >
+              <Menu className="w-4 h-4 text-foreground" />
+            </button>
           </div>
+
+          {/* Slide-in Menu Overlay */}
+          {menuOpen && (
+            <div className="fixed inset-0 z-50 flex">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={() => setMenuOpen(false)}
+              />
+              {/* Menu Panel */}
+              <div className="relative ml-auto w-72 h-full bg-background border-l border-border flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-8 pb-4 border-b border-border">
+                  <div>
+                    <p className="text-sm font-black text-foreground">{user?.name || 'Guest'}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[180px]">{user?.email || ''}</p>
+                  </div>
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 press-scale"
+                  >
+                    <X className="w-4 h-4 text-foreground" />
+                  </button>
+                </div>
+
+                {/* Menu Items */}
+                <div className="flex-1 px-3 py-4 space-y-1">
+                  {/* Manage Subscription */}
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => {
+                        sfx.tap();
+                        setMenuOpen(false);
+                        openPortalMutation.mutate();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">Manage Subscription</p>
+                        <p className="text-xs text-muted-foreground">Billing, upgrade, cancel</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                    </button>
+                  )}
+
+                  {/* Admin Settings */}
+                  {isAuthenticated && user?.role === 'admin' && (
+                    <button
+                      onClick={() => {
+                        sfx.tap();
+                        setMenuOpen(false);
+                        setLocation('/admin');
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-chart-3" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">Admin Settings</p>
+                        <p className="text-xs text-muted-foreground">Pricing, access, config</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                    </button>
+                  )}
+
+                  {/* About */}
+                  <button
+                    onClick={() => {
+                      sfx.tap();
+                      setMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+                      <Info className="w-4 h-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">About</p>
+                      <p className="text-xs text-muted-foreground">Version 1.0 · Korean & Chinese</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Logout */}
+                {isAuthenticated && (
+                  <div className="px-3 pb-8 border-t border-border pt-3">
+                    <button
+                      onClick={() => {
+                        sfx.tap();
+                        setMenuOpen(false);
+                        logoutMutation.mutate();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-destructive/10 transition-all press-scale text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-destructive/15 flex items-center justify-center">
+                        <LogOut className="w-4 h-4 text-destructive" />
+                      </div>
+                      <p className="text-sm font-bold text-destructive">Sign Out</p>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -552,6 +686,12 @@ export default function Home() {
         )}
       </div>
 
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        learnedCount={0}
+        limit={150}
+      />
       <BottomNav />
     </div>
   );
