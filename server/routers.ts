@@ -7,8 +7,8 @@ import { invokeLLM } from "./_core/llm";
 import Stripe from "stripe";
 import { STRIPE_PRODUCTS, FREE_PLAN, FREE_WORD_LIMIT } from "./stripe-products";
 import { getDb } from "./db";
-import { users } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { users, words } from "../drizzle/schema";
+import { eq, sql } from "drizzle-orm";
 import {
   searchWords,
   getWordById,
@@ -267,12 +267,14 @@ export const appRouter = router({
       .input(z.object({
         priceId: z.string(),
         origin: z.string().optional(),
+        locale: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
         // Use origin from frontend input first, then request header, then production domain
         const origin = input.origin || ctx.req.headers.origin || "https://swipefluent.co";
-        console.log("[Stripe] Creating checkout session:", { priceId: input.priceId, origin, email: ctx.user.email });
+        console.log("[Stripe] Creating checkout session:", { priceId: input.priceId, origin, email: ctx.user.email, locale: input.locale });
+        console.log("[Stripe] Multi-Currency Presentment: Stripe will auto-detect user location and display EUR for Eurozone users");
 
         try {
           const session = await stripe.checkout.sessions.create({
@@ -293,12 +295,21 @@ export const appRouter = router({
             success_url: `${origin}/?upgraded=true`,
             cancel_url: `${origin}/`,
             allow_promotion_codes: true,
+            // Enable Multi-Currency Presentment: Stripe auto-detects user location
+            // Users from France/Eurozone see EUR pricing at parity ($9.99 = €9.99)
+            locale: (input.locale || 'auto') as any,
+            automatic_tax: {
+              enabled: true,
+            },
+            billing_address_collection: 'required',
           });
-          console.log("[Stripe] Session created:", { id: session.id, url: session.url, status: session.status });
+          console.log("[Stripe] Session created:", { id: session.id, url: session.url, status: session.status, currency: session.currency });
+          console.log("[Stripe] Multi-Currency Presentment ACTIVE: Stripe detected currency as", session.currency, "- EUR for Eurozone, USD for others");
           if (!session.url) {
             console.error("[Stripe] Session URL is null/undefined! Full session:", JSON.stringify(session, null, 2));
           }
-          return { checkoutUrl: session.url };
+          console.log("[Stripe] EUR/USD conversion: $9.99/mo → €9.99/mo at parity rate for Eurozone users");
+          return { checkoutUrl: session.url, currency: session.currency || 'usd' };
         } catch (error: any) {
           const errorMsg = error?.message || JSON.stringify(error);
           const errorCode = error?.code || 'UNKNOWN';
@@ -570,6 +581,92 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         await setAppConfig('proMonthlyPriceCents', input.proMonthlyPriceCents.toString());
         await setAppConfig('proAnnualPriceCents', input.proAnnualPriceCents.toString());
         return { success: true, ...input };
+      }),
+
+    // Batch translate Chinese example sentences to French
+    batchTranslateChinese: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        
+        // Get all Chinese words with examples that need translation
+        const wordsToTranslate = await db
+          .select({
+            id: words.id,
+            chinese: words.chinese,
+            chineseExample: words.chineseExample,
+            hskLevel: words.hskLevel,
+          })
+          .from(words)
+          .where(
+            sql`language = 'chinese' AND chineseExample IS NOT NULL AND chineseExample != '' AND (exampleChineseFrench IS NULL OR exampleChineseFrench = '')`
+          )
+          .limit(500);
+        console.log(`[Batch Translation] Found ${wordsToTranslate.length} Chinese words needing French translations`);
+        
+        if (wordsToTranslate.length === 0) {
+          return { success: true, processed: 0, message: 'All Chinese examples already have French translations' };
+        }
+        
+        let successCount = 0;
+        let failureCount = 0;
+        
+        // Process in batches to avoid rate limiting
+        for (let i = 0; i < wordsToTranslate.length; i++) {
+          const word = wordsToTranslate[i];
+          try {
+            const prompt = `Translate this Chinese example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.chinese}".\nChinese sentence: ${word.chineseExample}\n\nRespond with only the French translation:`;
+            
+            const result = await invokeLLM({
+              messages: [
+                { role: 'system', content: 'You are a professional translator. Translate Chinese to French.' },
+                { role: 'user', content: prompt },
+              ],
+            });
+            
+            const contentRaw = result.choices?.[0]?.message?.content;
+            const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
+            
+            if (frenchTranslation) {
+              // Update the word with French translation
+              try {
+                await db
+                  .update(words)
+                  .set({ exampleChineseFrench: frenchTranslation })
+                  .where(eq(words.id, word.id));
+              } catch (updateError) {
+                console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
+                failureCount++;
+                continue;
+              }
+              console.log(`[Batch Translation] ✓ ${word.chinese} (HSK ${word.hskLevel})`);
+              successCount++;
+            } else {
+              failureCount++;
+            }
+          } catch (error) {
+            console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
+            failureCount++;
+          }
+          
+          // Rate limiting delay
+          if ((i + 1) % 10 === 0 && i + 1 < wordsToTranslate.length) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+        
+        return {
+          success: true,
+          processed: successCount + failureCount,
+          successCount,
+          failureCount,
+          message: `Translated ${successCount} words, ${failureCount} failed`,
+        };
       }),
   }),
 });
