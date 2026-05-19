@@ -626,21 +626,14 @@ export default function Home() {
         {isAuthenticated && ps && (
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => { sfx.tap(); setLocation(`/words?statuses=learned${langParam}`); }}
-              className="game-card p-3 text-center press-scale"
-            >
-              <p className="text-lg font-black text-primary">{ps.learned}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('words.learned')}</p>
-            </button>
-            <button
-              onClick={() => { sfx.tap(); setLocation(`/words?statuses=reviewing${langParam}`); }}
+              onClick={() => { sfx.tap(); setLocation(`/play?filter=reviewing${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-chart-3">{ps.reviewing}</p>
               <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('words.reviewing')}</p>
             </button>
             <button
-              onClick={() => { sfx.tap(); setLocation(`/words?statuses=new${langParam}`); }}
+              onClick={() => { sfx.tap(); setLocation(`/play?filter=new${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-accent">{(ws?.total ?? 0) - ps.learned - ps.reviewing}</p>

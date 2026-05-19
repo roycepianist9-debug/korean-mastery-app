@@ -411,18 +411,6 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
     icon: <RotateCcw className="w-4 h-4" />,
     descKey: 'swipe.wordsToReview',
   },
-  {
-    key: 'learned',
-    labelKey: 'words.learned',
-    icon: <Star className="w-4 h-4" />,
-    descKey: 'swipe.reinforceLearned',
-  },
-  {
-    key: 'all',
-    labelKey: 'swipe.allWords',
-    icon: <BookOpen className="w-4 h-4" />,
-    descKey: 'swipe.allWords',
-  },
 ];
 
 /* ─── Main Component ─── */
