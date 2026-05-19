@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { Home, BookOpen, Gamepad2, Settings } from "lucide-react";
 import { useSound } from "@/contexts/SoundContext";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
@@ -11,11 +12,12 @@ export default function BottomNav() {
   // Show Settings tab only for admin users
   const isAdmin = user?.role === "admin";
 
+  const { t } = useI18n();
   const tabs = [
-    { path: "/", icon: Home, label: "Home" },
-    { path: "/play", icon: Gamepad2, label: "Play" },
-    { path: "/words", icon: BookOpen, label: "Words" },
-    ...(isAdmin ? [{ path: "/admin", icon: Settings, label: "Settings" }] : []),
+    { path: "/", icon: Home, label: t("nav.home") },
+    { path: "/play", icon: Gamepad2, label: t("nav.play") },
+    { path: "/words", icon: BookOpen, label: t("nav.words") },
+    ...(isAdmin ? [{ path: "/admin", icon: Settings, label: t("nav.settings") }] : []),
   ];
 
   return (

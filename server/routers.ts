@@ -299,9 +299,16 @@ export const appRouter = router({
             console.error("[Stripe] Session URL is null/undefined! Full session:", JSON.stringify(session, null, 2));
           }
           return { checkoutUrl: session.url };
-        } catch (error) {
-          console.error("[Stripe] Checkout session creation failed:", error);
-          throw new Error("Failed to create checkout session");
+        } catch (error: any) {
+          const errorMsg = error?.message || JSON.stringify(error);
+          const errorCode = error?.code || 'UNKNOWN';
+          const errorType = error?.type || 'unknown';
+          console.error("[Stripe] Checkout session creation FAILED");
+          console.error("  Code:", errorCode);
+          console.error("  Type:", errorType);
+          console.error("  Message:", errorMsg);
+          console.error("  Full error:", error);
+          throw new Error(`Stripe API rejected session: ${errorCode} - ${errorMsg}`);
         }
       }),
 

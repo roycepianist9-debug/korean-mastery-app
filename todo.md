@@ -225,3 +225,10 @@
 - [x] Menu: add "Guest Sign up/in" item for unauthenticated users (standard OAuth login flow)
 - [x] Menu: move Sign Out button up into main menu items (no longer buried at bottom)
 - [x] Fix Stripe checkout failure: Updated to LIVE Stripe keys (pk_live_, sk_live_) and verified LIVE product/price IDs (prod_UXeVGiiQsUm8fg, price_1TYZClK1SjGQ7gS6EVuarqby, price_1TYZCrK1SjGQ7gS6BY5YWF5a). All 64 tests passing. Cache cleared and server restarted with fresh dependencies.
+
+## Features (May 2026 - Round 4)
+- [x] Words page: set default filters to "New" + first level when reached from bottom nav "Words" icon
+- [x] i18n: build translation system (English + French) — I18nContext with localStorage persistence
+- [x] i18n: add language picker after onboarding (English or French) — LocalePicker component
+- [x] i18n: translate all UI strings to French — Home, WordList, SwipeGame, Rules, UpgradeModal, BottomNav
+- [x] Menu: add Globe language switch to toggle EN/FR anytime

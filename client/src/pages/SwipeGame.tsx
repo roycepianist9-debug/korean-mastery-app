@@ -23,6 +23,7 @@ import WordDetailSheet from "@/components/WordDetailSheet";
 import ClickableExample from "@/components/ClickableExample";
 import { useSound } from "@/contexts/SoundContext";
 import UpgradeModal from "@/components/UpgradeModal";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface SwipeResult {
   wordId: number;
@@ -310,12 +311,13 @@ function SessionSummary({
   onHome: () => void;
   playVictory: () => void;
 }) {
+  const { t } = useI18n();
   const hasPlayed = useRef(false);
   useEffect(() => {
     if (!hasPlayed.current) {
       hasPlayed.current = true;
-      const t = setTimeout(() => playVictory(), 200);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => playVictory(), 200);
+      return () => clearTimeout(timer);
     }
   }, [playVictory]);
 
@@ -324,7 +326,7 @@ function SessionSummary({
       <div className="text-center space-y-6 max-w-sm w-full">
         <div className="animate-xp-pop">
           <Trophy className="w-16 h-16 text-chart-3 mx-auto mb-2" />
-          <h2 className="text-2xl font-black text-foreground">Session Complete!</h2>
+          <h2 className="text-2xl font-black text-foreground">{t('swipe.sessionComplete')}</h2>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -336,22 +338,22 @@ function SessionSummary({
           <div className="game-card p-4 text-center">
             <Check className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-xl font-black text-primary">{results.totalLearned}</p>
-            <p className="text-[10px] text-muted-foreground font-medium">Learned</p>
+            <p className="text-[10px] text-muted-foreground font-medium">{t('swipe.learned')}</p>
           </div>
           <div className="game-card p-4 text-center">
             <RotateCcw className="w-5 h-5 text-chart-3 mx-auto mb-1" />
             <p className="text-xl font-black text-chart-3">{results.totalReviewed - results.totalLearned}</p>
-            <p className="text-[10px] text-muted-foreground font-medium">To Review</p>
+            <p className="text-[10px] text-muted-foreground font-medium">{t('swipe.review')}</p>
           </div>
         </div>
 
         <div className="space-y-3">
           <Button size="lg" className="w-full font-bold press-scale" onClick={onRestart}>
             <Sparkles className="w-5 h-5 mr-2" />
-            Play Again
+            {t('swipe.playAgain')}
           </Button>
           <Button size="lg" variant="outline" className="w-full font-bold press-scale" onClick={onHome}>
-            Back to Home
+            {t('swipe.backToHome')}
           </Button>
         </div>
       </div>
@@ -394,6 +396,7 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; label: string; icon: React.ReactNo
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { language } = useLanguage();
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
@@ -571,7 +574,7 @@ export default function SwipeGame() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
           </button>
-          <h1 className="text-2xl font-black text-foreground">Start Session</h1>
+          <h1 className="text-2xl font-black text-foreground">{t('swipe.startSession')}</h1>
           <p className="text-sm text-muted-foreground mt-1">Choose your deck and start swiping</p>
         </div>
 
@@ -688,7 +691,7 @@ export default function SwipeGame() {
             onClick={() => { sfx.whoosh(); setSessionStarted(true); }}
           >
             <Gamepad2 className="w-6 h-6 mr-2" />
-            Start ({deckSize} cards)
+            {t('swipe.startSession')} ({deckSize} {t('swipe.cards')})
           </Button>
         </div>
 

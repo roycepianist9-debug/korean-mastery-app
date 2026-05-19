@@ -6,6 +6,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { SoundProvider } from "./contexts/SoundContext";
+import { I18nProvider, useI18n } from "./contexts/I18nContext";
+import LocalePicker from "./components/LocalePicker";
 import Home from "./pages/Home";
 import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
@@ -28,18 +30,32 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { hasChosenLocale } = useI18n();
+  
+  if (!hasChosenLocale) {
+    return <LocalePicker />;
+  }
+
+  return (
+    <LanguageProvider>
+      <SoundProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </SoundProvider>
+    </LanguageProvider>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable>
-        <LanguageProvider>
-          <SoundProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </SoundProvider>
-        </LanguageProvider>
+        <I18nProvider>
+          <AppContent />
+        </I18nProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

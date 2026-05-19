@@ -9,13 +9,14 @@ import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
   ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
-  Menu, Settings, CreditCard, Info, LogOut, Shield,
+  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useI18n } from "@/contexts/I18nContext";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
@@ -112,6 +113,7 @@ export default function Home() {
   const { language } = useLanguage();
   const { play: sfx, muted, toggleMute } = useSound();
   const { theme, toggleTheme } = useTheme();
+  const { t, locale, setLocale } = useI18n();
 
 
   const isChinese = language === 'chinese';
@@ -302,8 +304,8 @@ export default function Home() {
                         <CreditCard className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-foreground">Manage Subscription</p>
-                        <p className="text-xs text-muted-foreground">Billing, upgrade, cancel</p>
+                        <p className="text-sm font-bold text-foreground">{t('menu.manageSubscription')}</p>
+                        <p className="text-xs text-muted-foreground">{t('menu.billing')}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
                     </button>
@@ -323,8 +325,8 @@ export default function Home() {
                         <Shield className="w-4 h-4 text-chart-3" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-foreground">Admin Settings</p>
-                        <p className="text-xs text-muted-foreground">Pricing, access, config</p>
+                        <p className="text-sm font-bold text-foreground">{t('menu.adminSettings')}</p>
+                        <p className="text-xs text-muted-foreground">{t('menu.pricing')}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
                     </button>
@@ -343,8 +345,8 @@ export default function Home() {
                       <BookOpen className="w-4 h-4 text-chart-3" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">Rules</p>
-                      <p className="text-xs text-muted-foreground">How to use the app</p>
+                      <p className="text-sm font-bold text-foreground">{t('menu.rules')}</p>
+                      <p className="text-xs text-muted-foreground">{t('menu.howToUse')}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
                   </button>
@@ -361,8 +363,26 @@ export default function Home() {
                       <Info className="w-4 h-4 text-accent" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">About</p>
-                      <p className="text-xs text-muted-foreground">Version 1.0 · Korean & Chinese</p>
+                      <p className="text-sm font-bold text-foreground">{t('menu.about')}</p>
+                      <p className="text-xs text-muted-foreground">{t('menu.version')} · Korean & Chinese</p>
+                    </div>
+                  </button>
+
+                  {/* Language Switch */}
+                  <button
+                    onClick={() => {
+                      sfx.tap();
+                      const newLocale = locale === 'en' ? 'fr' : 'en';
+                      setLocale(newLocale);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-chart-3" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{locale === 'en' ? 'Français' : 'English'}</p>
+                      <p className="text-xs text-muted-foreground">{locale === 'en' ? 'Switch to French' : 'Passer en anglais'}</p>
                     </div>
                   </button>
 
@@ -379,7 +399,7 @@ export default function Home() {
                       <div className="w-8 h-8 rounded-lg bg-destructive/15 flex items-center justify-center">
                         <LogOut className="w-4 h-4 text-destructive" />
                       </div>
-                      <p className="text-sm font-bold text-destructive">Sign Out</p>
+                      <p className="text-sm font-bold text-destructive">{t('menu.signOut')}</p>
                     </button>
                   )}
 
@@ -397,8 +417,8 @@ export default function Home() {
                         <LogIn className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-foreground">Sign up / Sign in</p>
-                        <p className="text-xs text-muted-foreground">Save progress & unlock features</p>
+                        <p className="text-sm font-bold text-foreground">{t('menu.signUpIn')}</p>
+                        <p className="text-xs text-muted-foreground">{t('home.signInDesc')}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
                     </button>
@@ -412,15 +432,12 @@ export default function Home() {
           <div>
             <h1 className="text-2xl font-black text-foreground">
               {isAuthenticated
-                ? (gs && gs.xp > 0 ? 'Welcome back!' : 'Welcome!')
+                ? (gs && gs.xp > 0 ? t('home.welcomeBack') : t('home.welcome'))
                 : isChinese ? 'Chinese Mastery' : 'Korean Mastery'
               }
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {isAuthenticated
-                ? (gs && gs.xp > 0 ? 'Ready to learn more?' : 'Learn languages by swiping!')
-                : 'Learn languages by swiping!'
-              }
+              {t('home.tagline')}
             </p>
           </div>
           {isAuthenticated && gs && (
@@ -454,7 +471,7 @@ export default function Home() {
             >
               <CalendarDays className="w-5 h-5 text-primary mx-auto mb-1" />
               <p className="text-lg font-black text-foreground">{todayWords}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">Today</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('home.today')}</p>
             </button>
           </div>
         )}
@@ -591,7 +608,7 @@ export default function Home() {
           className="w-full h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
         >
           <Gamepad2 className="w-6 h-6 mr-2" />
-          Start Swipe Game
+          {t('home.tagline').includes('swipant') ? 'Commencer le Swipe' : 'Start Swipe Game'}
         </Button>
 
         {/* Clickable Progress Stats */}
@@ -695,7 +712,7 @@ export default function Home() {
           <div className="game-card p-3.5">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-4 h-4 text-primary" />
-              <span className="text-sm font-black text-foreground">Dictionary Stats</span>
+              <span className="text-sm font-black text-foreground">{t('home.dictionaryStats')}</span>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               {ws.byLevel.map((item: any) => (
@@ -718,8 +735,8 @@ export default function Home() {
               <LogIn className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 text-left">
-              <p className="font-bold text-sm text-foreground">Sign in to track progress</p>
-              <p className="text-xs text-muted-foreground">Save your XP, streaks, and learned words</p>
+              <p className="font-bold text-sm text-foreground">{t('home.signInToTrack')}</p>
+              <p className="text-xs text-muted-foreground">{t('home.signInDesc')}</p>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>

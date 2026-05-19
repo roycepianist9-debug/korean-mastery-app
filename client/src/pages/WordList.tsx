@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useI18n } from "@/contexts/I18nContext";
 import { trpc } from "@/lib/trpc";
 import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
@@ -132,26 +133,28 @@ function StatusFilter({
 export default function WordList() {
   const { isAuthenticated } = useAuth();
   const { language } = useLanguage();
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
-  // Initialize from URL params
+  // Initialize from URL params — if no params at all (bottom nav), default to New + first level
+  const hasAnyUrlParam = !!(params.get("pos") || params.get("level") || params.get("hskLevel") || params.get("statuses"));
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const isChinese = language === 'chinese';
+  const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : "beginner");
+  const defaultStatuses = hasAnyUrlParam ? [] : ["new"];
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
   const [levelFilter, setLevelFilter] = useState(
-    params.get("hskLevel") || params.get("level") || "all"
+    params.get("hskLevel") || params.get("level") || defaultLevel
   );
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     const s = params.get("statuses");
-    return s ? s.split(",").filter(Boolean) : [];
+    return s ? s.split(",").filter(Boolean) : defaultStatuses;
   });
   const [page, setPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(
-    !!(params.get("pos") || params.get("level") || params.get("hskLevel") || params.get("statuses"))
-  );
+  const [showFilters, setShowFilters] = useState(true);
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const pageSize = 30;
@@ -218,10 +221,10 @@ export default function WordList() {
             <button onClick={() => setLocation("/")} className="text-muted-foreground press-scale">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-black text-foreground">Dictionary</h1>
+            <h1 className="text-xl font-black text-foreground">{t('words.dictionary')}</h1>
           </div>
           <span className="text-xs text-muted-foreground font-medium">
-            {total.toLocaleString()} words
+            {total.toLocaleString()} {t('words.wordsCount')}
           </span>
         </div>
 
@@ -229,7 +232,7 @@ export default function WordList() {
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search Korean, romanization, or English..."
+            placeholder={t('words.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 bg-secondary border-border h-10"
@@ -253,7 +256,7 @@ export default function WordList() {
             }`}
           >
             <Filter className="w-3 h-3" />
-            Filters
+            {t('words.filters')}
           </button>
           {isAuthenticated && (
             <StatusFilter
@@ -320,7 +323,7 @@ export default function WordList() {
                 onClick={() => { setPosFilter('all'); setLevelFilter('all'); setStatusFilter([]); setPage(1); }}
                 className="text-xs text-destructive font-medium"
               >
-                Clear all filters
+                {t('words.clearFilters')}
               </button>
             )}
           </div>
@@ -340,7 +343,7 @@ export default function WordList() {
             className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/20 border border-primary/40 text-primary font-bold text-sm press-scale transition-colors hover:bg-primary/30"
           >
             <Gamepad2 className="w-4 h-4" />
-            Swipe Mode
+            {t('words.swipeMode')}
           </button>
         )}
       </div>
@@ -360,8 +363,8 @@ export default function WordList() {
         ) : words.length === 0 ? (
           <div className="text-center py-12">
             <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">No words found</p>
-            <p className="text-xs text-muted-foreground mt-1">Try different search terms or filters</p>
+            <p className="text-muted-foreground font-medium">{t('words.noWords')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('words.tryDifferent')}</p>
           </div>
         ) : (
           words.map((word: any) => (

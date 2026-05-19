@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Lock, Sparkles, Zap, Crown, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface UpgradeModalProps {
 
 export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 }: UpgradeModalProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const { t } = useI18n();
   const plans = trpc.subscription.getPlans.useQuery(undefined, { enabled: open });
   const checkout = trpc.subscription.createCheckoutSession.useMutation();
 
@@ -21,14 +23,13 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
     try {
       const result = await checkout.mutateAsync({ priceId, origin: window.location.origin });
       if (result.checkoutUrl) {
-        toast.info("Redirecting to checkout...");
-        // Use location.href to avoid popup blockers on mobile Safari
+        toast.info(t('upgrade.redirecting'));
         window.location.href = result.checkoutUrl;
       } else {
-        toast.error("Checkout URL not returned. Please try again.");
+        toast.error(t('upgrade.failed'));
       }
     } catch (error) {
-      toast.error("Failed to start checkout. Please try again.");
+      toast.error(t('upgrade.failed'));
     } finally {
       setLoading(null);
     }
@@ -60,10 +61,10 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
           <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-3">
             <Crown className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-xl font-black text-foreground">You've reached the limit!</h2>
+          <h2 className="text-xl font-black text-foreground">{t('upgrade.limitReached')}</h2>
           <p className="text-sm text-muted-foreground mt-1.5">
-            You've learned <span className="font-bold text-primary">{learnedCount ?? limit}</span> words.
-            Upgrade to Pro for unlimited access.
+            <span className="font-bold text-primary">{learnedCount ?? limit}</span> {t('upgrade.wordsLearned')}.
+            {' '}{t('upgrade.subtitle')}.
           </p>
         </div>
 
@@ -71,15 +72,15 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
         <div className="space-y-2 mb-6">
           <div className="flex items-center gap-2.5 text-sm text-foreground">
             <Sparkles className="w-4 h-4 text-primary shrink-0" />
-            <span>Unlimited vocabulary (56,000+ Korean words)</span>
+            <span>{t('upgrade.unlimitedWords')}</span>
           </div>
           <div className="flex items-center gap-2.5 text-sm text-foreground">
             <Zap className="w-4 h-4 text-primary shrink-0" />
-            <span>AI-powered translations & grammar tips</span>
+            <span>{t('upgrade.aiTranslations')}</span>
           </div>
           <div className="flex items-center gap-2.5 text-sm text-foreground">
             <Lock className="w-4 h-4 text-primary shrink-0" />
-            <span>All levels: beginner to advanced</span>
+            <span>{t('upgrade.allLevels')}</span>
           </div>
         </div>
 
@@ -99,9 +100,9 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
               {loading === plan.stripePriceId ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              {plan.name} — ${(plan.priceInCents / 100).toFixed(2)}/{plan.interval}
+              {plan.interval === 'year' ? t('upgrade.annual') : t('upgrade.monthly')} — ${(plan.priceInCents / 100).toFixed(2)}{plan.interval === 'year' ? t('upgrade.year') : t('upgrade.month')}
               {plan.interval === 'year' && (
-                <span className="ml-2 text-xs opacity-80">(Save 17%)</span>
+                <span className="ml-2 text-xs opacity-80">({t('upgrade.save')})</span>
               )}
             </Button>
           ))}
@@ -112,7 +113,7 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
           onClick={onClose}
           className="w-full text-center text-xs text-muted-foreground mt-4 py-2"
         >
-          Maybe later
+          {t('general.cancel')}
         </button>
       </div>
     </div>
