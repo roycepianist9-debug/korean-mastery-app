@@ -115,6 +115,7 @@ export default function Home() {
   const { play: sfx, muted, toggleMute } = useSound();
   const { theme, toggleTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
+  const branding = trpc.admin.getAppBranding.useQuery();
 
 
   const isChinese = language === 'chinese';
@@ -445,15 +446,20 @@ export default function Home() {
           )}
         </div>
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-foreground">
-              {isAuthenticated
-                ? (gs && gs.xp > 0 ? t('home.welcomeBack') : t('home.welcome'))
-                : isChinese ? 'Chinese Mastery' : 'Korean Mastery'
-              }
-            </h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              {branding.data?.logoUrl && (
+                <img src={branding.data.logoUrl} alt="SwipeFluent" className="h-8 w-auto" />
+              )}
+              <h1 className="text-2xl font-black text-foreground">
+                {isAuthenticated
+                  ? (gs && gs.xp > 0 ? t('home.welcomeBack') : t('home.welcome'))
+                  : isChinese ? 'Chinese Mastery' : 'Korean Mastery'
+                }
+              </h1>
+            </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {t('home.tagline')}
+              {locale === 'fr' ? branding.data?.taglineFr : branding.data?.taglineEn}
             </p>
           </div>
           {isAuthenticated && gs && (

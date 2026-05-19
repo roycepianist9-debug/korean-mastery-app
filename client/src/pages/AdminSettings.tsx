@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
-import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X, Sparkles, Loader2 } from "lucide-react";
+import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X, Sparkles, Loader2, Image } from "lucide-react";
 
 export default function AdminSettings() {
   const { user, isAuthenticated } = useAuth();
@@ -16,6 +16,10 @@ export default function AdminSettings() {
   const [editWordId, setEditWordId] = useState<string>("");
   const [editMeaningFr, setEditMeaningFr] = useState<string>("");
   const [isEditingWord, setIsEditingWord] = useState(false);
+  const [taglineEn, setTaglineEn] = useState<string>("");
+  const [taglineFr, setTaglineFr] = useState<string>("");
+  const [isEditingTagline, setIsEditingTagline] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   // Populate price fields when config loads
   useEffect(() => {
@@ -24,6 +28,15 @@ export default function AdminSettings() {
       setAnnualPrice((config.data.proAnnualPriceCents / 100).toFixed(2));
     }
   }, [config.data]);
+
+  const brandingQuery = trpc.admin.getAppBranding.useQuery();
+  useEffect(() => {
+    if (brandingQuery.data) {
+      setTaglineEn(brandingQuery.data.taglineEn);
+      setTaglineFr(brandingQuery.data.taglineFr);
+      setLogoPreview(brandingQuery.data.logoUrl);
+    }
+  }, [brandingQuery.data]);
 
   const toggleBypass = trpc.admin.toggleAdminBypass.useMutation({
     onSuccess: (data) => {
@@ -74,6 +87,24 @@ export default function AdminSettings() {
     onError: (error) => toast.error(`Failed to update: ${error.message}`),
   });
 
+  const updateTagline = trpc.admin.updateTagline.useMutation({
+    onSuccess: () => {
+      toast.success("Tagline updated!");
+      setIsEditingTagline(false);
+      brandingQuery.refetch();
+    },
+    onError: () => toast.error("Failed to update tagline"),
+  });
+
+  const uploadLogo = trpc.admin.uploadLogo.useMutation({
+    onSuccess: (data) => {
+      toast.success("Logo uploaded!");
+      setLogoPreview(data.logoUrl);
+      brandingQuery.refetch();
+    },
+    onError: () => toast.error("Failed to upload logo"),
+  });
+
   const handleSavePricing = () => {
     const monthly = parseFloat(monthlyPrice);
     const annual = parseFloat(annualPrice);
@@ -107,6 +138,33 @@ export default function AdminSettings() {
       return;
     }
     editWordDefinition.mutate({ wordId, meaningFr: editMeaningFr });
+  };
+
+  const handleSaveTagline = () => {
+    if (!taglineEn.trim() || !taglineFr.trim()) {
+      toast.error("Both taglines are required");
+      return;
+    }
+    updateTagline.mutate({ taglineEn, taglineFr });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      toast.error("Only PNG, JPEG, and WebP images are supported");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = (event.target?.result as string).split(',')[1];
+      uploadLogo.mutate({ base64, mimeType: file.type as 'image/png' | 'image/jpeg' | 'image/webp' });
+    };
+    reader.readAsDataURL(file);
   };
 
   const isUnlimited = (config.data?.wordAccessLimit ?? 0) >= 999999;
@@ -377,6 +435,121 @@ export default function AdminSettings() {
           ) : (
             <div className="text-sm font-bold text-foreground">{freeWordCap} words / language</div>
           )}
+        </div>
+
+        {/* App Branding */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">App Branding</span>
+            </div>
+            {!isEditingTagline && (
+              <button
+                onClick={() => setIsEditingTagline(true)}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          {isEditingTagline ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Tagline (English)</label>
+                <textarea
+                  value={taglineEn}
+                  onChange={(e) => setTaglineEn(e.target.value)}
+                  placeholder="e.g., SwipeFluent — The fastest way to learn Korean & Chinese"
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none h-16"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Tagline (French)</label>
+                <textarea
+                  value={taglineFr}
+                  onChange={(e) => setTaglineFr(e.target.value)}
+                  placeholder="e.g., La manière la plus rapide d'apprendre le coréen et le chinois."
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none h-16"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveTagline}
+                  disabled={updateTagline.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingTagline(false);
+                    if (brandingQuery.data) {
+                      setTaglineEn(brandingQuery.data.taglineEn);
+                      setTaglineFr(brandingQuery.data.taglineFr);
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div>
+                <p className="text-xs text-muted-foreground font-bold mb-1">English</p>
+                <p className="text-xs text-foreground">{taglineEn}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-bold mb-1">French</p>
+                <p className="text-xs text-foreground">{taglineFr}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Logo Upload */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Image className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">App Logo</span>
+          </div>
+          {logoPreview && (
+            <div className="mb-3 flex justify-center">
+              <img src={logoPreview} alt="App logo" className="h-16 w-auto rounded-lg" />
+            </div>
+          )}
+          <div className="relative">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleLogoUpload}
+              disabled={uploadLogo.isPending}
+              className="hidden"
+              id="logo-upload"
+            />
+            <label
+              htmlFor="logo-upload"
+              className="block w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 text-center cursor-pointer transition-all"
+            >
+              {uploadLogo.isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Uploading...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Image className="w-4 h-4" />
+                  Upload Logo (PNG, JPEG, WebP)
+                </span>
+              )}
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Max 5MB. Recommended: 200x200px</p>
         </div>
 
         {/* Edit Word Definition */}

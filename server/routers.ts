@@ -9,6 +9,7 @@ import { STRIPE_PRODUCTS, FREE_PLAN, FREE_WORD_LIMIT } from "./stripe-products";
 import { getDb } from "./db";
 import { users, words, appConfig } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
+import { storagePut } from "./storage";
 import {
   searchWords,
   getWordById,
@@ -813,6 +814,81 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
           message: `Translated ${successCount} words, ${failureCount} failed`,
         };
       }),
+
+    // Update app tagline (English and French)
+    updateTagline: protectedProcedure
+      .input(z.object({
+        taglineEn: z.string().min(1).max(500),
+        taglineFr: z.string().min(1).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        await setAppConfig('taglineEn', input.taglineEn);
+        await setAppConfig('taglineFr', input.taglineFr);
+        return { success: true, taglineEn: input.taglineEn, taglineFr: input.taglineFr };
+      }),
+
+    // Upload logo and save URL to appConfig
+    uploadLogo: protectedProcedure
+      .input(z.object({
+        base64: z.string().min(1),
+        mimeType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        
+        try {
+          // Convert base64 to buffer
+          const buffer = Buffer.from(input.base64, 'base64');
+          
+          // Determine file extension from mime type
+          const ext = input.mimeType === 'image/png' ? 'png' : input.mimeType === 'image/jpeg' ? 'jpg' : 'webp';
+          
+          // Upload to storage
+          const { url } = await storagePut(
+            `app-logo.${ext}`,
+            buffer,
+            input.mimeType
+          );
+          
+          // Save URL to appConfig
+          await setAppConfig('logoUrl', url);
+          
+          console.log('[Admin] Logo uploaded successfully:', url);
+          return { success: true, logoUrl: url };
+        } catch (error) {
+          console.error('[Admin] Logo upload failed:', error);
+          throw new Error('Failed to upload logo');
+        }
+      }),
+
+    // Get current tagline and logo from appConfig
+    getAppBranding: publicProcedure.query(async () => {
+      try {
+        const taglineEn = await getAppConfig('taglineEn');
+        const taglineFr = await getAppConfig('taglineFr');
+        const logoUrl = await getAppConfig('logoUrl');
+        
+        return {
+          taglineEn: taglineEn || 'SwipeFluent — The fastest way to learn Korean & Chinese',
+          taglineFr: taglineFr || 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
+          logoUrl: logoUrl || null,
+        };
+      } catch (error) {
+        console.error('[Admin] Failed to fetch app branding:', error);
+        return {
+          taglineEn: 'SwipeFluent — The fastest way to learn Korean & Chinese',
+          taglineFr: 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
+          logoUrl: null,
+        };
+      }
+    }),
   }),
 });
 
