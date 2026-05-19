@@ -9,6 +9,15 @@ export default function LanguageToggle() {
   return (
     <div className="flex gap-1">
       <Button
+        variant={language === 'korean' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => { sfx.pop(); setLanguage('korean'); }}
+        className="text-lg"
+        title="English (Korean)"
+      >
+        🇰🇷
+      </Button>
+      <Button
         variant={language === 'chinese' ? 'default' : 'outline'}
         size="sm"
         onClick={() => { sfx.pop(); setLanguage('chinese'); }}
