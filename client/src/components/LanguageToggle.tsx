@@ -1,10 +1,12 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 
 export default function LanguageToggle() {
   const { language, setLanguage } = useLanguage();
   const { play: sfx } = useSound();
+  const { setLocale } = useI18n();
 
   return (
     <div className="flex gap-1">
@@ -29,7 +31,7 @@ export default function LanguageToggle() {
       <Button
         variant={language === 'french' ? 'default' : 'outline'}
         size="sm"
-        onClick={() => { sfx.pop(); setLanguage('french'); }}
+        onClick={() => { sfx.pop(); setLocale('fr'); }}
         className="text-lg"
         title="Français"
       >
