@@ -256,12 +256,7 @@ function FlashCard({
                   <span className="text-xs text-muted-foreground">Translating...</span>
                 </div>
               ) : translationFailed ? (
-                <button
-                  onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
-                  className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
-                >
-                  Tap to translate
-                </button>
+                <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
               ) : null
             ) : null}
           </div>
@@ -280,12 +275,7 @@ function FlashCard({
                   <span className="text-xs text-muted-foreground">Translating...</span>
                 </div>
               ) : translationFailed ? (
-                <button
-                  onClick={(e) => { e.stopPropagation(); retryTranslation(); }}
-                  className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 transition-colors"
-                >
-                  Tap to translate
-                </button>
+                <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
               ) : null
             ) : null}
           </div>

@@ -232,3 +232,7 @@
 - [x] i18n: add language picker after onboarding (English or French) — LocalePicker component
 - [x] i18n: translate all UI strings to French — Home, WordList, SwipeGame, Rules, UpgradeModal, BottomNav
 - [x] Menu: add Globe language switch to toggle EN/FR anytime
+
+## Bug Fixes (May 2026 - Round 5)
+- [x] Remove "Tap to translate" button when AI Translation is ON — replaced with "Translation unavailable" message for graceful failure handling
+- [x] Diagnosed LLM translation failures: Gemini API quota exhausted (412 Precondition Failed error) — not a code bug, graceful UX implemented
