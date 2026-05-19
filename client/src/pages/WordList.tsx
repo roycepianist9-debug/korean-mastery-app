@@ -100,6 +100,7 @@ function StatusFilter({
   selected: string[];
   onChange: (statuses: string[]) => void;
 }) {
+  const { t } = useI18n();
   const toggle = (status: string) => {
     if (selected.includes(status)) {
       onChange(selected.filter(s => s !== status));
@@ -109,9 +110,9 @@ function StatusFilter({
   };
 
   const statuses = [
-    { key: 'new', label: 'New', color: 'text-accent bg-accent/20 border-accent/40' },
-    { key: 'reviewing', label: 'Reviewing', color: 'text-chart-3 bg-chart-3/20 border-chart-3/40' },
-    { key: 'learned', label: 'Learned', color: 'text-primary bg-primary/20 border-primary/40' },
+    { key: 'new', label: t('words.new'), color: 'text-accent bg-accent/20 border-accent/40' },
+    { key: 'reviewing', label: t('words.reviewing'), color: 'text-chart-3 bg-chart-3/20 border-chart-3/40' },
+    { key: 'learned', label: t('words.learned'), color: 'text-primary bg-primary/20 border-primary/40' },
   ];
 
   return (
@@ -281,7 +282,7 @@ export default function WordList() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="all">{t('swipe.allLevels')}</SelectItem>
                     {isChinese ? (
                       <>
                         <SelectItem value="1">HSK 1</SelectItem>
@@ -296,9 +297,9 @@ export default function WordList() {
                       </>
                     ) : (
                       <>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
+                        <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
+                        <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
+                        <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
                       </>
                     )}
                   </SelectContent>
@@ -311,13 +312,13 @@ export default function WordList() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="noun">Nouns</SelectItem>
-                    <SelectItem value="verb">Verbs</SelectItem>
-                    <SelectItem value="adjective">Adjectives</SelectItem>
-                    <SelectItem value="adverb">Adverbs</SelectItem>
-                    <SelectItem value="determiner">Determiners</SelectItem>
-                    <SelectItem value="interjection">Interjections</SelectItem>
+                    <SelectItem value="all">{t('swipe.allTypes')}</SelectItem>
+                    <SelectItem value="noun">{t('swipe.noun')}s</SelectItem>
+                    <SelectItem value="verb">{t('swipe.verb')}s</SelectItem>
+                    <SelectItem value="adjective">{t('swipe.adjective')}s</SelectItem>
+                    <SelectItem value="adverb">{t('swipe.adverb')}s</SelectItem>
+                    <SelectItem value="determiner">{t('swipe.determiner')}s</SelectItem>
+                    <SelectItem value="interjection">{t('swipe.interjection')}s</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

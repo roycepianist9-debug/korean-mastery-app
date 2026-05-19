@@ -220,8 +220,8 @@ function FlashCard({
               word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
               'bg-accent/20 text-accent'
             }`}>
-              {word.topikLevel === 'beginner' ? 'Beginner' :
-               word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced'}
+              {word.topikLevel === 'beginner' ? t('swipe.beginner') :
+               word.topikLevel === 'intermediate' ? t('swipe.intermediate') : t('swipe.advanced')}
             </span>
           )}
         </div>
@@ -594,7 +594,7 @@ export default function SwipeGame() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="all">{t('swipe.allLevels')}</SelectItem>
                   {isChinese ? (
                     <>
                       <SelectItem value="1">HSK 1</SelectItem>
@@ -606,9 +606,9 @@ export default function SwipeGame() {
                     </>
                   ) : (
                     <>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
+                      <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
+                      <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -622,11 +622,11 @@ export default function SwipeGame() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="noun">Nouns</SelectItem>
-                  <SelectItem value="verb">Verbs</SelectItem>
-                  <SelectItem value="adjective">Adjectives</SelectItem>
-                  <SelectItem value="adverb">Adverbs</SelectItem>
+                  <SelectItem value="all">{t('swipe.allTypes')}</SelectItem>
+                  <SelectItem value="noun">{t('swipe.noun')}s</SelectItem>
+                  <SelectItem value="verb">{t('swipe.verb')}s</SelectItem>
+                  <SelectItem value="adjective">{t('swipe.adjective')}s</SelectItem>
+                  <SelectItem value="adverb">{t('swipe.adverb')}s</SelectItem>
                 </SelectContent>
               </Select>
             </div>
