@@ -247,9 +247,6 @@ function FlashCard({
           ) : (
             <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
           )}
-          <p style={{fontSize:'10px',color:'red',marginTop:'4px'}}>
-            lang={language} | fr={word?.meaningFr ?? 'NULL'}
-          </p>
         </div>
 
         {/* Example sentence */}
