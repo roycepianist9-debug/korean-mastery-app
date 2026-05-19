@@ -239,8 +239,8 @@ export default function Home() {
   const langParam = isChinese ? '&lang=chinese' : '';
 
   const levelFilterParam = (l: string) => {
-    if (isChinese) return `/words?hskLevel=${l}&lang=chinese`;
-    return `/words?level=${l}`;
+    if (isChinese) return `/play?hskLevel=${l}&lang=chinese`;
+    return `/play?level=${l}`;
   };
 
   return (
@@ -685,7 +685,7 @@ export default function Home() {
               {posData.map(item => (
                 <button
                   key={item.pos}
-                  onClick={() => { sfx.tap(); setLocation(`/words?pos=${item.pos}${langParam}`); }}
+                  onClick={() => { sfx.tap(); setLocation(`/play?pos=${item.pos}${langParam}`); }}
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">

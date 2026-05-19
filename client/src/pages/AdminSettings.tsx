@@ -37,9 +37,16 @@ export default function AdminSettings() {
     onError: () => toast.error("Failed to update pricing"),
   });
 
-  const batchTranslate = trpc.admin.batchTranslateChinese.useMutation({
+  const batchTranslateChinese = trpc.admin.batchTranslateChinese.useMutation({
     onSuccess: (data) => {
-      toast.success(`✓ Translated ${data.successCount} words, ${data.failureCount} failed`);
+      toast.success(`✓ Chinese: Translated ${data.successCount} words, ${data.failureCount} failed`);
+    },
+    onError: (error) => toast.error(`Translation failed: ${error.message}`),
+  });
+
+  const batchTranslateKorean = trpc.admin.batchTranslateKorean.useMutation({
+    onSuccess: (data) => {
+      toast.success(`✓ Korean: Translated ${data.successCount} words, ${data.failureCount} failed`);
     },
     onError: (error) => toast.error(`Translation failed: ${error.message}`),
   });
@@ -231,25 +238,44 @@ export default function AdminSettings() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            Translate Chinese HSK 1-6 example sentences to French. This will take a few minutes.
+            Translate example sentences to French. Each takes a few minutes.
           </p>
-          <button
-            onClick={() => batchTranslate.mutate()}
-            disabled={batchTranslate.isPending}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
-          >
-            {batchTranslate.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Translating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Start Batch Translation
-              </>
-            )}
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={() => batchTranslateChinese.mutate()}
+              disabled={batchTranslateChinese.isPending}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {batchTranslateChinese.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Chinese...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Translate Chinese (HSK 1-6)
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => batchTranslateKorean.mutate()}
+              disabled={batchTranslateKorean.isPending}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
+            >
+              {batchTranslateKorean.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Korean...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Translate Korean (TOPIK 1-6)
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* App Info */}

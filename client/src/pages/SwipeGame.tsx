@@ -776,20 +776,7 @@ export default function SwipeGame() {
         </div>
       </div>
 
-      {/* AI Translation toggle */}
-      <div className="px-4 mb-3 flex justify-center">
-        <button
-          onClick={toggleAi}
-          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all press-scale ${
-            aiEnabled
-              ? 'bg-accent/20 text-accent border-accent/40'
-              : 'bg-secondary text-muted-foreground border-transparent'
-          }`}
-        >
-          <Sparkles className="w-3 h-3" />
-          {aiEnabled ? 'AI Translation: ON' : 'AI Translation: OFF'}
-        </button>
-      </div>
+
 
       {/* Card area */}
       <div className="flex-1 px-6 pb-6 flex items-center justify-center">

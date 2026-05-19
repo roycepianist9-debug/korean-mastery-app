@@ -42,19 +42,11 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
     >
       <div
         className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-6 pb-8 animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary flex items-center justify-center press-scale"
-        >
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
 
         {/* Header */}
         <div className="text-center mb-6">
@@ -108,13 +100,7 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
           ))}
         </div>
 
-        {/* Dismiss */}
-        <button
-          onClick={onClose}
-          className="w-full text-center text-xs text-muted-foreground mt-4 py-2"
-        >
-          {t('general.cancel')}
-        </button>
+
       </div>
     </div>
   );

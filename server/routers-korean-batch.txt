@@ -1,0 +1,86 @@
+
+    // Batch translate Korean example sentences to French
+    batchTranslateKorean: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        
+        // Get all Korean words with examples that need translation
+        const wordsToTranslate = await db
+          .select({
+            id: words.id,
+            korean: words.korean,
+            koreanExample: words.koreanExample,
+            topikLevel: words.topikLevel,
+          })
+          .from(words)
+          .where(
+            sql`language = 'korean' AND koreanExample IS NOT NULL AND koreanExample != '' AND (exampleFrench IS NULL OR exampleFrench = '')`
+          )
+          .limit(500);
+        console.log(`[Batch Translation] Found ${wordsToTranslate.length} Korean words needing French translations`);
+        
+        if (wordsToTranslate.length === 0) {
+          return { success: true, processed: 0, message: 'All Korean examples already have French translations' };
+        }
+        
+        let successCount = 0;
+        let failureCount = 0;
+        
+        // Process in batches to avoid rate limiting
+        for (let i = 0; i < wordsToTranslate.length; i++) {
+          const word = wordsToTranslate[i];
+          try {
+            const prompt = `Translate this Korean example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.korean}".\nKorean sentence: ${word.koreanExample}\n\nRespond with only the French translation:`;
+            
+            const result = await invokeLLM({
+              messages: [
+                { role: 'system', content: 'You are a professional translator. Translate Korean to French.' },
+                { role: 'user', content: prompt },
+              ],
+            });
+            
+            const contentRaw = result.choices?.[0]?.message?.content;
+            const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
+            
+            if (frenchTranslation) {
+              // Update the word with French translation
+              try {
+                await db
+                  .update(words)
+                  .set({ exampleFrench: frenchTranslation })
+                  .where(eq(words.id, word.id));
+              } catch (updateError) {
+                console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
+                failureCount++;
+                continue;
+              }
+              console.log(`[Batch Translation] ✓ ${word.korean} (TOPIK ${word.topikLevel})`);
+              successCount++;
+            } else {
+              failureCount++;
+            }
+          } catch (error) {
+            console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
+            failureCount++;
+          }
+          
+          // Rate limiting delay
+          if ((i + 1) % 10 === 0 && i + 1 < wordsToTranslate.length) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+        
+        return {
+          success: true,
+          processed: successCount + failureCount,
+          successCount,
+          failureCount,
+          message: `Translated ${successCount} words, ${failureCount} failed`,
+        };
+      }),
