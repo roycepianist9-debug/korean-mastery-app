@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useI18n } from "@/contexts/I18nContext";
 import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import {
@@ -15,6 +16,7 @@ export default function WordDetail() {
   const wordId = parseInt(params.id || "0");
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useAuth();
+  const { locale } = useI18n();
   const [tipsRequested, setTipsRequested] = useState(false);
 
   const wordQuery = trpc.words.getById.useQuery(
@@ -118,7 +120,9 @@ export default function WordDetail() {
             <BookOpen className="w-4 h-4 text-primary" />
             <span className="text-xs font-bold text-primary uppercase tracking-wider">Meaning</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{word.meaning}</p>
+          <p className="text-lg font-bold text-foreground">
+            {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
+          </p>
         </div>
       </div>
 

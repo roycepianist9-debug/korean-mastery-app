@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useI18n } from "@/contexts/I18nContext";
 import { trpc } from "@/lib/trpc";
 import {
   Sheet,
@@ -64,8 +65,10 @@ interface WordDetailSheetProps {
     pinyin?: string | null;
     pos: string;
     meaning: string;
+    meaningFr?: string | null;
     koreanExample?: string | null;
     exampleEnglish?: string | null;
+    exampleFrench?: string | null;
     chineseExample?: string | null;
     examplePinyin?: string | null;
     topikLevel?: string | null;
@@ -77,6 +80,7 @@ interface WordDetailSheetProps {
 
 export default function WordDetailSheet({ word, open, onOpenChange }: WordDetailSheetProps) {
   const { isAuthenticated } = useAuth();
+  const { locale } = useI18n();
   const [, setLocation] = useLocation();
   const [tipsRequested, setTipsRequested] = useState(false);
   const tipsMutation = trpc.llm.getWordTips.useMutation();
@@ -158,7 +162,9 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
               <BookOpen className="w-3.5 h-3.5 text-primary" />
               <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Meaning</span>
             </div>
-            <p className="text-base font-bold text-foreground">{word.meaning}</p>
+            <p className="text-base font-bold text-foreground">
+              {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
+            </p>
           </div>
 
           {/* Example */}

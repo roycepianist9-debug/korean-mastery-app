@@ -96,7 +96,7 @@ function FlashCard({
   aiEnabled: boolean;
 }) {
   const { language } = useLanguage();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -242,7 +242,7 @@ function FlashCard({
 
         {/* Meaning */}
         <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          {language === 'french' && word.meaningFr ? (
+          {locale === 'fr' && word.meaningFr ? (
             <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
           ) : (
             <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
@@ -252,7 +252,7 @@ function FlashCard({
         {/* Example sentence */}
         {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
-            {language === 'french' && word.exampleFrench ? (
+            {locale === 'fr' && word.exampleFrench ? (
               <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
             ) : (
               <>

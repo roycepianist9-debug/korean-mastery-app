@@ -30,14 +30,14 @@ function WordCard({
   onMarkLearned,
   onMarkReviewing,
   isAuthenticated,
-  language,
+  locale,
 }: {
   word: any;
   onClick: () => void;
   onMarkLearned: () => void;
   onMarkReviewing: () => void;
   isAuthenticated: boolean;
-  language: string;
+  locale: string;
 }) {
   return (
     <div className="game-card rounded-2xl flex items-center overflow-hidden">
@@ -61,7 +61,7 @@ function WordCard({
             </span>
           </div>
           <p className="text-xs text-muted-foreground truncate mt-0.5">
-            {language === 'french' && word.meaningFr ? word.meaningFr : word.meaning}
+            {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
           </p>
         </div>
 
@@ -138,7 +138,7 @@ function StatusFilter({
 export default function WordList() {
   const { isAuthenticated } = useAuth();
   const { language } = useLanguage();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
@@ -377,7 +377,7 @@ export default function WordList() {
               key={word.id}
               word={word}
               isAuthenticated={isAuthenticated}
-              language={language}
+              locale={locale}
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
