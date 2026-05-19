@@ -379,6 +379,21 @@ export default function Home() {
                     </div>
                   </button>
 
+                  {/* French Language Toggle */}
+                  <button
+                    onClick={() => {
+                      sfx.tap();
+                      const newLocale = locale === 'en' ? 'fr' : 'en';
+                      setLocale(newLocale);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center text-lg">
+                      🇫🇷
+                    </div>
+                    <p className="text-sm font-bold text-foreground">{locale === 'en' ? 'Français' : 'English'}</p>
+                  </button>
+
                   {/* Sign Out */}
                   {isAuthenticated && (
                     <button
