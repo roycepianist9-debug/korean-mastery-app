@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
@@ -95,6 +95,7 @@ function FlashCard({
   isTop: boolean;
   aiEnabled: boolean;
 }) {
+  const { language } = useLanguage();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -240,44 +241,60 @@ function FlashCard({
 
         {/* Meaning */}
         <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+          {language === 'french' && word.meaningFr ? (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+          ) : (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+          )}
         </div>
 
         {/* Example sentence */}
         {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
-            <ClickableExample sentence={word.koreanExample} />
-            {aiEnabled ? (
-              translation ? (
-                <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-              ) : translationLoading ? (
-                <div className="flex items-center justify-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Translating...</span>
-                </div>
-              ) : translationFailed ? (
-                <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
-              ) : null
-            ) : null}
+            {language === 'french' && word.exampleFrench ? (
+              <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
+            ) : (
+              <>
+                <ClickableExample sentence={word.koreanExample} />
+                {aiEnabled ? (
+                  translation ? (
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+                  ) : translationLoading ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Translating...</span>
+                    </div>
+                  ) : translationFailed ? (
+                    <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
+                  ) : null
+                ) : null}
+              </>
+            )}
           </div>
         ) : word.chineseExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
-            <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
-            {word.examplePinyin && (
-              <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
+            {language === 'french' && word.exampleChineseFrench ? (
+              <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
+            ) : (
+              <>
+                <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+                {word.examplePinyin && (
+                  <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
+                )}
+                {aiEnabled ? (
+                  translation ? (
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
+                  ) : translationLoading ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Translating...</span>
+                    </div>
+                  ) : translationFailed ? (
+                    <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
+                  ) : null
+                ) : null}
+              </>
             )}
-            {aiEnabled ? (
-              translation ? (
-                <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-              ) : translationLoading ? (
-                <div className="flex items-center justify-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Translating...</span>
-                </div>
-              ) : translationFailed ? (
-                <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
-              ) : null
-            ) : null}
           </div>
         ) : null}
 
@@ -435,7 +452,7 @@ export default function SwipeGame() {
       topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
-      language,
+      language: language === 'french' ? 'korean' : language,
       statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
@@ -483,7 +500,7 @@ export default function SwipeGame() {
     if (isAuthenticated) {
       persistedWordIds.current.add(wordId);
       swipeMutation.mutate(
-        { wordId, known, language },
+        { wordId, known, language: language === 'french' ? 'korean' : language },
         {
           onSuccess: (data) => {
             if (data.status === 'paywall_blocked') {

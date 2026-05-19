@@ -57,8 +57,10 @@ export const words = mysqlTable("words", {
   romanization: varchar("romanization", { length: 255 }).notNull().default(""),
   pos: varchar("pos", { length: 64 }).notNull().default(""),
   meaning: text("meaning").notNull(),
+  meaningFr: text("meaningFr"),
   koreanExample: text("koreanExample"),
   exampleEnglish: text("exampleEnglish"),
+  exampleFrench: text("exampleFrench"),
   topikLevel: mysqlEnum("topikLevel", ["beginner", "intermediate", "advanced"]).default("advanced"),
   // Chinese fields
   chinese: varchar("chinese", { length: 255 }),
@@ -66,6 +68,7 @@ export const words = mysqlTable("words", {
   hskLevel: mysqlEnum("hskLevel", ["1", "2", "3", "4", "5", "6", "7", "8", "9"]),
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
+  exampleChineseFrench: text("exampleChineseFrench"),
 }, (table) => [
   index("idx_words_language").on(table.language),
   index("idx_words_korean").on(table.korean),
@@ -74,8 +77,13 @@ export const words = mysqlTable("words", {
   index("idx_words_topik").on(table.topikLevel),
   index("idx_words_hsk").on(table.hskLevel),
   index("idx_words_romanization").on(table.romanization),
+  index("idx_words_meaning_fr").on(table.meaningFr),
 ]);
 
+// Note: French translations are cached from Claude API batch job
+// meaningFr: French translation of meaning (e.g., "eau" for "water")
+// exampleFrench: French translation of koreanExample
+// exampleChineseFrench: French translation of chineseExample
 export type Word = typeof words.$inferSelect;
 export type InsertWord = typeof words.$inferInsert;
 

@@ -118,12 +118,12 @@ export default function Home() {
 
   const isChinese = language === 'chinese';
 
-  const wordStats = trpc.words.stats.useQuery({ language });
+  const wordStats = trpc.words.stats.useQuery({ language: language === 'french' ? 'korean' : language });
   const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressStats = trpc.progress.getStats.useQuery({ language }, { enabled: isAuthenticated });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language }, { enabled: isAuthenticated });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language }, { enabled: isAuthenticated });
-  const todayCount = trpc.progress.todayCount.useQuery({ language }, { enabled: isAuthenticated });
+  const progressStats = trpc.progress.getStats.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -143,7 +143,7 @@ export default function Home() {
     onSuccess: () => { window.location.href = '/'; },
   });
   const dailyHistory = trpc.progress.dailyHistory.useQuery(
-    { language, days: 30 },
+    { language: language === 'french' ? 'korean' : language, days: 30 },
     { enabled: isAuthenticated && graphOpen }
   );
 

@@ -13,6 +13,7 @@ export default function LanguageToggle() {
         size="sm"
         onClick={() => { sfx.pop(); setLanguage('korean'); }}
         className="text-lg"
+        title="English (Korean)"
       >
         🇰🇷
       </Button>
@@ -21,8 +22,18 @@ export default function LanguageToggle() {
         size="sm"
         onClick={() => { sfx.pop(); setLanguage('chinese'); }}
         className="text-lg"
+        title="English (Chinese)"
       >
         🇨🇳
+      </Button>
+      <Button
+        variant={language === 'french' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => { sfx.pop(); setLanguage('french'); }}
+        className="text-lg"
+        title="Français"
+      >
+        🇫🇷
       </Button>
     </div>
   );

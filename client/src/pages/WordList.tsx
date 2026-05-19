@@ -30,12 +30,14 @@ function WordCard({
   onMarkLearned,
   onMarkReviewing,
   isAuthenticated,
+  language,
 }: {
   word: any;
   onClick: () => void;
   onMarkLearned: () => void;
   onMarkReviewing: () => void;
   isAuthenticated: boolean;
+  language: string;
 }) {
   return (
     <div className="game-card rounded-2xl flex items-center overflow-hidden">
@@ -58,7 +60,9 @@ function WordCard({
               {word.romanization || word.pinyin}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">{word.meaning}</p>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">
+            {language === 'french' && word.meaningFr ? word.meaningFr : word.meaning}
+          </p>
         </div>
 
       </button>
@@ -176,7 +180,7 @@ export default function WordList() {
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
-    language,
+    language: language === 'french' ? 'korean' : language,
   });
 
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -372,10 +376,11 @@ export default function WordList() {
               key={word.id}
               word={word}
               isAuthenticated={isAuthenticated}
+              language={language}
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'learned', language },
+                  { wordId: word.id, status: 'learned', language: language === 'french' ? 'korean' : language },
                   { onSuccess: (data) => {
                     if ((data as any).status !== 'paywall_blocked') {
                       toast.success(`${word.korean || word.chinese} marked as learned ✓`);
@@ -385,7 +390,7 @@ export default function WordList() {
               }}
               onMarkReviewing={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'reviewing', language },
+                  { wordId: word.id, status: 'reviewing', language: language === 'french' ? 'korean' : language },
                   { onSuccess: () => toast.success(`${word.korean || word.chinese} added to review`) }
                 );
               }}

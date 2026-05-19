@@ -15,10 +15,10 @@
   ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663639757732/AgvNoYTdwLUFS5Bk9mDdFK",
-    "access_key_id": "ASIAZV3A2ECZCSIEAM3L",
-    "secret_access_key": "gD6B4UPavc1QzQndDijncNs4tzu6TqnNjaIM6AaL",
-    "session_token": "IQoJb3JpZ2luX2VjEAAaCXVzLWVhc3QtMSJHMEUCIQDvo+pc9MKXbGm0T3O4VSNUBaCf1oZJqqLBBuPtmSOhpAIgE/k4OWSvEPdbHHZoF7/znY7Z883cuyZnqfl9kFy/Pdkq/wMIyf//////////ARAEGgw2NjUzODYwOTg4NjYiDP7EJI+bF/yDKhQJPirTAyV1di8Bt9XfkJLdqdJbNjOap20RdCGGr/pBAFzwXZNR2FyR9sv0R888YcuhwSPj0lljSc3ZL2/rLtccIUS2h3z6tC5qNMxPLnvS65O2GsIz2vLUNPPTSjpgvskvfNjtePRxUYVnYdr3CtheRdzDuB7Yun/rv7WXmHtPM7aR1vRKRChfRKJk8fHYo/W/dADameRROYJNUpxoPWVreoFIl+9ZYBQUtX5b7nMb9uIPbp1IeWv1seJZ5BPUAxPAXOpxN7AOI7AGz35/Hq+zzqeQ1a+ZrinOtpJ7a0kuTsAHnUorergJyZX27y6T6dJpB6Ibh7pWehYDWKeMDKuUpaV53MYih8VrhWlhrzCArG7DusG1N61/w5M7iM2g5s+uSDsrvX1My1YcQ9cFmqupDqUSOhO0uVSlDZdxvNqSYows/tdLpfFCNv9gYDGPZV/k5ddWqyCU3QAxZCCPBl44ELqS6L1LE96nHX3I7nCLX8Q9a/U6YkolJ4mElQXz/pKhZFg18c/ZKZHIK4ivAw9ugJpGvCeOn0AHW+F+kY78aANgYO47PPR/Lh9vIWdBq/7zE+DHWrqszHNkidwieiGRebjdmV5KO45Dsq/9hlUf/STrAQ+/rsvfMNjCrtAGOp0BOFIMYk1PEa2ELQb3KzCbe8eqrdXKpAzLGCPl/dtehKxz92PmHXL0qWTMSAPjuS1awUgXy8UkWNNlpDUxS60LojxOfi3ueNATGNyn/kgA1ewG9wBfruUegklir1Hb6b19hYKlcxg8TDTfeSuEOC1YHBaPOJzoC0uEFqB51Z7cMqtJ8iS3IwZkJZXY75CplOq4Q1VnWURY5FLQl1ZweQ==",
-    "expiration": "2026-05-19T11:31:36.000Z"
+    "access_key_id": "ASIAZV3A2ECZDGWUBEH4",
+    "secret_access_key": "K1lUZ5o187i0gAwC3yBO0I00kOobJJto/1mnEqNn",
+    "session_token": "IQoJb3JpZ2luX2VjEAsaCXVzLWVhc3QtMSJHMEUCIQCP9U93yiGUlesEtb/hVwTsLze8YtSmHh11IHc6QfvbGAIgRb9+WSAvnlIrrC/0uSeA3n3oBMZfXnkEpoYBo84PF9sq/wMI1P//////////ARAEGgw2NjUzODYwOTg4NjYiDIBVaWQV5PJYcdixMirTA7GCzdLpa0LfvJ4p34S5slT2/RjsEaQ7yjsjhZhtKyw5F5YMKE0x7l2et/ryQNkW+nR4FTZCGg03krjUMTfJPs+qvmIEUsX9sAFFf7Vc3SbZh+Rzwz8bZSYnxDSbCsABKwRP3LTULmvlV5j5XIVGjrDVVziro2wTqzw4m6wE3gHYpGQ/Fu8vOehtKC8Lem9YwTnWDdMWgrDl1Dix6A4pRomVCwKxTeqX4YpNNS8aCjUM3Y1WAUrOEQWncKRzShwlyHWlF+Wmts4O82pCHm4QpR4eYrfCbTtm+1uH+nbFfPKGBl0SJgOAGyoLxNLF8N7e+6lCbpreEOKyNWur/m+8ZYazeIqonIPqgzBFyl6ceNJwcmaVUPy6sUAlUCryPs6oo0jOzccLIyltwXdDCDNXv2E99rnF4Q700FGeUrLRqt/zPVhQM1y2CiJw3/t4CusWS9G9t19YQ6ZrJhYCeYJ6yy6rpQJ4eevF7TFpguf1WNXbjAMXZ6HXmDvGrEB4XqtahYvvTMZLRXZfuKoDfJS7eD+C18PX06wdHCG81puw9GcZ79NzcTH3p+Lz58rAsDY4wIqHp2og38oXWPfEDOpNEK8iE/NawCiBQZTS/6NuTF4gM31/MM7zsNAGOp0BrGmeuL3z+Ma/45DKLp6BZ14Rw4SjdgLK6emHkEu3VnhVI4IpevtVTau1ErD5m6fxBup6dGwsxuhEdz6eW0JW2QJZ/5b7wKrKHTNDVDqspPmbjqp9xOjBwMelCz8ikRN1SQtqG0tx5fnoN3JsmWZYUNVnSVyMRSju9dcf7o8vgjLHbC14jlELQGkXE7dV73sOJKfyA7ta6v/42/Jozw==",
+    "expiration": "2026-05-19T22:22:06.000Z"
   },
   "name": "korean-mastery-app",
   "path": "/home/ubuntu/korean-mastery-app",
@@ -26,8 +26,10 @@
   "secrets": {
     "BUILT_IN_FORGE_API_KEY": "APok8cwMPGSuokTg3Ca657",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "GEMINI_API_KEY": "AIzaSyBdRkiuNeQ5gYxBJsRpw_T2GxyTJpOJmfc",
     "JWT_SECRET": "BLAwDgXSF3vkYcg9Arcb7E",
     "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OPENAI_API_KEY": "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",
     "OWNER_NAME": "Chris",
     "OWNER_OPEN_ID": "9MzHaEq47pGKFZzknh9ffM",
     "STRIPE_PRICE_PRO_ANNUAL": "price_1TYYeoK1SjGQ7gS6kUPoF99n",
