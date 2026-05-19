@@ -386,15 +386,10 @@ export default function Home() {
                       const newLocale = locale === 'en' ? 'fr' : 'en';
                       setLocale(newLocale);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                    className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center text-lg hover:bg-chart-3/30 transition-all press-scale"
+                    title={locale === 'en' ? 'Switch to French' : 'Passer en anglais'}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center text-lg">
-                      {locale === 'en' ? '🇫🇷' : '🇰🇷'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">{locale === 'en' ? '🇫🇷 Français' : '🇰🇷 English'}</p>
-                      <p className="text-xs text-muted-foreground">{locale === 'en' ? 'Switch to French' : 'Passer en anglais'}</p>
-                    </div>
+                    {locale === 'en' ? '🇫🇷' : '🇰🇷'}
                   </button>
 
                   {/* Sign Out */}
