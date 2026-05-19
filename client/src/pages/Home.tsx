@@ -89,7 +89,7 @@ function MilestoneCard({ language, learnedCount }: { language: string; learnedCo
                     )}
                   </div>
                   <span className={`text-[10px] ${completed ? 'text-muted-foreground' : inProgress ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>
-                    {t(m.labelKey)}
+                    {t(m.labelKey as any)}
                   </span>
                 </div>
               </div>
