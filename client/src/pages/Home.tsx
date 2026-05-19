@@ -9,7 +9,7 @@ import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
   ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
-  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe,
+  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -132,10 +132,10 @@ export default function Home() {
 
   const openPortalMutation = trpc.subscription.openCustomerPortal.useMutation({
     onSuccess: (data) => {
-      if (data.portalUrl) window.open(data.portalUrl, '_blank');
+      if (data.portalUrl) window.location.href = data.portalUrl;
     },
     onError: () => {
-      // No Stripe customer yet → show upgrade flow
+      // No Stripe customer yet -> show upgrade flow
       setUpgradeOpen(true);
     },
   });
@@ -309,10 +309,15 @@ export default function Home() {
                         setMenuOpen(false);
                         openPortalMutation.mutate();
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
+                      disabled={openPortalMutation.isPending}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all press-scale text-left"
                     >
                       <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
-                        <CreditCard className="w-4 h-4 text-primary" />
+                        {openPortalMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        ) : (
+                          <CreditCard className="w-4 h-4 text-primary" />
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-foreground">{t('menu.manageSubscription')}</p>
