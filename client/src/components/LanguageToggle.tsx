@@ -3,28 +3,37 @@ import { useSound } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
 
 export default function LanguageToggle() {
-  const { studyLanguage, setStudyLanguage } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { play: sfx } = useSound();
 
   return (
     <div className="flex gap-1">
       <Button
-        variant={studyLanguage === 'korean' ? 'default' : 'outline'}
+        variant={language === 'korean' ? 'default' : 'outline'}
         size="sm"
-        onClick={() => { sfx.pop(); setStudyLanguage('korean'); }}
+        onClick={() => { sfx.pop(); setLanguage('korean'); }}
         className="text-lg"
-        title="Study Korean"
+        title="English (Korean)"
       >
         🇰🇷
       </Button>
       <Button
-        variant={studyLanguage === 'chinese' ? 'default' : 'outline'}
+        variant={language === 'chinese' ? 'default' : 'outline'}
         size="sm"
-        onClick={() => { sfx.pop(); setStudyLanguage('chinese'); }}
+        onClick={() => { sfx.pop(); setLanguage('chinese'); }}
         className="text-lg"
-        title="Study Chinese"
+        title="English (Chinese)"
       >
         🇨🇳
+      </Button>
+      <Button
+        variant={language === 'french' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => { sfx.pop(); setLanguage('french'); }}
+        className="text-lg"
+        title="Français"
+      >
+        🇫🇷
       </Button>
     </div>
   );

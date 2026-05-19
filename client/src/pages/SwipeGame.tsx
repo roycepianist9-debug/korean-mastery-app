@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
@@ -95,7 +95,7 @@ function FlashCard({
   isTop: boolean;
   aiEnabled: boolean;
 }) {
-  const { interfaceLanguage } = useLanguage();
+  const { language } = useLanguage();
   const { t } = useI18n();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
@@ -242,17 +242,20 @@ function FlashCard({
 
         {/* Meaning */}
         <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          {interfaceLanguage === 'fr' && word.meaningFr ? (
+          {language === 'french' && word.meaningFr ? (
             <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
           ) : (
             <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
           )}
+          <p style={{fontSize:'10px',color:'red',marginTop:'4px'}}>
+            lang={language} | fr={word?.meaningFr ?? 'NULL'}
+          </p>
         </div>
 
         {/* Example sentence */}
         {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
-            {interfaceLanguage === 'fr' && word.exampleFrench ? (
+            {language === 'french' && word.exampleFrench ? (
               <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
             ) : (
               <>
@@ -274,7 +277,7 @@ function FlashCard({
           </div>
         ) : word.chineseExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
-            {interfaceLanguage === 'fr' && word.exampleChineseFrench ? (
+            {language === 'french' && word.exampleChineseFrench ? (
               <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
             ) : (
               <>
@@ -403,17 +406,17 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
 /* ─── Main Component ─── */
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const { studyLanguage, interfaceLanguage } = useLanguage();
+  const { language } = useLanguage();
   const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
-  const isChinese = studyLanguage === 'chinese';
+  const isChinese = language === 'chinese';
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
   const [levelFilter, setLevelFilter] = useState(
     params.get("hskLevel") || params.get("level") ||
-    (studyLanguage === 'chinese' ? '1' : 'beginner')
+    (language === 'chinese' ? '1' : 'beginner')
   );
   const [cardFilter, setCardFilter] = useState<CardFilter>('new');
   const [sessionStarted, setSessionStarted] = useState(false);
@@ -453,7 +456,7 @@ export default function SwipeGame() {
       topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
-      language: studyLanguage,
+      language: language === 'french' ? 'korean' : language,
       statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
@@ -501,7 +504,7 @@ export default function SwipeGame() {
     if (isAuthenticated) {
       persistedWordIds.current.add(wordId);
       swipeMutation.mutate(
-        { wordId, known, language: studyLanguage },
+        { wordId, known, language: language === 'french' ? 'korean' : language },
         {
           onSuccess: (data) => {
             if (data.status === 'paywall_blocked') {
@@ -521,7 +524,7 @@ export default function SwipeGame() {
     } else {
       setCurrentIndex(prev => prev + 1);
     }
-  }, [currentIndex, words, isAuthenticated, swipeMutation, studyLanguage, sfx, wordLimit]);
+  }, [currentIndex, words, isAuthenticated, swipeMutation, language, sfx, wordLimit]);
 
   // Undo is allowed only if the card being undone hasn't been persisted to the database
   // For authenticated users: undo is disabled for cards in persistedWordIds (already saved)

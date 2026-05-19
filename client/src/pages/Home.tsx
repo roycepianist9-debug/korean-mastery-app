@@ -111,20 +111,20 @@ function MilestoneCard({ language, learnedCount }: { language: string; learnedCo
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  const { studyLanguage } = useLanguage();
+  const { language } = useLanguage();
   const { play: sfx, muted, toggleMute } = useSound();
   const { theme, toggleTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
 
 
-  const isChinese = studyLanguage === 'chinese';
+  const isChinese = language === 'chinese';
 
-  const wordStats = trpc.words.stats.useQuery({ language: studyLanguage });
+  const wordStats = trpc.words.stats.useQuery({ language: language === 'french' ? 'korean' : language });
   const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressStats = trpc.progress.getStats.useQuery({ language: studyLanguage }, { enabled: isAuthenticated });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: studyLanguage }, { enabled: isAuthenticated });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language: studyLanguage }, { enabled: isAuthenticated });
-  const todayCount = trpc.progress.todayCount.useQuery({ language: studyLanguage }, { enabled: isAuthenticated });
+  const progressStats = trpc.progress.getStats.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -144,7 +144,7 @@ export default function Home() {
     onSuccess: () => { window.location.href = '/'; },
   });
   const dailyHistory = trpc.progress.dailyHistory.useQuery(
-    { language: studyLanguage, days: 30 },
+    { language: language === 'french' ? 'korean' : language, days: 30 },
     { enabled: isAuthenticated && graphOpen }
   );
 
@@ -715,7 +715,7 @@ export default function Home() {
 
         {/* Milestone Card — always visible when authenticated */}
         {isAuthenticated && (
-          <MilestoneCard language={studyLanguage} learnedCount={ps?.learned ?? 0} />
+          <MilestoneCard language={language} learnedCount={ps?.learned ?? 0} />
         )}
 
         {/* Word Stats (unauthenticated) */}
