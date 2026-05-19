@@ -1,45 +1,69 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type Language = 'korean' | 'chinese' | 'french';
+export type StudyLanguage = 'korean' | 'chinese';
+export type InterfaceLanguage = 'en' | 'fr';
 
 interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  getLanguageName?: (lang: Language) => string;
+  // Study language: which deck the user is learning (Korean or Chinese)
+  studyLanguage: StudyLanguage;
+  setStudyLanguage: (lang: StudyLanguage) => void;
+  
+  // Interface language: what language the UI is displayed in (English or Français)
+  interfaceLanguage: InterfaceLanguage;
+  setInterfaceLanguage: (lang: InterfaceLanguage) => void;
+  
+  getLanguageName?: (lang: StudyLanguage) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('french');
+  const [studyLanguage, setStudyLanguageState] = useState<StudyLanguage>('korean');
+  const [interfaceLanguage, setInterfaceLanguageState] = useState<InterfaceLanguage>('en');
   const [mounted, setMounted] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('language') as Language | null;
-    if (saved && (saved === 'korean' || saved === 'chinese' || saved === 'french')) {
-      setLanguageState(saved);
+    const savedStudy = localStorage.getItem('studyLanguage') as StudyLanguage | null;
+    if (savedStudy && (savedStudy === 'korean' || savedStudy === 'chinese')) {
+      setStudyLanguageState(savedStudy);
     }
+    
+    const savedInterface = localStorage.getItem('interfaceLanguage') as InterfaceLanguage | null;
+    if (savedInterface && (savedInterface === 'en' || savedInterface === 'fr')) {
+      setInterfaceLanguageState(savedInterface);
+    }
+    
     setMounted(true);
   }, []);
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('language', lang);
+  const setStudyLanguage = (lang: StudyLanguage) => {
+    setStudyLanguageState(lang);
+    localStorage.setItem('studyLanguage', lang);
   };
 
-  // Get display name for language
-  const getLanguageName = (lang: Language): string => {
+  const setInterfaceLanguage = (lang: InterfaceLanguage) => {
+    setInterfaceLanguageState(lang);
+    localStorage.setItem('interfaceLanguage', lang);
+  };
+
+  // Get display name for study language
+  const getLanguageName = (lang: StudyLanguage): string => {
     switch (lang) {
-      case 'korean': return 'English';
-      case 'chinese': return 'English';
-      case 'french': return 'Français';
+      case 'korean': return 'Korean';
+      case 'chinese': return 'Chinese';
       default: return lang;
     }
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, getLanguageName }}>
+    <LanguageContext.Provider value={{ 
+      studyLanguage, 
+      setStudyLanguage,
+      interfaceLanguage,
+      setInterfaceLanguage,
+      getLanguageName 
+    }}>
       {children}
     </LanguageContext.Provider>
   );

@@ -30,14 +30,14 @@ function WordCard({
   onMarkLearned,
   onMarkReviewing,
   isAuthenticated,
-  language,
+  interfaceLanguage,
 }: {
   word: any;
   onClick: () => void;
   onMarkLearned: () => void;
   onMarkReviewing: () => void;
   isAuthenticated: boolean;
-  language: string;
+  interfaceLanguage: string;
 }) {
   return (
     <div className="game-card rounded-2xl flex items-center overflow-hidden">
@@ -61,7 +61,7 @@ function WordCard({
             </span>
           </div>
           <p className="text-xs text-muted-foreground truncate mt-0.5">
-            {language === 'french' && word.meaningFr ? word.meaningFr : word.meaning}
+            {interfaceLanguage === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
           </p>
         </div>
 
@@ -137,7 +137,7 @@ function StatusFilter({
 /* ─── Main Component ─── */
 export default function WordList() {
   const { isAuthenticated } = useAuth();
-  const { language } = useLanguage();
+  const { studyLanguage, interfaceLanguage } = useLanguage();
   const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
@@ -147,7 +147,7 @@ export default function WordList() {
   const hasAnyUrlParam = !!(params.get("pos") || params.get("level") || params.get("hskLevel") || params.get("statuses"));
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const isChinese = language === 'chinese';
+  const isChinese = studyLanguage === 'chinese';
   const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : "beginner");
   const defaultStatuses = hasAnyUrlParam ? [] : ["new"];
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
@@ -181,7 +181,7 @@ export default function WordList() {
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
-    language: language === 'french' ? 'korean' : language,
+    language: studyLanguage,
   });
 
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -377,11 +377,11 @@ export default function WordList() {
               key={word.id}
               word={word}
               isAuthenticated={isAuthenticated}
-              language={language}
+              interfaceLanguage={interfaceLanguage}
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'learned', language: language === 'french' ? 'korean' : language },
+                  { wordId: word.id, status: 'learned', language: studyLanguage },
                   { onSuccess: (data) => {
                     if ((data as any).status !== 'paywall_blocked') {
                       toast.success(`${word.korean || word.chinese} marked as learned ✓`);
@@ -391,7 +391,7 @@ export default function WordList() {
               }}
               onMarkReviewing={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'reviewing', language: language === 'french' ? 'korean' : language },
+                  { wordId: word.id, status: 'reviewing', language: studyLanguage },
                   { onSuccess: () => toast.success(`${word.korean || word.chinese} added to review`) }
                 );
               }}
