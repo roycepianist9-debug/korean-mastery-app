@@ -19,10 +19,13 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
   const handleUpgrade = async (priceId: string) => {
     setLoading(priceId);
     try {
-      const result = await checkout.mutateAsync({ priceId });
+      const result = await checkout.mutateAsync({ priceId, origin: window.location.origin });
       if (result.checkoutUrl) {
         toast.info("Redirecting to checkout...");
-        window.open(result.checkoutUrl, '_blank');
+        // Use location.href to avoid popup blockers on mobile Safari
+        window.location.href = result.checkoutUrl;
+      } else {
+        toast.error("Checkout URL not returned. Please try again.");
       }
     } catch (error) {
       toast.error("Failed to start checkout. Please try again.");

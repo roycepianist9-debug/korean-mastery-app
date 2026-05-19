@@ -266,9 +266,13 @@ export const appRouter = router({
     createCheckoutSession: protectedProcedure
       .input(z.object({
         priceId: z.string(),
+        origin: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+        // Use origin from frontend input first, then request header, then production domain
+        const origin = input.origin || ctx.req.headers.origin || "https://swipefluent.co";
+        console.log("[Stripe] Creating checkout session:", { priceId: input.priceId, origin, email: ctx.user.email });
 
         try {
           const session = await stripe.checkout.sessions.create({
@@ -286,11 +290,14 @@ export const appRouter = router({
               },
             ],
             mode: "subscription",
-            success_url: `${ctx.req.headers.origin}/?upgraded=true`,
-            cancel_url: `${ctx.req.headers.origin}/`,
+            success_url: `${origin}/?upgraded=true`,
+            cancel_url: `${origin}/`,
             allow_promotion_codes: true,
           });
-
+          console.log("[Stripe] Session created:", { id: session.id, url: session.url, status: session.status });
+          if (!session.url) {
+            console.error("[Stripe] Session URL is null/undefined! Full session:", JSON.stringify(session, null, 2));
+          }
           return { checkoutUrl: session.url };
         } catch (error) {
           console.error("[Stripe] Checkout session creation failed:", error);
