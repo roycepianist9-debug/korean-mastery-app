@@ -26,15 +26,7 @@ export default function LanguageToggle() {
       >
         🇨🇳
       </Button>
-      <Button
-        variant={language === 'french' ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => { sfx.pop(); setLanguage('french'); }}
-        className="text-lg"
-        title="Français"
-      >
-        🇫🇷
-      </Button>
+
     </div>
   );
 }
