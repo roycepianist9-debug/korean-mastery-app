@@ -26,25 +26,26 @@ import {
 // ─── Milestone Data ─────────────────────────────────────────────────────────
 
 const KOREAN_MILESTONES = [
-  { level: 'TOPIK 1', words: 1000, label: 'Basic Understanding' },
-  { level: 'TOPIK 2', words: 2000, label: 'Conversational Fluency' },
-  { level: 'TOPIK 3', words: 4000, label: 'Advanced Comprehension' },
-  { level: 'TOPIK 4', words: 6000, label: 'Professional Proficiency' },
-  { level: 'TOPIK 5', words: 8000, label: 'Advanced Proficiency' },
-  { level: 'TOPIK 6', words: 10000, label: 'Near-Native Fluency' },
+  { level: 'TOPIK 1', words: 1000, labelKey: 'swipe.understanding' },
+  { level: 'TOPIK 2', words: 2000, labelKey: 'swipe.conversational' },
+  { level: 'TOPIK 3', words: 4000, labelKey: 'swipe.comprehension' },
+  { level: 'TOPIK 4', words: 6000, labelKey: 'swipe.professional' },
+  { level: 'TOPIK 5', words: 8000, labelKey: 'swipe.advancedProf' },
+  { level: 'TOPIK 6', words: 10000, labelKey: 'swipe.nativeFluentcy' },
 ];
 
 const CHINESE_MILESTONES = [
-  { level: 'HSK 1', words: 300, label: 'Elementary' },
-  { level: 'HSK 2', words: 600, label: 'Elementary+' },
-  { level: 'HSK 3', words: 900, label: 'Intermediate' },
-  { level: 'HSK 4', words: 1200, label: 'Intermediate+' },
-  { level: 'HSK 5', words: 2500, label: 'Advanced Proficiency' },
-  { level: 'HSK 6', words: 5000, label: 'Advanced Fluency' },
-  { level: 'HSK 7-9', words: 11000, label: 'Near-Native Proficiency' },
+  { level: 'HSK 1', words: 300, labelKey: 'swipe.elementary' },
+  { level: 'HSK 2', words: 600, labelKey: 'swipe.elementaryPlus' },
+  { level: 'HSK 3', words: 900, labelKey: 'swipe.intermediate' },
+  { level: 'HSK 4', words: 1200, labelKey: 'swipe.intermediatePlus' },
+  { level: 'HSK 5', words: 2500, labelKey: 'swipe.advancedProf' },
+  { level: 'HSK 6', words: 5000, labelKey: 'swipe.advancedFluency' },
+  { level: 'HSK 7-9', words: 11000, labelKey: 'swipe.nativeProficiency' },
 ];
 
 function MilestoneCard({ language, learnedCount }: { language: string; learnedCount: number }) {
+  const { t } = useI18n();
   const milestones = language === 'chinese' ? CHINESE_MILESTONES : KOREAN_MILESTONES;
   const title = language === 'chinese' ? 'HSK Milestones' : 'TOPIK Milestones';
 
@@ -88,7 +89,7 @@ function MilestoneCard({ language, learnedCount }: { language: string; learnedCo
                     )}
                   </div>
                   <span className={`text-[10px] ${completed ? 'text-muted-foreground' : inProgress ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>
-                    {m.label}
+                    {t(m.labelKey)}
                   </span>
                 </div>
               </div>
