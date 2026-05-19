@@ -11,6 +11,9 @@ export interface WordEntry {
   pinyin: string;
   chineseExample: string | null;
   examplePinyin: string | null;
+  meaningFr: string | null;
+  exampleFrench: string | null;
+  exampleChineseFrench: string | null;
 }
 
 export interface WordProgress {
