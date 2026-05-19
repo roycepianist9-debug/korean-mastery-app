@@ -96,6 +96,7 @@ function FlashCard({
   aiEnabled: boolean;
 }) {
   const { language } = useLanguage();
+  const { t } = useI18n();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
