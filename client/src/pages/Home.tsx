@@ -643,7 +643,7 @@ export default function Home() {
           <div className="game-card p-3.5">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-accent" />
-              <span className="text-sm font-black text-foreground">Progress by Level</span>
+              <span className="text-sm font-black text-foreground">{t('home.progressByLevel')}</span>
             </div>
             <div className="space-y-3">
               {levelData.map(item => (
@@ -675,7 +675,7 @@ export default function Home() {
           <div className="game-card p-3.5">
             <div className="flex items-center gap-2 mb-3">
               <BookOpen className="w-4 h-4 text-primary" />
-              <span className="text-sm font-black text-foreground">Progress by Type</span>
+              <span className="text-sm font-black text-foreground">{t('home.progressByType')}</span>
             </div>
             <div className="space-y-3">
               {posData.map(item => (

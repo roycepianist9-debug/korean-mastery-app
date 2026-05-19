@@ -25,6 +25,8 @@ const translations = {
     "home.signInToTrack": "Sign in to track progress",
     "home.signInDesc": "Save your progress, unlock streaks, and compete on leaderboards.",
     "home.signIn": "Sign In",
+    "home.progressByLevel": "Progress by Level",
+    "home.progressByType": "Progress by Type",
 
     // Menu
     "menu.manageSubscription": "Manage Subscription",
@@ -70,6 +72,16 @@ const translations = {
     "swipe.startSession": "Start Session",
     "swipe.deckSize": "Deck Size",
     "swipe.cards": "cards",
+    "swipe.chooseYourDeck": "Choose your deck and start swiping",
+    "swipe.topikLevel": "TOPIK Level",
+    "swipe.partOfSpeech": "Part of Speech",
+    "swipe.cardsPerSession": "Cards per Session",
+    "swipe.wordSelection": "Word Selection",
+    "swipe.onlyUnseenWords": "Only unseen words",
+    "swipe.wordsToReview": "Words to review",
+    "swipe.reinforceLearned": "Reinforce learned",
+    "swipe.allWords": "All words",
+    "swipe.startSessionButton": "Start Session",
 
     // Upgrade modal
     "upgrade.title": "Upgrade to Pro",
@@ -124,7 +136,7 @@ const translations = {
 
     // Home page
     "home.welcome": "Bienvenue !",
-    "home.welcomeBack": "Bon retour !",
+    "home.welcomeBack": "Bienvenue !",
     "home.tagline": "Apprenez les langues en swipant !",
     "home.xp": "XP",
     "home.streak": "Série",
@@ -132,11 +144,13 @@ const translations = {
     "home.days": "jours",
     "home.words": "mots",
     "home.dictionaryStats": "Statistiques du dictionnaire",
-    "home.totalWords": "Mots au total",
-    "home.milestone": "Objectif",
+    "home.totalWords": "Mots totaux",
+    "home.milestone": "Jalon",
     "home.signInToTrack": "Connectez-vous pour suivre vos progrès",
-    "home.signInDesc": "Sauvegardez vos progrès, débloquez les séries et participez aux classements.",
+    "home.signInDesc": "Enregistrez vos progrès, débloquez des séries et participez aux classements.",
     "home.signIn": "Se connecter",
+    "home.progressByLevel": "Progrès par niveau",
+    "home.progressByType": "Progrès par type",
 
     // Menu
     "menu.manageSubscription": "Gérer l'abonnement",
@@ -182,6 +196,16 @@ const translations = {
     "swipe.startSession": "Commencer",
     "swipe.deckSize": "Taille du paquet",
     "swipe.cards": "cartes",
+    "swipe.chooseYourDeck": "Choisissez votre paquet et commencez à swiper",
+    "swipe.topikLevel": "Niveau TOPIK",
+    "swipe.partOfSpeech": "Partie du discours",
+    "swipe.cardsPerSession": "Cartes par session",
+    "swipe.wordSelection": "Sélection des mots",
+    "swipe.onlyUnseenWords": "Seulement les mots non vus",
+    "swipe.wordsToReview": "Mots à réviser",
+    "swipe.reinforceLearned": "Renforcer l'apprentissage",
+    "swipe.allWords": "Tous les mots",
+    "swipe.startSessionButton": "Commencer la session",
 
     // Upgrade modal
     "upgrade.title": "Passer à Pro",

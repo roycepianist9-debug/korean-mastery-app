@@ -372,30 +372,30 @@ function SessionSummary({
 const DECK_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 /* ─── Card Filter Options ─── */
-const CARD_FILTER_OPTIONS: { key: CardFilter; label: string; icon: React.ReactNode; desc: string }[] = [
+const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.ReactNode; descKey: string }[] = [
   {
     key: 'new',
-    label: 'New',
+    labelKey: 'words.new',
     icon: <Plus className="w-4 h-4" />,
-    desc: 'Only unseen words',
+    descKey: 'swipe.onlyUnseenWords',
   },
   {
     key: 'reviewing',
-    label: 'Review',
+    labelKey: 'words.reviewing',
     icon: <RotateCcw className="w-4 h-4" />,
-    desc: 'Words to review',
+    descKey: 'swipe.wordsToReview',
   },
   {
     key: 'learned',
-    label: 'Learned',
+    labelKey: 'words.learned',
     icon: <Star className="w-4 h-4" />,
-    desc: 'Reinforce learned',
+    descKey: 'swipe.reinforceLearned',
   },
   {
     key: 'all',
-    label: 'Mixed',
+    labelKey: 'swipe.allWords',
     icon: <BookOpen className="w-4 h-4" />,
-    desc: 'All words',
+    descKey: 'swipe.allWords',
   },
 ];
 
@@ -579,16 +579,16 @@ export default function SwipeGame() {
         <div className="px-4 pt-6 pb-4">
           <button onClick={() => { sfx.tap(); setLocation("/"); }} className="flex items-center gap-1 text-muted-foreground mb-4 press-scale">
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
+            <span className="text-sm font-medium">{t('rules.back')}</span>
           </button>
           <h1 className="text-2xl font-black text-foreground">{t('swipe.startSession')}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Choose your deck and start swiping</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('swipe.chooseYourDeck')}</p>
         </div>
 
         <div className="px-4 space-y-4">
           <div className="game-card p-4 space-y-4">
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : 'TOPIK Level'}</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : t('swipe.topikLevel')}</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
                   <SelectValue />
@@ -616,7 +616,7 @@ export default function SwipeGame() {
             </div>
 
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">Part of Speech</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{t('swipe.partOfSpeech')}</label>
               <Select value={posFilter} onValueChange={setPosFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
                   <SelectValue />
@@ -633,7 +633,7 @@ export default function SwipeGame() {
 
             {/* Deck Size */}
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">Cards per Session</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{t('swipe.cardsPerSession')}</label>
               <div className="grid grid-cols-4 gap-2">
                 {DECK_SIZE_OPTIONS.map(size => (
                   <button
@@ -654,7 +654,7 @@ export default function SwipeGame() {
             {/* Card Filter — New / Review / Learned / Mixed */}
             {isAuthenticated && (
               <div>
-                <label className="text-sm font-bold text-foreground mb-2 block">Word Selection</label>
+                <label className="text-sm font-bold text-foreground mb-2 block">{t('swipe.wordSelection')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {CARD_FILTER_OPTIONS.map(opt => (
                     <button
@@ -671,8 +671,8 @@ export default function SwipeGame() {
                     >
                       {opt.icon}
                       <div className="text-left">
-                        <p className="text-xs font-bold leading-none">{opt.label}</p>
-                        <p className="text-[10px] font-normal opacity-70 mt-0.5">{opt.desc}</p>
+                        <p className="text-xs font-bold leading-none">{t(opt.labelKey as any)}</p>
+                        <p className="text-[10px] font-normal opacity-70 mt-0.5">{t(opt.descKey as any)}</p>
                       </div>
                     </button>
                   ))}
