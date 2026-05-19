@@ -583,6 +583,17 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         return { success: true, ...input };
       }),
 
+    updateFreeWordCap: protectedProcedure
+      .input(z.object({ wordCap: z.number().min(10).max(10000) }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        await setAppConfig('freeWordCap', input.wordCap.toString());
+        return { success: true, wordCap: input.wordCap };
+      }),
+
     // Batch translate Chinese example sentences to French
     batchTranslateChinese: protectedProcedure
       .mutation(async ({ ctx }) => {

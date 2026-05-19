@@ -31,7 +31,7 @@ interface SwipeResult {
   known: boolean;
 }
 
-type CardFilter = 'all' | 'new' | 'reviewing' | 'learned';
+type CardFilter = 'new' | 'reviewing' | 'all';
 
 /* ─── Inline AI Translation Hook ─── */
 function useExampleTranslation(
@@ -411,6 +411,12 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
     icon: <RotateCcw className="w-4 h-4" />,
     descKey: 'swipe.wordsToReview',
   },
+  {
+    key: 'all',
+    labelKey: 'words.all',
+    icon: <BookOpen className="w-4 h-4" />,
+    descKey: 'swipe.allWords',
+  },
 ];
 
 /* ─── Main Component ─── */
@@ -678,7 +684,6 @@ export default function SwipeGame() {
                         cardFilter === opt.key
                           ? opt.key === 'new' ? 'bg-accent/20 text-accent border-accent/40' :
                             opt.key === 'reviewing' ? 'bg-chart-3/20 text-chart-3 border-chart-3/40' :
-                            opt.key === 'learned' ? 'bg-primary/20 text-primary border-primary/40' :
                             'bg-secondary text-foreground border-border'
                           : 'bg-secondary/50 text-muted-foreground border-transparent hover:bg-secondary'
                       }`}

@@ -11,6 +11,8 @@ export default function AdminSettings() {
   const [monthlyPrice, setMonthlyPrice] = useState<string>("");
   const [annualPrice, setAnnualPrice] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
+  const [freeWordCap, setFreeWordCap] = useState<string>("150");
+  const [isEditingWordCap, setIsEditingWordCap] = useState(false);
 
   // Populate price fields when config loads
   useEffect(() => {
@@ -51,6 +53,14 @@ export default function AdminSettings() {
     onError: (error) => toast.error(`Translation failed: ${error.message}`),
   });
 
+  const updateFreeWordCap = trpc.admin.updateFreeWordCap.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Free word cap updated to ${data.wordCap}`);
+      setIsEditingWordCap(false);
+    },
+    onError: () => toast.error("Failed to update word cap"),
+  });
+
   const handleSavePricing = () => {
     const monthly = parseFloat(monthlyPrice);
     const annual = parseFloat(annualPrice);
@@ -62,6 +72,15 @@ export default function AdminSettings() {
       proMonthlyPriceCents: Math.round(monthly * 100),
       proAnnualPriceCents: Math.round(annual * 100),
     });
+  };
+
+  const handleSaveWordCap = () => {
+    const cap = parseInt(freeWordCap);
+    if (isNaN(cap) || cap < 10 || cap > 10000) {
+      toast.error("Invalid word cap. Range: 10-10000");
+      return;
+    }
+    updateFreeWordCap.mutate({ wordCap: cap });
   };
 
   const isUnlimited = (config.data?.wordAccessLimit ?? 0) >= 999999;
@@ -278,13 +297,69 @@ export default function AdminSettings() {
           </div>
         </div>
 
+        {/* Free Word Cap Editor */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Free Word Cap</span>
+            </div>
+            {!isEditingWordCap && (
+              <button
+                onClick={() => setIsEditingWordCap(true)}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          {isEditingWordCap ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Free Word Limit (10-10000)</label>
+                <input
+                  type="number"
+                  min="10"
+                  max="10000"
+                  value={freeWordCap}
+                  onChange={(e) => setFreeWordCap(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveWordCap}
+                  disabled={updateFreeWordCap.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingWordCap(false);
+                    setFreeWordCap("150");
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm font-bold text-foreground">{freeWordCap} words / language</div>
+          )}
+        </div>
+
         {/* App Info */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <p className="text-xs text-muted-foreground font-bold uppercase mb-2">App Info</p>
           <div className="space-y-1.5 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Free word cap</span>
-              <span className="font-bold text-foreground">150 words / language</span>
+              <span className="font-bold text-foreground">{freeWordCap} words / language</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Korean words</span>

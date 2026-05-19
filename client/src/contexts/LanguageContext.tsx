@@ -14,13 +14,41 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>('french');
   const [mounted, setMounted] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount, with geolocation fallback
   useEffect(() => {
     const saved = localStorage.getItem('language') as Language | null;
     if (saved && (saved === 'korean' || saved === 'chinese' || saved === 'french')) {
       setLanguageState(saved);
+      setMounted(true);
+      return;
     }
-    setMounted(true);
+
+    // Geolocation-based default language
+    const detectLanguageByLocation = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        const country = data.country_code?.toUpperCase();
+        
+        let detectedLang: Language = 'korean'; // Default
+        if (country === 'KR') {
+          detectedLang = 'korean';
+        } else if (country === 'CN') {
+          detectedLang = 'chinese';
+        } else if (['FR', 'BE', 'CH', 'LU', 'CA'].includes(country)) {
+          // French-speaking countries
+          detectedLang = 'korean'; // Still default to Korean for learning
+        }
+        
+        setLanguageState(detectedLang);
+      } catch (error) {
+        // Fallback to Korean if geolocation fails
+        setLanguageState('korean');
+      }
+      setMounted(true);
+    };
+
+    detectLanguageByLocation();
   }, []);
 
   const setLanguage = (lang: Language) => {
@@ -31,9 +59,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Get display name for language
   const getLanguageName = (lang: Language): string => {
     switch (lang) {
-      case 'korean': return 'English';
-      case 'chinese': return 'English';
-      case 'french': return 'Français';
+      case 'korean': return '🇰🇷 Korean';
+      case 'chinese': return '🇨🇳 Chinese';
+      case 'french': return '🇫🇷 French';
       default: return lang;
     }
   };
