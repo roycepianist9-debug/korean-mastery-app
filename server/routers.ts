@@ -615,48 +615,64 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         
         let successCount = 0;
         let failureCount = 0;
+        const BATCH_SIZE = 10;
+        const BATCH_DELAY_MS = 2000;
         
-        // Process in batches to avoid rate limiting
-        for (let i = 0; i < wordsToTranslate.length; i++) {
-          const word = wordsToTranslate[i];
-          try {
-            const prompt = `Translate this Chinese example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.chinese}".\nChinese sentence: ${word.chineseExample}\n\nRespond with only the French translation:`;
-            
-            const result = await invokeLLM({
-              messages: [
-                { role: 'system', content: 'You are a professional translator. Translate Chinese to French.' },
-                { role: 'user', content: prompt },
-              ],
-            });
-            
-            const contentRaw = result.choices?.[0]?.message?.content;
-            const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
-            
-            if (frenchTranslation) {
-              // Update the word with French translation
-              try {
-                await db
-                  .update(words)
-                  .set({ exampleChineseFrench: frenchTranslation })
-                  .where(eq(words.id, word.id));
-              } catch (updateError) {
-                console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
-                failureCount++;
-                continue;
+        // Process in parallel batches to avoid rate limiting and timeouts
+        for (let batchStart = 0; batchStart < wordsToTranslate.length; batchStart += BATCH_SIZE) {
+          const batchEnd = Math.min(batchStart + BATCH_SIZE, wordsToTranslate.length);
+          const batch = wordsToTranslate.slice(batchStart, batchEnd);
+          
+          // Process all words in this batch in parallel
+          const batchPromises = batch.map(async (word) => {
+            try {
+              const prompt = `Translate this Chinese example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.chinese}".\nChinese sentence: ${word.chineseExample}\n\nRespond with only the French translation:`;
+              
+              const result = await invokeLLM({
+                messages: [
+                  { role: 'system', content: 'You are a professional translator. Translate Chinese to French.' },
+                  { role: 'user', content: prompt },
+                ],
+              });
+              
+              const contentRaw = result.choices?.[0]?.message?.content;
+              const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
+              
+              if (frenchTranslation) {
+                try {
+                  await db
+                    .update(words)
+                    .set({ exampleChineseFrench: frenchTranslation })
+                    .where(eq(words.id, word.id));
+                  console.log(`[Batch Translation] ✓ ${word.chinese} (HSK ${word.hskLevel})`);
+                  return { success: true };
+                } catch (updateError) {
+                  console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
+                  return { success: false };
+                }
+              } else {
+                return { success: false };
               }
-              console.log(`[Batch Translation] ✓ ${word.chinese} (HSK ${word.hskLevel})`);
-              successCount++;
+            } catch (error) {
+              console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
+              return { success: false };
+            }
+          });
+          
+          // Wait for all parallel requests in this batch to complete
+          const results = await Promise.allSettled(batchPromises);
+          results.forEach(result => {
+            if (result.status === 'fulfilled') {
+              if (result.value.success) successCount++;
+              else failureCount++;
             } else {
               failureCount++;
             }
-          } catch (error) {
-            console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
-            failureCount++;
-          }
+          });
           
-          // Rate limiting delay
-          if ((i + 1) % 10 === 0 && i + 1 < wordsToTranslate.length) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          // Delay before next batch to avoid rate limiting
+          if (batchEnd < wordsToTranslate.length) {
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
           }
         }
         
@@ -701,48 +717,64 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         
         let successCount = 0;
         let failureCount = 0;
+        const BATCH_SIZE = 10;
+        const BATCH_DELAY_MS = 2000;
         
-        // Process in batches to avoid rate limiting
-        for (let i = 0; i < wordsToTranslate.length; i++) {
-          const word = wordsToTranslate[i];
-          try {
-            const prompt = `Translate this Korean example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.korean}".\nKorean sentence: ${word.koreanExample}\n\nRespond with only the French translation:`;
-            
-            const result = await invokeLLM({
-              messages: [
-                { role: 'system', content: 'You are a professional translator. Translate Korean to French.' },
-                { role: 'user', content: prompt },
-              ],
-            });
-            
-            const contentRaw = result.choices?.[0]?.message?.content;
-            const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
-            
-            if (frenchTranslation) {
-              // Update the word with French translation
-              try {
-                await db
-                  .update(words)
-                  .set({ exampleFrench: frenchTranslation })
-                  .where(eq(words.id, word.id));
-              } catch (updateError) {
-                console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
-                failureCount++;
-                continue;
+        // Process in parallel batches to avoid rate limiting and timeouts
+        for (let batchStart = 0; batchStart < wordsToTranslate.length; batchStart += BATCH_SIZE) {
+          const batchEnd = Math.min(batchStart + BATCH_SIZE, wordsToTranslate.length);
+          const batch = wordsToTranslate.slice(batchStart, batchEnd);
+          
+          // Process all words in this batch in parallel
+          const batchPromises = batch.map(async (word) => {
+            try {
+              const prompt = `Translate this Korean example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.korean}".\nKorean sentence: ${word.koreanExample}\n\nRespond with only the French translation:`;
+              
+              const result = await invokeLLM({
+                messages: [
+                  { role: 'system', content: 'You are a professional translator. Translate Korean to French.' },
+                  { role: 'user', content: prompt },
+                ],
+              });
+              
+              const contentRaw = result.choices?.[0]?.message?.content;
+              const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
+              
+              if (frenchTranslation) {
+                try {
+                  await db
+                    .update(words)
+                    .set({ exampleFrench: frenchTranslation })
+                    .where(eq(words.id, word.id));
+                  console.log(`[Batch Translation] ✓ ${word.korean} (TOPIK ${word.topikLevel})`);
+                  return { success: true };
+                } catch (updateError) {
+                  console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
+                  return { success: false };
+                }
+              } else {
+                return { success: false };
               }
-              console.log(`[Batch Translation] ✓ ${word.korean} (TOPIK ${word.topikLevel})`);
-              successCount++;
+            } catch (error) {
+              console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
+              return { success: false };
+            }
+          });
+          
+          // Wait for all parallel requests in this batch to complete
+          const results = await Promise.allSettled(batchPromises);
+          results.forEach(result => {
+            if (result.status === 'fulfilled') {
+              if (result.value.success) successCount++;
+              else failureCount++;
             } else {
               failureCount++;
             }
-          } catch (error) {
-            console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
-            failureCount++;
-          }
+          });
           
-          // Rate limiting delay
-          if ((i + 1) % 10 === 0 && i + 1 < wordsToTranslate.length) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          // Delay before next batch to avoid rate limiting
+          if (batchEnd < wordsToTranslate.length) {
+            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
           }
         }
         

@@ -8,6 +8,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { SoundProvider } from "./contexts/SoundContext";
 import { I18nProvider, useI18n } from "./contexts/I18nContext";
 import LocalePicker from "./components/LocalePicker";
+import FrenchOnboardingModal from "./components/FrenchOnboardingModal";
 import Home from "./pages/Home";
 import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
@@ -42,6 +43,7 @@ function AppContent() {
       <SoundProvider>
         <TooltipProvider>
           <Toaster />
+          <FrenchOnboardingModal />
           <Router />
         </TooltipProvider>
       </SoundProvider>
