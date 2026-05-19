@@ -13,6 +13,9 @@ export default function AdminSettings() {
   const [isEditing, setIsEditing] = useState(false);
   const [freeWordCap, setFreeWordCap] = useState<string>("150");
   const [isEditingWordCap, setIsEditingWordCap] = useState(false);
+  const [editWordId, setEditWordId] = useState<string>("");
+  const [editMeaningFr, setEditMeaningFr] = useState<string>("");
+  const [isEditingWord, setIsEditingWord] = useState(false);
 
   // Populate price fields when config loads
   useEffect(() => {
@@ -61,6 +64,16 @@ export default function AdminSettings() {
     onError: () => toast.error("Failed to update word cap"),
   });
 
+  const editWordDefinition = trpc.admin.editWordDefinition.useMutation({
+    onSuccess: (data) => {
+      toast.success(`✓ Word #${data.wordId} updated`);
+      setIsEditingWord(false);
+      setEditWordId("");
+      setEditMeaningFr("");
+    },
+    onError: (error) => toast.error(`Failed to update: ${error.message}`),
+  });
+
   const handleSavePricing = () => {
     const monthly = parseFloat(monthlyPrice);
     const annual = parseFloat(annualPrice);
@@ -81,6 +94,19 @@ export default function AdminSettings() {
       return;
     }
     updateFreeWordCap.mutate({ wordCap: cap });
+  };
+
+  const handleSaveWordDefinition = () => {
+    const wordId = parseInt(editWordId);
+    if (isNaN(wordId) || wordId < 1) {
+      toast.error("Invalid word ID");
+      return;
+    }
+    if (!editMeaningFr.trim()) {
+      toast.error("Definition cannot be empty");
+      return;
+    }
+    editWordDefinition.mutate({ wordId, meaningFr: editMeaningFr });
   };
 
   const isUnlimited = (config.data?.wordAccessLimit ?? 0) >= 999999;
@@ -350,6 +376,76 @@ export default function AdminSettings() {
             </div>
           ) : (
             <div className="text-sm font-bold text-foreground">{freeWordCap} words / language</div>
+          )}
+        </div>
+
+        {/* Edit Word Definition */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Edit Word Definition</span>
+            </div>
+            {!isEditingWord && (
+              <button
+                onClick={() => setIsEditingWord(true)}
+                className="text-xs font-bold text-primary hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          {isEditingWord ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">Word ID</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editWordId}
+                  onChange={(e) => setEditWordId(e.target.value)}
+                  placeholder="e.g., 1234"
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-bold">French Definition</label>
+                <textarea
+                  value={editMeaningFr}
+                  onChange={(e) => setEditMeaningFr(e.target.value)}
+                  placeholder="e.g., passer (un coup de téléphone), téléphoner"
+                  className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none h-20"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveWordDefinition}
+                  disabled={editWordDefinition.isPending}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50"
+                >
+                  {editWordDefinition.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingWord(false);
+                    setEditWordId("");
+                    setEditMeaningFr("");
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">Click Edit to override a word definition</div>
           )}
         </div>
 

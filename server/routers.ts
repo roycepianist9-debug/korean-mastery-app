@@ -7,7 +7,7 @@ import { invokeLLM } from "./_core/llm";
 import Stripe from "stripe";
 import { STRIPE_PRODUCTS, FREE_PLAN, FREE_WORD_LIMIT } from "./stripe-products";
 import { getDb } from "./db";
-import { users, words } from "../drizzle/schema";
+import { users, words, appConfig } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import {
   searchWords,
@@ -592,6 +592,22 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         }
         await setAppConfig('freeWordCap', input.wordCap.toString());
         return { success: true, wordCap: input.wordCap };
+      }),
+
+    editWordDefinition: protectedProcedure
+      .input(z.object({
+        wordId: z.number(),
+        meaningFr: z.string().min(1).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        await db.update(words).set({ meaningFr: input.meaningFr }).where(eq(words.id, input.wordId));
+        return { success: true, wordId: input.wordId, meaningFr: input.meaningFr };
       }),
 
     // Batch translate Chinese example sentences to French
