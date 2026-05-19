@@ -328,7 +328,25 @@ export async function getRandomWords(params: {
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  return db.select()
+  return db.select({
+    id: words.id,
+    korean: words.korean,
+    romanization: words.romanization,
+    pos: words.pos,
+    meaning: words.meaning,
+    meaningFr: words.meaningFr,
+    koreanExample: words.koreanExample,
+    exampleEnglish: words.exampleEnglish,
+    exampleFrench: words.exampleFrench,
+    topikLevel: words.topikLevel,
+    chinese: words.chinese,
+    pinyin: words.pinyin,
+    chineseExample: words.chineseExample,
+    examplePinyin: words.examplePinyin,
+    exampleChineseFrench: words.exampleChineseFrench,
+    language: words.language,
+    hskLevel: words.hskLevel,
+  })
     .from(words)
     .where(whereClause)
     .orderBy(sql`RAND()`)

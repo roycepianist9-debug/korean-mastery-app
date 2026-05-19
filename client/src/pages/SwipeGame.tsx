@@ -249,11 +249,6 @@ function FlashCard({
           )}
         </div>
 
-        {/* DEBUG - TEMP */}
-        <p style={{fontSize: '10px', color: 'red'}}>
-          DEBUG: lang={language} | fr={word.meaningFr || 'NULL'}
-        </p>
-
         {/* Example sentence */}
         {word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
