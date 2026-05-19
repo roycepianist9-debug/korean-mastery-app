@@ -111,7 +111,7 @@ function MilestoneCard({ language, learnedCount }: { language: string; learnedCo
 export default function Home() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { play: sfx, muted, toggleMute } = useSound();
   const { theme, toggleTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
@@ -382,16 +382,16 @@ export default function Home() {
                   {/* French Language Toggle */}
                   <button
                     onClick={() => {
-                      sfx.tap();
-                      const newLocale = locale === 'en' ? 'fr' : 'en';
-                      setLocale(newLocale);
+                      sfx.pop();
+                      setLanguage('french');
+                      setMenuOpen(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary/60 transition-all press-scale text-left"
                   >
                     <div className="w-8 h-8 rounded-lg bg-chart-3/15 flex items-center justify-center text-lg">
                       🇫🇷
                     </div>
-                    <p className="text-sm font-bold text-foreground">{locale === 'en' ? 'Français' : 'English'}</p>
+                    <p className="text-sm font-bold text-foreground">Français</p>
                   </button>
 
                   {/* Sign Out */}
