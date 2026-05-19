@@ -212,7 +212,17 @@ export default function Home() {
 
   const levelLabel = (l: string) => {
     if (isChinese) return `HSK ${l}`;
-    return l === 'beginner' ? 'Beginner' : l === 'intermediate' ? 'Intermediate' : 'Advanced';
+    if (l === 'beginner') return t('swipe.beginner');
+    if (l === 'intermediate') return t('swipe.intermediate');
+    return t('swipe.advanced');
+  };
+
+  const posLabel = (p: string) => {
+    if (p === 'noun') return t('swipe.noun');
+    if (p === 'verb') return t('swipe.verb');
+    if (p === 'adjective') return t('swipe.adjective');
+    if (p === 'adverb') return t('swipe.adverb');
+    return p;
   };
 
   const levelColor = (l: string) => {
@@ -619,21 +629,21 @@ export default function Home() {
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-primary">{ps.learned}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">Learned</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('words.learned')}</p>
             </button>
             <button
               onClick={() => { sfx.tap(); setLocation(`/words?statuses=reviewing${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-chart-3">{ps.reviewing}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">Reviewing</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('words.reviewing')}</p>
             </button>
             <button
               onClick={() => { sfx.tap(); setLocation(`/words?statuses=new${langParam}`); }}
               className="game-card p-3 text-center press-scale"
             >
               <p className="text-lg font-black text-accent">{(ws?.total ?? 0) - ps.learned - ps.reviewing}</p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase">New</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase">{t('words.new')}</p>
             </button>
           </div>
         )}
@@ -685,8 +695,8 @@ export default function Home() {
                   className="w-full text-left press-scale"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-foreground capitalize">
-                      {item.pos} ({item.learned}/{item.total})
+                    <span className="text-xs font-bold text-foreground">
+                      {posLabel(item.pos)} ({item.learned}/{item.total})
                     </span>
                     <span className="text-xs font-bold text-muted-foreground">
                       {item.total > 0 ? Math.round((item.learned / item.total) * 100) : 0}%
