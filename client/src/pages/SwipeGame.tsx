@@ -8,7 +8,7 @@ import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
   Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
-  BookOpen, Star, Plus,
+  BookOpen, Star, Plus, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import ClickableExample from "@/components/ClickableExample";
 import { useSound } from "@/contexts/SoundContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useI18n } from "@/contexts/I18nContext";
+import { useAudio } from "@/hooks/useAudio";
 
 interface SwipeResult {
   wordId: number;
@@ -96,7 +97,9 @@ function FlashCard({
   aiEnabled: boolean;
 }) {
   const { language } = useLanguage();
-  const { t, locale } = useI18n();
+  const { locale, t } = useI18n();
+  const { speak, isSupported } = useAudio();
+  const audioSupported = isSupported();
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -230,12 +233,34 @@ function FlashCard({
         {/* Word display */}
         {word.korean ? (
           <>
-            <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.korean}</p>
+            <div className="flex items-center justify-center gap-3 mb-1 mt-4">
+              <p className="text-4xl font-black text-foreground">{word.korean}</p>
+              {audioSupported && (
+                <button
+                  onClick={() => speak(word.korean || '', 'ko-KR')}
+                  className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
+                  title="Pronounce"
+                >
+                  <Volume2 className="w-5 h-5 text-primary" />
+                </button>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground font-medium mb-3">{word.romanization}</p>
           </>
         ) : word.chinese ? (
           <>
-            <p className="text-4xl font-black text-foreground mb-1 mt-4">{word.chinese}</p>
+            <div className="flex items-center justify-center gap-3 mb-1 mt-4">
+              <p className="text-4xl font-black text-foreground">{word.chinese}</p>
+              {audioSupported && (
+                <button
+                  onClick={() => speak(word.chinese || '', 'zh-CN')}
+                  className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
+                  title="Pronounce"
+                >
+                  <Volume2 className="w-5 h-5 text-primary" />
+                </button>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground font-medium mb-3">{word.pinyin}</p>
           </>
         ) : null}

@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
-  ArrowLeft, Filter, X, Check, RotateCcw, Gamepad2,
+  ArrowLeft, Filter, X, Check, RotateCcw, Gamepad2, Volume2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import WordDetailSheet from "@/components/WordDetailSheet";
 import UpgradeModal from "@/components/UpgradeModal";
 import { toast } from "sonner";
+import { useAudio } from "@/hooks/useAudio";
 
 /* ─── Word Card Row ─── */
 function WordCard({
@@ -39,6 +40,8 @@ function WordCard({
   isAuthenticated: boolean;
   locale: string;
 }) {
+  const { speak, isSupported } = useAudio();
+  const audioSupported = isSupported();
   return (
     <div className="game-card rounded-2xl flex items-center overflow-hidden">
       {/* Left tappable area → opens popup */}
@@ -59,6 +62,18 @@ function WordCard({
             <span className="text-xs text-muted-foreground shrink-0">
               {word.romanization || word.pinyin}
             </span>
+            {audioSupported && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  speak(word.korean || word.chinese || '', word.korean ? 'ko-KR' : 'zh-CN');
+                }}
+                className="p-1 rounded hover:bg-secondary/60 transition-colors active:scale-95 shrink-0"
+                title="Pronounce"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-primary" />
+              </button>
+            )}
           </div>
           <p className="text-xs text-muted-foreground truncate mt-0.5">
             {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}

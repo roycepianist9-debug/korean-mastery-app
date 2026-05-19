@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
-import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X } from "lucide-react";
+import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X, Sparkles, Loader2 } from "lucide-react";
 
 export default function AdminSettings() {
   const { user, isAuthenticated } = useAuth();
@@ -35,6 +35,13 @@ export default function AdminSettings() {
       config.refetch();
     },
     onError: () => toast.error("Failed to update pricing"),
+  });
+
+  const batchTranslate = trpc.admin.batchTranslateChinese.useMutation({
+    onSuccess: (data) => {
+      toast.success(`✓ Translated ${data.successCount} words, ${data.failureCount} failed`);
+    },
+    onError: (error) => toast.error(`Translation failed: ${error.message}`),
   });
 
   const handleSavePricing = () => {
@@ -213,6 +220,36 @@ export default function AdminSettings() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Batch Translation */}
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground">Batch French Translation</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Translate Chinese HSK 1-6 example sentences to French. This will take a few minutes.
+          </p>
+          <button
+            onClick={() => batchTranslate.mutate()}
+            disabled={batchTranslate.isPending}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
+          >
+            {batchTranslate.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Translating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Start Batch Translation
+              </>
+            )}
+          </button>
         </div>
 
         {/* App Info */}
