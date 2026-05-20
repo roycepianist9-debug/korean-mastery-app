@@ -546,11 +546,14 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
       const userRecord = db
         ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
         : null;
+      const freeWordCapStr = await getAppConfig('freeWordCap');
+      const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
       return {
         proMonthlyPriceCents: parseInt(process.env.ADMIN_PRO_MONTHLY_CENTS || '999'),
         proAnnualPriceCents: parseInt(process.env.ADMIN_PRO_ANNUAL_CENTS || '9999'),
         adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
         wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
+        freeWordCap: freeWordCap,
         isOwner: true,
       };
     }),

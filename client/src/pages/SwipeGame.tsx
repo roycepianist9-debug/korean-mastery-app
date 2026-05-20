@@ -138,8 +138,8 @@ function FlashCard({
     if (!isDragging || !isTop) return;
     setIsDragging(false);
     if (Math.abs(dragX) > SWIPE_THRESHOLD) {
-      const known = dragX > 0; // RIGHT = Learned (known=true), LEFT = Review (known=false)
-      setExitDir(known ? 'right' : 'left');
+      const known = dragX < 0; // LEFT = Learned (known=true), RIGHT = Review (known=false)
+      setExitDir(known ? 'left' : 'right');
       setTimeout(() => onSwipe(known), 300);
     } else {
       setDragX(0);
@@ -198,18 +198,36 @@ function FlashCard({
     >
       {/* Swipe indicators */}
       {swipeIndicator === 'left' && (
-        <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[-12deg] animate-xp-pop">
-          <span className="text-destructive font-black text-lg">REVIEW ✗</span>
+        <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg] animate-xp-pop">
+          <span className="text-primary font-black text-lg">LEARNED ✓</span>
         </div>
       )}
       {swipeIndicator === 'right' && (
-        <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[12deg] animate-xp-pop">
-          <span className="text-primary font-black text-lg">LEARNED ✓</span>
+        <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[12deg] animate-xp-pop">
+          <span className="text-destructive font-black text-lg">REVIEW ✗</span>
         </div>
       )}
 
       {/* Card content */}
       <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
+        {/* Examples toggle top-left */}
+        {isTop && (
+          <button
+            onClick={() => {
+              const newState = !showExamples;
+              localStorage.setItem('swipe_show_examples', newState ? 'true' : 'false');
+              window.location.reload();
+            }}
+            className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
+            style={{
+              backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
+              color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
+            }}
+          >
+            {showExamples ? 'Ex: ON' : 'Ex: OFF'}
+          </button>
+        )}
+
         {/* Level badge top-right only (no POS) */}
         <div className="absolute top-3 right-3">
           {word.hskLevel ? (
@@ -327,7 +345,7 @@ function FlashCard({
         ) : null}
 
         <p className="text-[10px] text-muted-foreground/50 mt-auto pt-2">
-          ← Review · Swipe · Know it →
+          ← Know it · Swipe · Review →
         </p>
       </div>
     </div>
@@ -851,10 +869,10 @@ export default function SwipeGame() {
         </button>
 
         <button
-          onClick={() => handleSwipe(true)}
-          className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
+          onClick={() => handleSwipe(false)}
+          className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
         >
-          <Check className="w-7 h-7 text-primary" />
+          <X className="w-7 h-7 text-destructive" />
         </button>
         <button
           onClick={() => { sfx.tap(); setDetailWord(currentWord); setDetailOpen(true); }}
@@ -863,10 +881,10 @@ export default function SwipeGame() {
           <Info className="w-5 h-5 text-accent" />
         </button>
         <button
-          onClick={() => handleSwipe(false)}
-          className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
+          onClick={() => handleSwipe(true)}
+          className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
         >
-          <X className="w-7 h-7 text-destructive" />
+          <Check className="w-7 h-7 text-primary" />
         </button>
       </div>
 

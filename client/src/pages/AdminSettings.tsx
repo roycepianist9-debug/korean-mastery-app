@@ -30,6 +30,9 @@ export default function AdminSettings() {
     if (config.data) {
       setMonthlyPrice((config.data.proMonthlyPriceCents / 100).toFixed(2));
       setAnnualPrice((config.data.proAnnualPriceCents / 100).toFixed(2));
+      if (config.data.freeWordCap) {
+        setFreeWordCap(config.data.freeWordCap.toString());
+      }
     }
   }, [config.data]);
 
