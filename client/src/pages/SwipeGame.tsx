@@ -210,23 +210,7 @@ function FlashCard({
 
       {/* Card content */}
       <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
-        {/* Examples toggle top-left */}
-        {isTop && (
-          <button
-            onClick={() => {
-              const newState = !showExamples;
-              localStorage.setItem('swipe_show_examples', newState ? 'true' : 'false');
-              window.location.reload();
-            }}
-            className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
-            style={{
-              backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
-              color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
-            }}
-          >
-            {showExamples ? 'Ex: ON' : 'Ex: OFF'}
-          </button>
-        )}
+
 
         {/* Level badge top-right only (no POS) */}
         <div className="absolute top-3 right-3">
@@ -344,9 +328,26 @@ function FlashCard({
           </div>
         ) : null}
 
-        <p className="text-[10px] text-muted-foreground/50 mt-auto pt-2">
-          ← Know it · Swipe · Review →
-        </p>
+        <div className="mt-auto pt-3 flex flex-col items-center gap-2 w-full">
+          <button
+            onClick={() => {
+              const newState = !showExamples;
+              localStorage.setItem('swipe_show_examples', newState ? 'true' : 'false');
+              // Update state without reload
+              window.dispatchEvent(new CustomEvent('toggleExamples', { detail: newState }));
+            }}
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+            style={{
+              backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
+              color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
+            }}
+          >
+            {showExamples ? 'Examples ON' : 'Examples OFF'}
+          </button>
+          <p className="text-[10px] text-muted-foreground/50">
+            ← Know it · Swipe · Review →
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -743,19 +744,6 @@ export default function SwipeGame() {
               <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
             </button>
           )}
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleExamples}
-              className="flex-1 text-xs font-bold press-scale"
-              title={showExamples ? 'Hide example sentences' : 'Show example sentences'}
-            >
-              <BookOpen className="w-4 h-4 mr-1" />
-              {showExamples ? 'Examples ON' : 'Examples OFF'}
-            </Button>
-          </div>
 
           <Button
             size="lg"

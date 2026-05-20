@@ -1,32 +1,30 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import { words } from './drizzle/schema.ts';
-import { eq, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/mysql2/promise';
+import mysql from 'mysql2/promise';
+import { koreanWords, chineseWords } from './drizzle/schema.ts';
+import { eq, isNull } from 'drizzle-orm';
 
-const db = drizzle(process.env.DATABASE_URL);
+const connection = await mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
 
-// Check Chinese translations
-const chineseStats = await db.select({
-  total: sql`COUNT(*)`,
-  translated: sql`SUM(CASE WHEN exampleChineseFrench IS NOT NULL AND exampleChineseFrench != '' THEN 1 ELSE 0 END)`,
-  pending: sql`SUM(CASE WHEN exampleChineseFrench IS NULL OR exampleChineseFrench = '' THEN 1 ELSE 0 END)`
-}).from(words).where(eq(words.language, 'chinese'));
+const db = drizzle(connection);
 
-// Check Korean translations
+// Check Korean example translations
 const koreanStats = await db.select({
-  total: sql`COUNT(*)`,
-  translated: sql`SUM(CASE WHEN exampleKoreanFrench IS NOT NULL AND exampleKoreanFrench != '' THEN 1 ELSE 0 END)`,
-  pending: sql`SUM(CASE WHEN exampleKoreanFrench IS NULL OR exampleKoreanFrench = '' THEN 1 ELSE 0 END)`
-}).from(words).where(eq(words.language, 'korean'));
+  total: 'COUNT(*)',
+  translated: 'SUM(CASE WHEN exampleFrench IS NOT NULL AND exampleFrench != "" THEN 1 ELSE 0 END)',
+}).from(koreanWords);
 
-console.log('📊 TRANSLATION STATUS:');
-console.log('\n🇨🇳 Chinese:');
-console.log(`  Total words: ${chineseStats[0].total}`);
-console.log(`  Translated: ${chineseStats[0].translated}`);
-console.log(`  Pending: ${chineseStats[0].pending}`);
+// Check Chinese example translations
+const chineseStats = await db.select({
+  total: 'COUNT(*)',
+  translated: 'SUM(CASE WHEN exampleChineseFrench IS NOT NULL AND exampleChineseFrench != "" THEN 1 ELSE 0 END)',
+}).from(chineseWords);
 
-console.log('\n🇰🇷 Korean:');
-console.log(`  Total words: ${koreanStats[0].total}`);
-console.log(`  Translated: ${koreanStats[0].translated}`);
-console.log(`  Pending: ${koreanStats[0].pending}`);
+console.log('Korean Example Translations:', koreanStats[0]);
+console.log('Chinese Example Translations:', chineseStats[0]);
 
-process.exit(0);
+await connection.end();
