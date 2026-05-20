@@ -9,6 +9,7 @@ import { STRIPE_PRODUCTS, FREE_PLAN, FREE_WORD_LIMIT } from "./stripe-products";
 import { getDb } from "./db";
 import { users, words, appConfig } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
+import { startBatchTranslationJob, getJobStatus } from "./backgroundJobs";
 import { storagePut } from "./storage";
 import {
   searchWords,
@@ -611,7 +612,7 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         return { success: true, wordId: input.wordId, meaningFr: input.meaningFr };
       }),
 
-    // Batch translate Chinese example sentences to French
+    // Batch translate Chinese example sentences to French (async background job)
     batchTranslateChinese: protectedProcedure
       .mutation(async ({ ctx }) => {
         const { ENV } = await import('./_core/env');
@@ -619,101 +620,15 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
           throw new Error('Unauthorized');
         }
         
-        const db = await getDb();
-        if (!db) throw new Error('Database not available');
-        
-        // Get all Chinese words with examples that need translation
-        const wordsToTranslate = await db
-          .select({
-            id: words.id,
-            chinese: words.chinese,
-            chineseExample: words.chineseExample,
-            hskLevel: words.hskLevel,
-          })
-          .from(words)
-          .where(
-            sql`language = 'chinese' AND chineseExample IS NOT NULL AND chineseExample != '' AND (exampleChineseFrench IS NULL OR exampleChineseFrench = '')`
-          )
-          .limit(500);
-        console.log(`[Batch Translation] Found ${wordsToTranslate.length} Chinese words needing French translations`);
-        
-        if (wordsToTranslate.length === 0) {
-          return { success: true, processed: 0, message: 'All Chinese examples already have French translations' };
-        }
-        
-        let successCount = 0;
-        let failureCount = 0;
-        const BATCH_SIZE = 10;
-        const BATCH_DELAY_MS = 2000;
-        
-        // Process in parallel batches to avoid rate limiting and timeouts
-        for (let batchStart = 0; batchStart < wordsToTranslate.length; batchStart += BATCH_SIZE) {
-          const batchEnd = Math.min(batchStart + BATCH_SIZE, wordsToTranslate.length);
-          const batch = wordsToTranslate.slice(batchStart, batchEnd);
-          
-          // Process all words in this batch in parallel
-          const batchPromises = batch.map(async (word) => {
-            try {
-              const prompt = `Translate this Chinese example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.chinese}".\nChinese sentence: ${word.chineseExample}\n\nRespond with only the French translation:`;
-              
-              const result = await invokeLLM({
-                messages: [
-                  { role: 'system', content: 'You are a professional translator. Translate Chinese to French.' },
-                  { role: 'user', content: prompt },
-                ],
-              });
-              
-              const contentRaw = result.choices?.[0]?.message?.content;
-              const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
-              
-              if (frenchTranslation) {
-                try {
-                  await db
-                    .update(words)
-                    .set({ exampleChineseFrench: frenchTranslation })
-                    .where(eq(words.id, word.id));
-                  console.log(`[Batch Translation] ✓ ${word.chinese} (HSK ${word.hskLevel})`);
-                  return { success: true };
-                } catch (updateError) {
-                  console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
-                  return { success: false };
-                }
-              } else {
-                return { success: false };
-              }
-            } catch (error) {
-              console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
-              return { success: false };
-            }
-          });
-          
-          // Wait for all parallel requests in this batch to complete
-          const results = await Promise.allSettled(batchPromises);
-          results.forEach(result => {
-            if (result.status === 'fulfilled') {
-              if (result.value.success) successCount++;
-              else failureCount++;
-            } else {
-              failureCount++;
-            }
-          });
-          
-          // Delay before next batch to avoid rate limiting
-          if (batchEnd < wordsToTranslate.length) {
-            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
-          }
-        }
-        
+        // Start async job and return immediately
+        const result = await startBatchTranslationJob('chinese');
         return {
           success: true,
-          processed: successCount + failureCount,
-          successCount,
-          failureCount,
-          message: `Translated ${successCount} words, ${failureCount} failed`,
+          ...result,
         };
       }),
 
-    // Batch translate Korean example sentences to French
+    // Batch translate Korean example sentences to French (async background job)
     batchTranslateKorean: protectedProcedure
       .mutation(async ({ ctx }) => {
         const { ENV } = await import('./_core/env');
@@ -721,98 +636,25 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
           throw new Error('Unauthorized');
         }
         
-        const db = await getDb();
-        if (!db) throw new Error('Database not available');
-        
-        // Get all Korean words with examples that need translation
-        const wordsToTranslate = await db
-          .select({
-            id: words.id,
-            korean: words.korean,
-            koreanExample: words.koreanExample,
-            topikLevel: words.topikLevel,
-          })
-          .from(words)
-          .where(
-            sql`language = 'korean' AND koreanExample IS NOT NULL AND koreanExample != '' AND (exampleFrench IS NULL OR exampleFrench = '')`
-          )
-          .limit(500);
-        console.log(`[Batch Translation] Found ${wordsToTranslate.length} Korean words needing French translations`);
-        
-        if (wordsToTranslate.length === 0) {
-          return { success: true, processed: 0, message: 'All Korean examples already have French translations' };
-        }
-        
-        let successCount = 0;
-        let failureCount = 0;
-        const BATCH_SIZE = 10;
-        const BATCH_DELAY_MS = 2000;
-        
-        // Process in parallel batches to avoid rate limiting and timeouts
-        for (let batchStart = 0; batchStart < wordsToTranslate.length; batchStart += BATCH_SIZE) {
-          const batchEnd = Math.min(batchStart + BATCH_SIZE, wordsToTranslate.length);
-          const batch = wordsToTranslate.slice(batchStart, batchEnd);
-          
-          // Process all words in this batch in parallel
-          const batchPromises = batch.map(async (word) => {
-            try {
-              const prompt = `Translate this Korean example sentence to French. Return ONLY the French translation, nothing else.\n\nContext: This is a vocabulary learning example for the word "${word.korean}".\nKorean sentence: ${word.koreanExample}\n\nRespond with only the French translation:`;
-              
-              const result = await invokeLLM({
-                messages: [
-                  { role: 'system', content: 'You are a professional translator. Translate Korean to French.' },
-                  { role: 'user', content: prompt },
-                ],
-              });
-              
-              const contentRaw = result.choices?.[0]?.message?.content;
-              const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
-              
-              if (frenchTranslation) {
-                try {
-                  await db
-                    .update(words)
-                    .set({ exampleFrench: frenchTranslation })
-                    .where(eq(words.id, word.id));
-                  console.log(`[Batch Translation] ✓ ${word.korean} (TOPIK ${word.topikLevel})`);
-                  return { success: true };
-                } catch (updateError) {
-                  console.error(`[Batch Translation] Failed to update word ${word.id}:`, updateError);
-                  return { success: false };
-                }
-              } else {
-                return { success: false };
-              }
-            } catch (error) {
-              console.error(`[Batch Translation] ✗ Failed to process word ${word.id}:`, error);
-              return { success: false };
-            }
-          });
-          
-          // Wait for all parallel requests in this batch to complete
-          const results = await Promise.allSettled(batchPromises);
-          results.forEach(result => {
-            if (result.status === 'fulfilled') {
-              if (result.value.success) successCount++;
-              else failureCount++;
-            } else {
-              failureCount++;
-            }
-          });
-          
-          // Delay before next batch to avoid rate limiting
-          if (batchEnd < wordsToTranslate.length) {
-            await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
-          }
-        }
-        
+        // Start async job and return immediately
+        const result = await startBatchTranslationJob('korean');
         return {
           success: true,
-          processed: successCount + failureCount,
-          successCount,
-          failureCount,
-          message: `Translated ${successCount} words, ${failureCount} failed`,
+          ...result,
         };
+      }),
+
+    // Get batch translation job status
+    getBatchJobStatus: protectedProcedure
+      .input(z.object({ jobId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+        
+        const status = getJobStatus(input.jobId);
+        return status || { error: 'Job not found' };
       }),
 
     // Update app tagline (English and French)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
@@ -20,6 +20,10 @@ export default function AdminSettings() {
   const [taglineFr, setTaglineFr] = useState<string>("");
   const [isEditingTagline, setIsEditingTagline] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [chineseJobId, setChineseJobId] = useState<string | null>(null);
+  const [koreanJobId, setKoreanJobId] = useState<string | null>(null);
+  const [chineseJobStatus, setChineseJobStatus] = useState<any>(null);
+  const [koreanJobStatus, setKoreanJobStatus] = useState<any>(null);
 
   // Populate price fields when config loads
   useEffect(() => {
@@ -57,17 +61,57 @@ export default function AdminSettings() {
 
   const batchTranslateChinese = trpc.admin.batchTranslateChinese.useMutation({
     onSuccess: (data) => {
-      toast.success(`✓ Chinese: Translated ${data.successCount} words, ${data.failureCount} failed`);
+      setChineseJobId(data.jobId);
+      toast.success(`✓ Chinese batch started in background. Job ID: ${data.jobId}`);
+      // Start polling for status
+      const pollInterval = setInterval(() => {
+        getChineseJobStatus.refetch();
+      }, 2000);
+      setTimeout(() => clearInterval(pollInterval), 3600000); // Stop after 1 hour
     },
     onError: (error) => toast.error(`Translation failed: ${error.message}`),
   });
 
   const batchTranslateKorean = trpc.admin.batchTranslateKorean.useMutation({
     onSuccess: (data) => {
-      toast.success(`✓ Korean: Translated ${data.successCount} words, ${data.failureCount} failed`);
+      setKoreanJobId(data.jobId);
+      toast.success(`✓ Korean batch started in background. Job ID: ${data.jobId}`);
+      // Start polling for status
+      const pollInterval = setInterval(() => {
+        getKoreanJobStatus.refetch();
+      }, 2000);
+      setTimeout(() => clearInterval(pollInterval), 3600000); // Stop after 1 hour
     },
     onError: (error) => toast.error(`Translation failed: ${error.message}`),
   });
+
+  const getChineseJobStatus = trpc.admin.getBatchJobStatus.useQuery(
+    { jobId: chineseJobId || '' },
+    { enabled: !!chineseJobId, refetchInterval: 3000 }
+  );
+
+  const getKoreanJobStatus = trpc.admin.getBatchJobStatus.useQuery(
+    { jobId: koreanJobId || '' },
+    { enabled: !!koreanJobId, refetchInterval: 3000 }
+  );
+
+  useEffect(() => {
+    if (getChineseJobStatus.data && 'status' in getChineseJobStatus.data) {
+      setChineseJobStatus(getChineseJobStatus.data);
+      if (getChineseJobStatus.data.status === 'completed') {
+        toast.success(`✓ Chinese batch complete! ${getChineseJobStatus.data.successCount} words translated.`);
+      }
+    }
+  }, [getChineseJobStatus.data]);
+
+  useEffect(() => {
+    if (getKoreanJobStatus.data && 'status' in getKoreanJobStatus.data) {
+      setKoreanJobStatus(getKoreanJobStatus.data);
+      if (getKoreanJobStatus.data.status === 'completed') {
+        toast.success(`✓ Korean batch complete! ${getKoreanJobStatus.data.successCount} words translated.`);
+      }
+    }
+  }, [getKoreanJobStatus.data]);
 
   const updateFreeWordCap = trpc.admin.updateFreeWordCap.useMutation({
     onSuccess: (data) => {
@@ -344,40 +388,72 @@ export default function AdminSettings() {
             Translate example sentences to French. Each takes a few minutes.
           </p>
           <div className="space-y-2">
-            <button
-              onClick={() => batchTranslateChinese.mutate()}
-              disabled={batchTranslateChinese.isPending}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
-            >
-              {batchTranslateChinese.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Chinese...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Translate Chinese (HSK 1-6)
-                </>
+            <div>
+              <button
+                onClick={() => batchTranslateChinese.mutate()}
+                disabled={batchTranslateChinese.isPending || (chineseJobStatus && 'status' in chineseJobStatus && chineseJobStatus.status === 'running')}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
+              >
+                {batchTranslateChinese.isPending || (chineseJobStatus && 'status' in chineseJobStatus && chineseJobStatus.status === 'running') ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Chinese Processing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Translate Chinese (HSK 1-6)
+                  </>
+                )}
+              </button>
+              {chineseJobStatus && 'status' in chineseJobStatus && (
+                <div className="mt-2 p-2 bg-secondary/50 rounded-lg text-xs">
+                  <p className="text-muted-foreground">Status: <span className="font-bold text-foreground">{chineseJobStatus.status}</span></p>
+                  {chineseJobStatus.status === 'running' && (
+                    <>
+                      <p className="text-muted-foreground">Chunk: {chineseJobStatus.currentChunk}/{chineseJobStatus.totalChunks}</p>
+                      <p className="text-muted-foreground">Success: {chineseJobStatus.successCount} | Failed: {chineseJobStatus.failureCount}</p>
+                    </>
+                  )}
+                  {chineseJobStatus.status === 'completed' && (
+                    <p className="text-muted-foreground">✓ Completed: {chineseJobStatus.successCount} translated, {chineseJobStatus.failureCount} failed</p>
+                  )}
+                </div>
               )}
-            </button>
-            <button
-              onClick={() => batchTranslateKorean.mutate()}
-              disabled={batchTranslateKorean.isPending}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
-            >
-              {batchTranslateKorean.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Korean...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Translate Korean (TOPIK 1-6)
-                </>
+            </div>
+            <div>
+              <button
+                onClick={() => batchTranslateKorean.mutate()}
+                disabled={batchTranslateKorean.isPending || (koreanJobStatus && 'status' in koreanJobStatus && koreanJobStatus.status === 'running')}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all"
+              >
+                {batchTranslateKorean.isPending || (koreanJobStatus && 'status' in koreanJobStatus && koreanJobStatus.status === 'running') ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Korean Processing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Translate Korean (TOPIK 1-6)
+                  </>
+                )}
+              </button>
+              {koreanJobStatus && 'status' in koreanJobStatus && (
+                <div className="mt-2 p-2 bg-secondary/50 rounded-lg text-xs">
+                  <p className="text-muted-foreground">Status: <span className="font-bold text-foreground">{koreanJobStatus.status}</span></p>
+                  {koreanJobStatus.status === 'running' && (
+                    <>
+                      <p className="text-muted-foreground">Chunk: {koreanJobStatus.currentChunk}/{koreanJobStatus.totalChunks}</p>
+                      <p className="text-muted-foreground">Success: {koreanJobStatus.successCount} | Failed: {koreanJobStatus.failureCount}</p>
+                    </>
+                  )}
+                  {koreanJobStatus.status === 'completed' && (
+                    <p className="text-muted-foreground">✓ Completed: {koreanJobStatus.successCount} translated, {koreanJobStatus.failureCount} failed</p>
+                  )}
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
 
