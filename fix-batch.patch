@@ -1,0 +1,20 @@
+--- a/server/backgroundJobs.ts
++++ b/server/backgroundJobs.ts
+@@ -115,14 +115,8 @@ export async function processBatchTranslation(
+     job.totalChunks = chunks.length;
+     console.log(`[Background Job ${jobId}] Processing ${chunks.length} chunks of ${CHUNK_SIZE} words each`);
+ 
+-    // TEST: Log first 10 rows to verify data
+-    if (chunkIdx === 0) {
+-      console.log(`[Background Job ${jobId}] 🧪 TEST: First 10 words to translate:`);
+-      chunks[0].slice(0, 10).forEach((w, idx) => {
+-        console.log(`  ${idx + 1}. ${w.word} (Level ${w.level}) → Example: "${w.example.substring(0, 60)}..."`);
+-      });
+-    }
++    // TEST: Log first 10 rows to verify data
++    console.log(`[Background Job ${jobId}] TEST: First 10 words to translate:`);
++    chunks[0].slice(0, 10).forEach((w, idx) => {
++      console.log(`  ${idx + 1}. ${w.word} (Level ${w.level}) - Example: "${w.example.substring(0, 60)}..."`);
++    });
+ 
+     // Process each chunk with mandatory delay

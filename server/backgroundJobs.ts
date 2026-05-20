@@ -81,10 +81,10 @@ async function processBatchTranslation(
   if (!job) return;
 
   try {
-    // Query words needing translation
+    // Query words needing EXAMPLE SENTENCE translation (not definitions)
     const whereClause = language === 'chinese'
       ? sql`language = 'chinese' AND chineseExample IS NOT NULL AND chineseExample != '' AND (exampleChineseFrench IS NULL OR exampleChineseFrench = '')`
-      : sql`language = 'korean' AND koreanExample IS NOT NULL AND koreanExample != '' AND (exampleKoreanFrench IS NULL OR exampleKoreanFrench = '')`;
+      : sql`language = 'korean' AND koreanExample IS NOT NULL AND koreanExample != '' AND (exampleFrench IS NULL OR exampleFrench = '')`;
 
     const wordsToTranslate = await db.execute(`
       SELECT id, 
@@ -93,7 +93,7 @@ async function processBatchTranslation(
       WHERE language = '${language}' 
         AND ${language === 'chinese' ? 'chineseExample' : 'koreanExample'} IS NOT NULL 
         AND ${language === 'chinese' ? 'chineseExample' : 'koreanExample'} != '' 
-        AND (${language === 'chinese' ? 'exampleChineseFrench' : 'exampleKoreanFrench'} IS NULL OR ${language === 'chinese' ? 'exampleChineseFrench' : 'exampleKoreanFrench'} = '')
+        AND (${language === 'chinese' ? 'exampleChineseFrench' : 'exampleFrench'} IS NULL OR ${language === 'chinese' ? 'exampleChineseFrench' : 'exampleFrench'} = '')
     `) as any;
 
     console.log(`[Background Job ${jobId}] Found ${wordsToTranslate.length} ${language} words needing French translations`);
@@ -114,6 +114,12 @@ async function processBatchTranslation(
 
     job.totalChunks = chunks.length;
     console.log(`[Background Job ${jobId}] Processing ${chunks.length} chunks of ${CHUNK_SIZE} words each`);
+
+    // TEST: Log first 10 rows to verify data
+    console.log(`[Background Job ${jobId}] TEST: First 10 words to translate:`);
+    chunks[0].slice(0, 10).forEach((w: any, idx: number) => {
+      console.log(`  ${idx + 1}. ${w.word} (Level ${w.level}) - Example: "${w.example.substring(0, 60)}..."`);
+    });
 
     // Process each chunk with mandatory delay
     for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
@@ -143,12 +149,12 @@ async function processBatchTranslation(
             if (language === 'chinese') {
               updateData.exampleChineseFrench = frenchTranslation;
             } else {
-              updateData.exampleKoreanFrench = frenchTranslation;
+              updateData.exampleFrench = frenchTranslation;
             }
-            const escapedTranslation = frenchTranslation.replace(/'/g, "\\'");
+            const escapedTranslation = frenchTranslation.replace(/'/g, "\\");
             await db.execute(`
               UPDATE words 
-              SET ${language === 'chinese' ? 'exampleChineseFrench' : 'exampleKoreanFrench'} = '${escapedTranslation}'  
+              SET ${language === 'chinese' ? 'exampleChineseFrench' : 'exampleFrench'} = '${escapedTranslation}'  
               WHERE id = ${wordData.id}
             `) as any;
 

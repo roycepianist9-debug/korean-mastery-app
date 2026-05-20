@@ -90,11 +90,13 @@ function FlashCard({
   onSwipe,
   isTop,
   aiEnabled,
+  showExamples,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
   aiEnabled: boolean;
+  showExamples: boolean;
 }) {
   const { language } = useLanguage();
   const { locale, t } = useI18n();
@@ -136,8 +138,8 @@ function FlashCard({
     if (!isDragging || !isTop) return;
     setIsDragging(false);
     if (Math.abs(dragX) > SWIPE_THRESHOLD) {
-      const known = dragX < 0; // LEFT = Learned (known=true), RIGHT = Review (known=false)
-      setExitDir(known ? 'left' : 'right');
+      const known = dragX > 0; // RIGHT = Learned (known=true), LEFT = Review (known=false)
+      setExitDir(known ? 'right' : 'left');
       setTimeout(() => onSwipe(known), 300);
     } else {
       setDragX(0);
@@ -196,13 +198,13 @@ function FlashCard({
     >
       {/* Swipe indicators */}
       {swipeIndicator === 'left' && (
-        <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg] animate-xp-pop">
-          <span className="text-primary font-black text-lg">LEARNED ✓</span>
+        <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[-12deg] animate-xp-pop">
+          <span className="text-destructive font-black text-lg">REVIEW ✗</span>
         </div>
       )}
       {swipeIndicator === 'right' && (
-        <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[12deg] animate-xp-pop">
-          <span className="text-destructive font-black text-lg">REVIEW ✗</span>
+        <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[12deg] animate-xp-pop">
+          <span className="text-primary font-black text-lg">LEARNED ✓</span>
         </div>
       )}
 
@@ -275,7 +277,7 @@ function FlashCard({
         </div>
 
         {/* Example sentence */}
-        {word.koreanExample ? (
+        {showExamples && word.koreanExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
             {locale === 'fr' && word.exampleFrench ? (
               <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
@@ -297,7 +299,7 @@ function FlashCard({
               </>
             )}
           </div>
-        ) : word.chineseExample ? (
+        ) : showExamples && word.chineseExample ? (
           <div className="w-full space-y-1.5 text-center px-1">
             {locale === 'fr' && word.exampleChineseFrench ? (
               <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
@@ -456,6 +458,19 @@ export default function SwipeGame() {
     setAiEnabled(prev => {
       const next = !prev;
       try { localStorage.setItem('swipe-ai-translation', next ? 'on' : 'off'); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Example sentence toggle — persisted in localStorage
+  const [showExamples, setShowExamples] = useState<boolean>(() => {
+    try { return localStorage.getItem('swipe-show-examples') !== 'off'; } catch { return true; }
+  });
+
+  const toggleExamples = useCallback(() => {
+    setShowExamples(prev => {
+      const next = !prev;
+      try { localStorage.setItem('swipe-show-examples', next ? 'on' : 'off'); } catch {}
       return next;
     });
   }, []);
@@ -711,6 +726,19 @@ export default function SwipeGame() {
             </button>
           )}
 
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleExamples}
+              className="flex-1 text-xs font-bold press-scale"
+              title={showExamples ? 'Hide example sentences' : 'Show example sentences'}
+            >
+              <BookOpen className="w-4 h-4 mr-1" />
+              {showExamples ? 'Examples ON' : 'Examples OFF'}
+            </Button>
+          </div>
+
           <Button
             size="lg"
             className="w-full h-14 text-lg font-black press-scale bg-gradient-to-r from-primary to-primary/80"
@@ -793,6 +821,7 @@ export default function SwipeGame() {
               onSwipe={() => {}}
               isTop={false}
               aiEnabled={aiEnabled}
+              showExamples={showExamples}
             />
           )}
           <FlashCard
@@ -801,6 +830,7 @@ export default function SwipeGame() {
             onSwipe={handleSwipe}
             isTop={true}
             aiEnabled={aiEnabled}
+            showExamples={showExamples}
           />
         </div>
       </div>
@@ -821,10 +851,10 @@ export default function SwipeGame() {
         </button>
 
         <button
-          onClick={() => handleSwipe(false)}
-          className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
+          onClick={() => handleSwipe(true)}
+          className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
         >
-          <X className="w-7 h-7 text-destructive" />
+          <Check className="w-7 h-7 text-primary" />
         </button>
         <button
           onClick={() => { sfx.tap(); setDetailWord(currentWord); setDetailOpen(true); }}
@@ -833,10 +863,10 @@ export default function SwipeGame() {
           <Info className="w-5 h-5 text-accent" />
         </button>
         <button
-          onClick={() => handleSwipe(true)}
-          className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
+          onClick={() => handleSwipe(false)}
+          className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
         >
-          <Check className="w-7 h-7 text-primary" />
+          <X className="w-7 h-7 text-destructive" />
         </button>
       </div>
 
