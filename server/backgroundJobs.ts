@@ -26,7 +26,7 @@ export type JobStatus = typeof activeJobs extends Map<string, infer T> ? T : nev
  */
 export async function startBatchTranslationJob(
   language: 'chinese' | 'korean'
-): Promise<{ jobId: string; message: string }> {
+): Promise<{ jobId: string; message: string; successCount: number; failureCount: number }> {
   const jobId = `batch-${language}-${Date.now()}`;
   
   // Initialize job tracking
@@ -53,6 +53,8 @@ export async function startBatchTranslationJob(
   return {
     jobId,
     message: `Batch ${language} translation started in background. Job ID: ${jobId}`,
+    successCount: 0,
+    failureCount: 0,
   };
 }
 
