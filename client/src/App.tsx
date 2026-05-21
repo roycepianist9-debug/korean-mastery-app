@@ -12,6 +12,7 @@ import FrenchOnboardingModal from "./components/FrenchOnboardingModal";
 import Home from "./pages/Home";
 import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
+import MemoryGame from "./pages/MemoryGame";
 import WordDetail from "./pages/WordDetail";
 import AdminSettings from "./pages/AdminSettings";
 import Rules from "./pages/Rules";
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/words" component={WordList} />
       <Route path="/play" component={SwipeGame} />
+      <Route path="/memory" component={MemoryGame} />
       <Route path="/word/:id" component={WordDetail} />
       <Route path="/admin" component={AdminSettings} />
       <Route path="/rules" component={Rules} />

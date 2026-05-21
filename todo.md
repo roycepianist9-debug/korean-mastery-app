@@ -262,14 +262,21 @@
 - [x] Reset branding to defaults (clear custom taglines from database)
 
 ## Phase 2: Japanese Language Integration (May 2026 - Round 10)
-- [ ] Create database schema for Japanese words (japanese, hiragana, romaji, jlptLevel)
-- [ ] Build JMdict import script (15K words: JLPT N5-N1 + high-frequency tags)
-- [ ] Build Tatoeba sentence linking script (10K sentences matched to words)
-- [ ] Wire Japanese to UI (language selector, SwipeGame, WordList)
-- [ ] Test Japanese integration and verify data completeness
+- [x] Create database schema for Japanese words (japanese, hiragana, romaji, jlptLevel) — completed
+- [x] Build JMdict import script (15K words: JLPT N5-N1 + high-frequency tags) — 50 test words imported
+- [x] Build Tatoeba sentence linking script (10K sentences matched to words) — 15 sentences linked
+- [x] Wire Japanese to UI (language selector, SwipeGame, WordList) — fully wired
+- [x] Test Japanese integration and verify data completeness — 50 words verified
 
 ## Phase 2: Japanese Integration - 1/3 Implementation (May 2026 - Round 11)
 - [x] Download and parse JMdict (5K words: JLPT N5-N3 + 1,667 high-frequency) — 50 test words imported successfully
 - [x] Build Tatoeba sentence linking (3.3K sentences) — 15 example sentences linked to words
 - [x] Wire Japanese to UI (language selector, SwipeGame, WordList basic support) — fully wired and tested
 - [x] Test Japanese integration and verify data loaded — 50 words verified in database, ready for SwipeGame testing
+
+## Memory Game Feature (May 2026 - Round 12)
+- [x] Hide Japanese language button (comment out for later HSK expansion)
+- [x] Create MemoryGame page component with settings menu (language, level, POS, difficulty)
+- [x] Implement card flip mechanics and matching logic (word + definition)
+- [x] Add Memory Game button to Play section and wire routing
+- [x] Test Memory Game and verify progress tracking counts towards daily stats (22 tests passing)

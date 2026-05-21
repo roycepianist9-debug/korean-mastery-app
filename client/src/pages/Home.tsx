@@ -640,13 +640,22 @@ export default function Home() {
         )}
 
         {/* Quick Start */}
-        <Button
-          onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
-          className="w-full h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
-        >
-          <Gamepad2 className="w-6 h-6 mr-2" />
-          {t('home.tagline').includes('swipant') ? 'Commencer le Swipe' : 'Start Swipe Game'}
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
+            className="h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
+          >
+            <Gamepad2 className="w-6 h-6 mr-2" />
+            Swipe
+          </Button>
+          <Button
+            onClick={() => { sfx.whoosh(); setLocation('/memory'); }}
+            className="h-14 text-lg font-black bg-accent hover:bg-accent/90 press-scale rounded-2xl"
+          >
+            <Trophy className="w-6 h-6 mr-2" />
+            Memory
+          </Button>
+        </div>
 
         {/* Clickable Progress Stats */}
         {isAuthenticated && ps && (

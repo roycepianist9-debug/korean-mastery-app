@@ -77,7 +77,7 @@ export async function searchWords(params: {
   userId?: number;
   page: number;
   pageSize: number;
-  language?: 'korean' | 'chinese';
+  language?: 'korean' | 'chinese' | 'japanese';
 }) {
   const db = await getDb();
   if (!db) return { words: [], total: 0 };
