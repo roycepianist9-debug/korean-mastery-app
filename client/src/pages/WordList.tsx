@@ -165,10 +165,27 @@ export default function WordList() {
   const isChinese = language === 'chinese';
   const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : "beginner");
   const defaultStatuses = hasAnyUrlParam ? [] : ["new"];
+  
+  // Load persisted level filter from localStorage
+  const getPersistedLevel = () => {
+    try {
+      const persisted = localStorage.getItem('wordListLevelFilter');
+      if (persisted) return persisted;
+    } catch {}
+    return defaultLevel;
+  };
+  
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
   const [levelFilter, setLevelFilter] = useState(
-    params.get("hskLevel") || params.get("level") || defaultLevel
+    params.get("hskLevel") || params.get("level") || getPersistedLevel()
   );
+  
+  // Persist level filter to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('wordListLevelFilter', levelFilter);
+    } catch {}
+  }, [levelFilter]);
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     const s = params.get("statuses");
     return s ? s.split(",").filter(Boolean) : defaultStatuses;
