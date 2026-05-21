@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import Stripe from "stripe";
@@ -536,6 +537,30 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
 
   admin: router({
     // Get current pricing config and admin status
+    getConfig: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access only' });
+        }
+        const db = await getDb();
+        const userRecord = db
+          ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
+          : null;
+        const freeWordCapStr = await getAppConfig('freeWordCap');
+        const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
+        const proMonthlyStr = await getAppConfig('proMonthlyPriceCents');
+        const proAnnualStr = await getAppConfig('proAnnualPriceCents');
+        return {
+          proMonthlyPriceCents: proMonthlyStr ? parseInt(proMonthlyStr) : 999,
+          proAnnualPriceCents: proAnnualStr ? parseInt(proAnnualStr) : 9999,
+          adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
+          wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
+          freeWordCap,
+          isOwner: ctx.user.openId === ENV.ownerOpenId,
+        };
+      }),
+
     extractAndAddExampleWords: protectedProcedure
       .mutation(async ({ ctx }) => {
         const { ENV } = await import('./_core/env');

@@ -310,12 +310,20 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
+    // Auto-promote owner to admin on every login
+    const updatePayload: Parameters<typeof db.upsertUser>[0] = {
       openId: user.openId,
       lastSignedIn: signedInAt,
-    });
+    };
+    if (user.openId === ENV.ownerOpenId && user.role !== 'admin') {
+      console.log('[Auth] Auto-promoting owner to admin');
+      updatePayload.role = 'admin';
+    }
+    await db.upsertUser(updatePayload);
 
-    return user;
+    // Re-fetch user to get latest role after potential promotion
+    const freshUser = await db.getUserByOpenId(user.openId);
+    return freshUser ?? user;
   }
 }
 
