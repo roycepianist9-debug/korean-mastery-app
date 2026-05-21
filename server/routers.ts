@@ -583,7 +583,7 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
 
         // Check which words are already in the database
         const dbWordsResult = await db.select({ korean: words.korean }).from(words).where(sql`${words.korean} IS NOT NULL`);
-        const existingWords = new Set(dbWordsResult.map(r => r.korean));
+        const existingWords = new Set(dbWordsResult.map(r => r.korean || ''));
         console.log(`[Extract Words] Database has ${existingWords.size} words`);
 
         // Find missing words
