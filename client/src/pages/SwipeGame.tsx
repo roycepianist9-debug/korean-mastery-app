@@ -239,35 +239,39 @@ function FlashCard({
         {/* Word display */}
         {word.korean ? (
           <>
-            <div className="flex items-center justify-center gap-3 mb-1 mt-4">
-              <p className="text-4xl font-black text-foreground">{word.korean}</p>
-              {audioSupported && (
-                <button
-                  onClick={() => speak(word.korean || '', 'ko-KR')}
-                  className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
-                  title="Pronounce"
-                >
-                  <Volume2 className="w-5 h-5 text-primary" />
-                </button>
-              )}
+            <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-5xl font-black text-foreground">{word.korean}</p>
+                {audioSupported && (
+                  <button
+                    onClick={() => speak(word.korean || '', 'ko-KR')}
+                    className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
+                    title="Pronounce"
+                  >
+                    <Volume2 className="w-5 h-5 text-primary" />
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground font-medium">{word.romanization}</p>
             </div>
-            <p className="text-sm text-muted-foreground font-medium mb-3">{word.romanization}</p>
           </>
         ) : word.chinese ? (
           <>
-            <div className="flex items-center justify-center gap-3 mb-1 mt-4">
-              <p className="text-4xl font-black text-foreground">{word.chinese}</p>
-              {audioSupported && (
-                <button
-                  onClick={() => speak(word.chinese || '', 'zh-CN')}
-                  className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
-                  title="Pronounce"
-                >
-                  <Volume2 className="w-5 h-5 text-primary" />
-                </button>
-              )}
+            <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-5xl font-black text-foreground">{word.chinese}</p>
+                {audioSupported && (
+                  <button
+                    onClick={() => speak(word.chinese || '', 'zh-CN')}
+                    className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
+                    title="Pronounce"
+                  >
+                    <Volume2 className="w-5 h-5 text-primary" />
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground font-medium">{word.pinyin}</p>
             </div>
-            <p className="text-sm text-muted-foreground font-medium mb-3">{word.pinyin}</p>
           </>
         ) : null}
 
