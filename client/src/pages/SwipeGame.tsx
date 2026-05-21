@@ -91,12 +91,14 @@ function FlashCard({
   isTop,
   aiEnabled,
   showExamples,
+  onToggleExamples,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
   aiEnabled: boolean;
   showExamples: boolean;
+  onToggleExamples: () => void;
 }) {
   const { language } = useLanguage();
   const { locale, t } = useI18n();
@@ -330,12 +332,7 @@ function FlashCard({
 
         <div className="mt-auto pt-3 flex flex-col items-center gap-2 w-full">
           <button
-            onClick={() => {
-              const newState = !showExamples;
-              localStorage.setItem('swipe_show_examples', newState ? 'true' : 'false');
-              // Update state without reload
-              window.dispatchEvent(new CustomEvent('toggleExamples', { detail: newState }));
-            }}
+            onClick={onToggleExamples}
             className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
             style={{
               backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
@@ -492,6 +489,17 @@ export default function SwipeGame() {
       try { localStorage.setItem('swipe-show-examples', next ? 'on' : 'off'); } catch {}
       return next;
     });
+  }, []);
+
+  // Listen for toggle events from card buttons
+  useEffect(() => {
+    const handleToggle = (event: Event) => {
+      if (event instanceof CustomEvent) {
+        setShowExamples(event.detail);
+      }
+    };
+    window.addEventListener('toggleExamples', handleToggle);
+    return () => window.removeEventListener('toggleExamples', handleToggle);
   }, []);
 
   // Build statuses array from cardFilter for the random query
@@ -828,6 +836,7 @@ export default function SwipeGame() {
               isTop={false}
               aiEnabled={aiEnabled}
               showExamples={showExamples}
+              onToggleExamples={toggleExamples}
             />
           )}
           <FlashCard
@@ -837,6 +846,7 @@ export default function SwipeGame() {
             isTop={true}
             aiEnabled={aiEnabled}
             showExamples={showExamples}
+            onToggleExamples={toggleExamples}
           />
         </div>
       </div>

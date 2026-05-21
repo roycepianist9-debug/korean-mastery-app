@@ -9,6 +9,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { stripeWebhookHandler } from "../stripe-endpoint";
+import { debugSchemaRouter } from "../debug-schema";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,9 +43,12 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  app.use('/api/debug', debugSchemaRouter);
   
   // Log webhook endpoint registration
   console.log("[Stripe] Webhook endpoint registered at /api/stripe/webhook");
+  console.log("[Debug] Schema inspection available at /api/debug/test-schema");
+
   // tRPC API
   app.use(
     "/api/trpc",
