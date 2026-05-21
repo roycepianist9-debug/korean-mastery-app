@@ -33,7 +33,7 @@ export default function MemoryGame() {
   const { play: sfx } = useSound();
   const auth = useAuth();
   const user = auth.user;
-  const [, navigate] = useRouter();
+  const { navigate } = useRouter();
 
   // Settings
   const [difficulty, setDifficulty] = useState<Difficulty>('3x3');
@@ -58,7 +58,7 @@ export default function MemoryGame() {
       topikLevel: level || undefined,
       hskLevel: language === 'chinese' ? level : undefined,
       pos: pos || undefined,
-      limit: cardCount / 2,
+      limit: Math.ceil(cardCount / 2),
     },
     { enabled: gameStatus === 'playing' }
   );
@@ -229,7 +229,7 @@ export default function MemoryGame() {
                     <SelectValue placeholder="All Levels" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Levels</SelectItem>
+                    <SelectItem value="all">All Levels</SelectItem>
                     {levelOptions.map(opt => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
@@ -244,7 +244,7 @@ export default function MemoryGame() {
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     {posOptions.map(opt => (
                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                     ))}
