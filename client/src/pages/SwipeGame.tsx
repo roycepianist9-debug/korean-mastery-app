@@ -8,7 +8,7 @@ import { useLocation, useSearch } from "wouter";
 import {
   ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
   Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
-  BookOpen, Star, Plus, Volume2,
+  BookOpen, Star, Plus, Volume2, Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +38,7 @@ type CardFilter = 'new' | 'reviewing' | 'all';
 /* ─── Chinese Example with Audio ─── */
 function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
   const { speak } = useAudio();
+  const { user } = useAuth();
   return (
     <div className="flex items-center justify-center gap-2">
       <p className="text-sm text-foreground leading-relaxed">{sentence}</p>
@@ -59,12 +60,22 @@ function FlashCard({
   isTop,
   showExamples,
   onToggleExamples,
+  isAuthenticated,
+  user,
+  setDetailWord,
+  setDetailOpen,
+  sfx,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
   showExamples: boolean;
   onToggleExamples: () => void;
+  isAuthenticated: boolean;
+  user: any;
+  setDetailWord: (word: any) => void;
+  setDetailOpen: (open: boolean) => void;
+  sfx: any;
 }) {
   const { language } = useLanguage();
   const { locale, t } = useI18n();
@@ -233,12 +244,25 @@ function FlashCard({
         ) : null}
 
         {/* Meaning - always show */}
-        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          {locale === 'fr' && word.meaningFr ? (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
-          ) : (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
-          )}
+        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3 relative">
+          <div className="flex items-center justify-center gap-2">
+            <div className="flex-1">
+              {locale === 'fr' && word.meaningFr ? (
+                <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+              ) : (
+                <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+              )}
+            </div>
+            {isAuthenticated && user?.role === 'admin' && (
+              <button
+                onClick={() => { sfx?.beep?.(); setDetailWord(word); setDetailOpen(true); }}
+                className="flex-shrink-0 p-1 rounded hover:bg-primary/20 transition-colors"
+                title="Edit meaning"
+              >
+                <Edit className="w-4 h-4 text-primary" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Example sentence - Stack Korean and French */}
@@ -306,7 +330,14 @@ function SessionSummary({
   playVictory: () => void;
 }) {
   const { t } = useI18n();
-  // Victory music removed per user request
+  const hasPlayed = useRef(false);
+  useEffect(() => {
+    if (!hasPlayed.current) {
+      hasPlayed.current = true;
+      const timer = setTimeout(() => playVictory(), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [playVictory]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
@@ -375,7 +406,7 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
 
 /* ─── Main Component ─── */
 export default function SwipeGame() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { language } = useLanguage();
   const { t } = useI18n();
   const [, setLocation] = useLocation();
@@ -752,10 +783,15 @@ export default function SwipeGame() {
             <FlashCard
               key={`next-${words[currentIndex + 1].id}`}
               word={words[currentIndex + 1]}
-            onSwipe={() => {}}
-            isTop={false}
-            showExamples={showExamples}
-            onToggleExamples={toggleExamples}
+              onSwipe={() => {}}
+              isTop={false}
+              showExamples={showExamples}
+              onToggleExamples={toggleExamples}
+              isAuthenticated={isAuthenticated}
+              user={user}
+              setDetailWord={setDetailWord}
+              setDetailOpen={setDetailOpen}
+              sfx={sfx}
             />
           )}
           <FlashCard
@@ -765,6 +801,11 @@ export default function SwipeGame() {
             isTop={true}
             showExamples={showExamples}
             onToggleExamples={toggleExamples}
+            isAuthenticated={isAuthenticated}
+            user={user}
+            setDetailWord={setDetailWord}
+            setDetailOpen={setDetailOpen}
+            sfx={sfx}
           />
         </div>
       </div>
@@ -785,7 +826,7 @@ export default function SwipeGame() {
         </button>
 
         <button
-          onClick={() => handleSwipe(false)}
+          onClick={() => { sfx.beep(); handleSwipe(false); }}
           className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
         >
           <X className="w-7 h-7 text-destructive" />
@@ -797,7 +838,7 @@ export default function SwipeGame() {
           <Info className="w-5 h-5 text-accent" />
         </button>
         <button
-          onClick={() => handleSwipe(true)}
+          onClick={() => { sfx.beep(); handleSwipe(true); }}
           className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
         >
           <Check className="w-7 h-7 text-primary" />

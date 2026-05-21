@@ -9,7 +9,7 @@ import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
   ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
-  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe, Loader2,
+  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe, Loader2, Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -255,9 +255,9 @@ export default function Home() {
               <button
                 onClick={() => { sfx.pop(); toggleTheme(); }}
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                aria-label={`Current theme: ${theme}. Click to cycle themes.`}
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-foreground" /> : theme === 'light' ? <Moon className="w-4 h-4 text-foreground" /> : <Palette className="w-4 h-4 text-foreground" />}
               </button>
             )}
             <button

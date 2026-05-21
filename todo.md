@@ -248,3 +248,9 @@
 ## UI Fixes (May 2026 - Round 7)
 - [x] Fix card layout: word definition now always visible, examples appear below (not replacing it)
 - [x] Remove victory music from session-complete screen
+
+## Audio & Admin Features (May 2026 - Round 8)
+- [x] Generate 3-5s session-complete tune and measure duration
+- [x] Add beep sounds to icon taps (X, info, checkmark buttons)
+- [x] Implement admin pen/edit button for word meanings during swipe game
+- [x] Fix cinematic theme toggle to cycle through all three themes (light → dark → cinematic)
