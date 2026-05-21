@@ -213,7 +213,7 @@ export default function WordList() {
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
-    language: language === 'french' ? 'korean' : language,
+    language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined,
   });
 
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -413,7 +413,7 @@ export default function WordList() {
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'learned', language: language === 'french' ? 'korean' : language },
+                  { wordId: word.id, status: 'learned', language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
                   { onSuccess: (data) => {
                     if ((data as any).status !== 'paywall_blocked') {
                       toast.success(`${word.korean || word.chinese} marked as learned ✓`);
@@ -423,7 +423,7 @@ export default function WordList() {
               }}
               onMarkReviewing={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'reviewing', language: language === 'french' ? 'korean' : language },
+                  { wordId: word.id, status: 'reviewing', language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
                   { onSuccess: () => toast.success(`${word.korean || word.chinese} added to review`) }
                 );
               }}

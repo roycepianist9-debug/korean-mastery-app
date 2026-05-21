@@ -44,10 +44,25 @@ const CHINESE_MILESTONES = [
   { level: 'HSK 7-9', words: 11000, labelKey: 'swipe.nativeProficiency' },
 ];
 
+const JAPANESE_MILESTONES = [
+  { level: 'JLPT N5', words: 800, labelKey: 'swipe.elementary' },
+  { level: 'JLPT N4', words: 1500, labelKey: 'swipe.elementaryPlus' },
+  { level: 'JLPT N3', words: 3000, labelKey: 'swipe.intermediate' },
+  { level: 'JLPT N2', words: 6000, labelKey: 'swipe.advancedProf' },
+  { level: 'JLPT N1', words: 10000, labelKey: 'swipe.nativeProficiency' },
+];
+
 function MilestoneCard({ language, learnedCount }: { language: string; learnedCount: number }) {
   const { t } = useI18n();
-  const milestones = language === 'chinese' ? CHINESE_MILESTONES : KOREAN_MILESTONES;
-  const title = language === 'chinese' ? 'HSK Milestones' : 'TOPIK Milestones';
+  let milestones = KOREAN_MILESTONES;
+  let title = 'TOPIK Milestones';
+  if (language === 'chinese') {
+    milestones = CHINESE_MILESTONES;
+    title = 'HSK Milestones';
+  } else if (language === 'japanese') {
+    milestones = JAPANESE_MILESTONES;
+    title = 'JLPT Milestones';
+  }
 
   return (
     <div className="game-card p-3.5">
@@ -120,12 +135,12 @@ export default function Home() {
 
   const isChinese = language === 'chinese';
 
-  const wordStats = trpc.words.stats.useQuery({ language: language === 'french' ? 'korean' : language });
+  const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
   const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressStats = trpc.progress.getStats.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
-  const todayCount = trpc.progress.todayCount.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 

@@ -28,6 +28,15 @@ export default function LanguageToggle() {
       >
         🇨🇳
       </Button>
+      <Button
+        variant={language === 'japanese' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => { sfx.pop(); setLanguage('japanese'); }}
+        className="text-lg"
+        title="English (Japanese)"
+      >
+        🇯🇵
+      </Button>
     </div>
   );
 }

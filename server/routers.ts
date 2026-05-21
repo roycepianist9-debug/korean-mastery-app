@@ -53,7 +53,7 @@ export const appRouter = router({
         statuses: z.array(z.string()).optional(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(30),
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
       }))
       .query(async ({ input, ctx }) => {
         return searchWords({
@@ -81,7 +81,7 @@ export const appRouter = router({
         hskLevel: z.string().optional(),
         limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
         statuses: z.array(z.string()).optional(),
       }))
       .query(async ({ input, ctx }) => {
@@ -98,7 +98,7 @@ export const appRouter = router({
       }),
 
     stats: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ input }) => {
         return getWordStats(input?.language || 'korean');
       }),
@@ -106,19 +106,19 @@ export const appRouter = router({
 
   progress: router({
     getStats: protectedProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
         return getUserProgressStats(ctx.user.id, input?.language || 'korean');
       }),
 
     getByLevel: protectedProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
         return getProgressByLevel(ctx.user.id, input?.language || 'korean');
       }),
 
     getByPos: protectedProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
         return getProgressByPos(ctx.user.id, input?.language || 'korean');
       }),
@@ -133,7 +133,7 @@ export const appRouter = router({
       .input(z.object({
         wordId: z.number(),
         status: z.enum(['learned', 'reviewing', 'new']),
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Paywall check: count learned words for this language
@@ -160,7 +160,7 @@ export const appRouter = router({
       .input(z.object({
         wordId: z.number(),
         known: z.boolean(),
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Paywall check for "learned" swipes
@@ -191,7 +191,7 @@ export const appRouter = router({
           wordId: z.number(),
           known: z.boolean(),
         })),
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         let totalXp = 0;
@@ -210,7 +210,7 @@ export const appRouter = router({
       }),
 
     todayCount: protectedProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const count = await getTodayLearnedCount(ctx.user.id, input?.language || 'korean');
         return { count };
@@ -218,7 +218,7 @@ export const appRouter = router({
 
     dailyHistory: protectedProcedure
       .input(z.object({
-        language: z.enum(['korean', 'chinese']).optional(),
+        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
         days: z.number().min(7).max(90).default(30),
       }).optional())
       .query(async ({ ctx, input }) => {

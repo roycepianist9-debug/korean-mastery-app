@@ -192,6 +192,14 @@ function FlashCard({
             }`}>
               HSK {word.hskLevel}
             </span>
+          ) : word.jlptLevel ? (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              word.jlptLevel === 'n5' || word.jlptLevel === 'n4' ? 'bg-primary/20 text-primary' :
+              word.jlptLevel === 'n3' ? 'bg-chart-3/20 text-chart-3' :
+              'bg-accent/20 text-accent'
+            }`}>
+              JLPT {word.jlptLevel.toUpperCase()}
+            </span>
           ) : (
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
               word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
@@ -239,6 +247,27 @@ function FlashCard({
                 )}
               </div>
               <p className="text-xs text-muted-foreground font-medium">{word.pinyin}</p>
+            </div>
+          </>
+        ) : word.japanese ? (
+          <>
+            <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-5xl font-black text-foreground">{word.japanese}</p>
+                {audioSupported && (
+                  <button
+                    onClick={() => speak(word.japanese || '', 'ja-JP')}
+                    className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
+                    title="Pronounce"
+                  >
+                    <Volume2 className="w-5 h-5 text-primary" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <p className="text-xs text-muted-foreground font-medium">{word.hiragana}</p>
+                <p className="text-xs text-muted-foreground/70 font-medium">{word.romaji}</p>
+              </div>
             </div>
           </>
         ) : null}
@@ -414,6 +443,7 @@ export default function SwipeGame() {
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
   const isChinese = language === 'chinese';
+  const isJapanese = language === 'japanese';
   
   // Persist settings to localStorage
   const [posFilter, setPosFilter] = useState(() => {
@@ -505,7 +535,7 @@ export default function SwipeGame() {
       topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
-      language: language === 'french' ? 'korean' : language,
+      language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined,
       statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
@@ -553,7 +583,7 @@ export default function SwipeGame() {
     if (isAuthenticated) {
       persistedWordIds.current.add(wordId);
       swipeMutation.mutate(
-        { wordId, known, language: language === 'french' ? 'korean' : language },
+        { wordId, known, language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
         {
           onSuccess: (data) => {
             if (data.status === 'paywall_blocked') {
@@ -637,7 +667,7 @@ export default function SwipeGame() {
         <div className="px-4 space-y-4">
           <div className="game-card p-4 space-y-4">
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : t('swipe.topikLevel')}</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : isJapanese ? 'JLPT Level' : t('swipe.topikLevel')}</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
                   <SelectValue />
@@ -652,6 +682,14 @@ export default function SwipeGame() {
                       <SelectItem value="4">HSK 4</SelectItem>
                       <SelectItem value="5">HSK 5</SelectItem>
                       <SelectItem value="6">HSK 6</SelectItem>
+                    </>
+                  ) : isJapanese ? (
+                    <>
+                      <SelectItem value="n5">JLPT N5</SelectItem>
+                      <SelectItem value="n4">JLPT N4</SelectItem>
+                      <SelectItem value="n3">JLPT N3</SelectItem>
+                      <SelectItem value="n2">JLPT N2</SelectItem>
+                      <SelectItem value="n1">JLPT N1</SelectItem>
                     </>
                   ) : (
                     <>
