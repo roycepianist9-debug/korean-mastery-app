@@ -333,7 +333,7 @@ function FlashCard({
         <div className="mt-auto pt-3 flex flex-col items-center gap-2 w-full">
           <button
             onClick={onToggleExamples}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors relative z-50 pointer-events-auto"
             style={{
               backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
               color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
