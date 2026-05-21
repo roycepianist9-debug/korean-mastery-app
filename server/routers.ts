@@ -536,7 +536,83 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
 
   admin: router({
     // Get current pricing config and admin status
-    getConfig: protectedProcedure.query(async ({ ctx }) => {
+    extractAndAddExampleWords: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { ENV } = await import('./_core/env');
+        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized');
+        }
+
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+
+        // Get all Korean example sentences
+        const examplesResult = await db.select({ koreanExample: words.koreanExample }).from(words).where(sql`${words.koreanExample} IS NOT NULL AND ${words.koreanExample} != ''`);
+        console.log(`[Extract Words] Found ${examplesResult.length} unique example sentences`);
+
+        const allWords = new Set();
+        const KOREAN_PARTICLES = [
+          '은', '는', '이', '가', '을', '를', '에', '에서', '에게', '에게서',
+          '으로', '로', '와', '과', '의', '도', '만', '까지', '부터', '마다',
+          '처럼', '같이', '보다', '한테', '한테서', '께', '께서', '이나', '나',
+          '이란', '란', '이라', '라', '이며', '며', '이고', '고', '이요', '요',
+        ];
+
+        // Extract words from all examples
+        for (const row of examplesResult) {
+          const sentence = row.koreanExample;
+          if (!sentence) continue;
+
+          // Simple tokenization: split by spaces and punctuation
+          const tokens = sentence.split(/[\s.,!?;:\-—()[\]{}"'']/u).filter(t => t.length > 0);
+
+          for (const token of tokens) {
+            // Add the token itself
+            allWords.add(token);
+
+            // Add forms without particles
+            for (const p of KOREAN_PARTICLES.sort((a, b) => b.length - a.length)) {
+              if (token.endsWith(p) && token.length > p.length) {
+                allWords.add(token.slice(0, -p.length));
+              }
+            }
+          }
+        }
+
+        console.log(`[Extract Words] Extracted ${allWords.size} unique words`);
+
+        // Check which words are already in the database
+        const dbWordsResult = await db.select({ korean: words.korean }).from(words).where(sql`${words.korean} IS NOT NULL`);
+        const existingWords = new Set(dbWordsResult.map(r => r.korean));
+        console.log(`[Extract Words] Database has ${existingWords.size} words`);
+
+        // Find missing words
+        const missingWords = Array.from(allWords).filter(w => !existingWords.has(w) && w.length > 0);
+        console.log(`[Extract Words] Found ${missingWords.length} missing words`);
+
+        if (missingWords.length === 0) {
+          return {
+            success: true,
+            message: 'All words from examples are already in the database!',
+            missingCount: 0,
+            sampleMissing: [],
+          };
+        }
+
+        // Show sample of missing words
+        const sampleMissing = missingWords.slice(0, 30);
+
+        return {
+          success: true,
+          message: `Found ${missingWords.length} missing words from example sentences`,
+          missingCount: missingWords.length,
+          sampleMissing,
+          nextStep: 'Use batch translation to populate meanings for these words, or add them manually.',
+        };
+      }),
+
+    getAppBranding: protectedProcedure
+      .query(async ({ ctx }) => {
       // Only the owner (OWNER_OPEN_ID) can access admin config
       const { ENV } = await import('./_core/env');
       if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
@@ -713,27 +789,7 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         }
       }),
 
-    // Get current tagline and logo from appConfig
-    getAppBranding: publicProcedure.query(async () => {
-      try {
-        const taglineEn = await getAppConfig('taglineEn');
-        const taglineFr = await getAppConfig('taglineFr');
-        const logoUrl = await getAppConfig('logoUrl');
-        
-        return {
-          taglineEn: taglineEn || 'SwipeFluent — The fastest way to learn Korean & Chinese',
-          taglineFr: taglineFr || 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
-          logoUrl: logoUrl || null,
-        };
-      } catch (error) {
-        console.error('[Admin] Failed to fetch app branding:', error);
-        return {
-          taglineEn: 'SwipeFluent — The fastest way to learn Korean & Chinese',
-          taglineFr: 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
-          logoUrl: null,
-        };
-      }
-    }),
+
   }),
 });
 
