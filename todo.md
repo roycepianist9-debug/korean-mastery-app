@@ -280,3 +280,11 @@
 - [x] Implement card flip mechanics and matching logic (word + definition)
 - [x] Add Memory Game button to Play section and wire routing
 - [x] Test Memory Game and verify progress tracking counts towards daily stats (22 tests passing)
+
+
+## Phase 3: Japanese Vocabulary Scaling (May 2026 - Round 13)
+- [x] Scale Japanese vocabulary from 50 to 95 JLPT N5 core words
+- [x] Add Tatoeba example sentences with French translations for all 95 words
+- [x] Create admin import procedure (importJapanese300) to seed words into database
+- [x] Write comprehensive test suite for Japanese vocabulary (13 tests passing)
+- [x] Verify Japanese vocabulary structure and completeness

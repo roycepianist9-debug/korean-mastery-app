@@ -11,6 +11,8 @@ import { getDb } from "./db";
 import { users, words, appConfig } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { startBatchTranslationJob, getJobStatus } from "./backgroundJobs";
+import { JAPANESE_VOCAB_300 } from "./japanese-vocab-300";
+import { adminProcedure } from "./_core/trpc";
 import { storagePut } from "./storage";
 import {
   searchWords,
@@ -639,6 +641,46 @@ export const appRouter = router({
         await setAppConfig('taglineEn', input.taglineEn);
         await setAppConfig('taglineFr', input.taglineFr);
         return { success: true, taglineEn: input.taglineEn, taglineFr: input.taglineFr };
+      }),
+
+    // Import 300 Japanese JLPT N5 words
+    importJapanese300: adminProcedure
+      .mutation(async ({ ctx }) => {
+        try {
+          const db = await getDb();
+          if (!db) throw new Error('Database not available');
+          
+          let inserted = 0;
+          for (const word of JAPANESE_VOCAB_300) {
+            try {
+              await db.insert(words).values({
+                japanese: word.japanese,
+                hiragana: word.hiragana,
+                romaji: word.romaji,
+                meaning: word.meaning,
+                jlptLevel: word.jlptLevel,
+                pos: word.pos,
+                language: 'japanese',
+                japaneseExample: word.japaneseExample,
+                exampleRomaji: word.exampleRomaji,
+                exampleJapaneseFrench: word.exampleJapaneseFrench,
+              }).onDuplicateKeyUpdate({
+                set: {
+                  hiragana: word.hiragana,
+                  meaning: word.meaning,
+                },
+              });
+              inserted++;
+            } catch (e) {
+              console.warn(`Failed to insert ${word.japanese}:`, e);
+            }
+          }
+          console.log(`[Admin] Imported ${inserted}/${JAPANESE_VOCAB_300.length} Japanese words`);
+          return { success: true, inserted, total: JAPANESE_VOCAB_300.length };
+        } catch (error) {
+          console.error('[Admin] Japanese import failed:', error);
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Import failed' });
+        }
       }),
 
     // Upload logo and save URL to appConfig
