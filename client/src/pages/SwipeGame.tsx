@@ -35,6 +35,23 @@ type CardFilter = 'new' | 'reviewing' | 'all';
 
 
 
+/* ─── Chinese Example with Audio ─── */
+function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
+  const { speak } = useAudio();
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <p className="text-sm text-foreground leading-relaxed">{sentence}</p>
+      <button
+        onClick={() => speak(sentence, 'zh-CN')}
+        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+        aria-label="Play audio"
+      >
+        <Volume2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
 /* ─── Flash Card ─── */
 function FlashCard({
   word,
@@ -231,7 +248,7 @@ function FlashCard({
           <div className="w-full space-y-2 text-center px-1">
             {/* Korean example */}
             <div className="space-y-1">
-              <ClickableExample sentence={word.koreanExample} />
+              <ClickableExample sentence={word.koreanExample} language="ko-KR" />
             </div>
             {/* French translation */}
             {word.exampleFrench ? (
@@ -244,7 +261,7 @@ function FlashCard({
           <div className="w-full space-y-2 text-center px-1">
             {/* Chinese example */}
             <div className="space-y-1">
-              <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+              <ChineseExampleWithAudio sentence={word.chineseExample} />
               {word.examplePinyin && (
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}

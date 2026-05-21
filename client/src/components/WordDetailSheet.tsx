@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/sheet";
 import {
   BookOpen, MessageSquare,
-  Loader2, ExternalLink,
+  Loader2, ExternalLink, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import ClickableExample from "./ClickableExample";
+import { useAudio } from "@/hooks/useAudio";
 
 
 
@@ -116,7 +117,7 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
               {exampleSentence && (
                 <div className="mb-1">
                   {isChinese ? (
-                    <p className="text-base font-bold text-foreground">{exampleSentence}</p>
+                    <ChineseExampleWithAudio sentence={exampleSentence} />
                   ) : (
                     <ClickableExample sentence={exampleSentence} />
                   )}
@@ -147,5 +148,21 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
+  const { speak } = useAudio();
+  return (
+    <div className="flex items-center gap-2">
+      <p className="text-base font-bold text-foreground flex-1">{sentence}</p>
+      <button
+        onClick={() => speak(sentence, 'zh-CN')}
+        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+        aria-label="Play audio"
+      >
+        <Volume2 className="w-4 h-4" />
+      </button>
+    </div>
   );
 }

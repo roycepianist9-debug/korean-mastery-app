@@ -4,11 +4,12 @@ import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import {
   ArrowLeft, BookOpen, MessageSquare,
-  Loader2,
+  Loader2, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
+import { useAudio } from "@/hooks/useAudio";
 
 export default function WordDetail() {
   const params = useParams<{ id: string }>();
@@ -121,10 +122,10 @@ export default function WordDetail() {
               <span className="text-xs font-bold text-chart-3 uppercase tracking-wider">Example</span>
             </div>
             {exampleSentence && (
-              <p className="text-sm text-foreground mb-1">{exampleSentence}</p>
+              <ExampleWithAudio sentence={exampleSentence} language={isChinese ? 'zh-CN' : 'ko-KR'} />
             )}
             {exampleTranslation && (
-              <p className="text-sm text-muted-foreground italic">{exampleTranslation}</p>
+              <p className="text-sm text-muted-foreground italic mt-2">{exampleTranslation}</p>
             )}
           </div>
         </div>
@@ -133,6 +134,22 @@ export default function WordDetail() {
 
 
       <BottomNav />
+    </div>
+  );
+}
+
+function ExampleWithAudio({ sentence, language }: { sentence: string; language: 'ko-KR' | 'zh-CN' }) {
+  const { speak } = useAudio();
+  return (
+    <div className="flex items-center gap-2">
+      <p className="text-sm text-foreground flex-1">{sentence}</p>
+      <button
+        onClick={() => speak(sentence, language)}
+        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+        aria-label="Play audio"
+      >
+        <Volume2 className="w-4 h-4" />
+      </button>
     </div>
   );
 }

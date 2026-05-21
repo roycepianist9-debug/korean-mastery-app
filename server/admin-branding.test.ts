@@ -162,15 +162,15 @@ describe('Admin Branding', () => {
 
       // Update tagline as admin
       const updateResult = await adminCaller.admin.updateTagline({
-        taglineEn: 'Integration Test EN',
-        taglineFr: 'Integration Test FR',
+        taglineEn: 'SwipeFluent - Custom EN Tagline',
+        taglineFr: 'SwipeFluent - Tagline personnalise FR',
       });
       expect(updateResult.success).toBe(true);
 
       // Retrieve as public user
       const brandingResult = await publicCaller.admin.getAppBranding();
-      expect(brandingResult.taglineEn).toBe('Integration Test EN');
-      expect(brandingResult.taglineFr).toBe('Integration Test FR');
+      expect(brandingResult.taglineEn).toBe('SwipeFluent - Custom EN Tagline');
+      expect(brandingResult.taglineFr).toBe('SwipeFluent - Tagline personnalise FR');
     });
   });
 });

@@ -49,8 +49,51 @@
   --swipe-left: oklch(0.62 0.20 25);
 }
 
+/* ===== CINEMATIC THEME (Premium Brown/Red) ===== */
+.cinematic {
+  --background: #1A120E;
+  --foreground: #F7F3EF;
+  --card: rgba(58, 35, 28, 0.78);
+  --card-foreground: #F7F3EF;
+  --popover: rgba(58, 35, 28, 0.78);
+  --popover-foreground: #F7F3EF;
+  --primary: #C84B4B;
+  --primary-foreground: #F7F3EF;
+  --secondary: #B86A3C;
+  --secondary-foreground: #F7F3EF;
+  --muted: rgba(58, 35, 28, 0.6);
+  --muted-foreground: #9D8D82;
+  --accent: #C84B4B;
+  --accent-foreground: #F7F3EF;
+  --destructive: #C84B4B;
+  --destructive-foreground: #F7F3EF;
+  --border: rgba(255, 255, 255, 0.05);
+  --input: rgba(58, 35, 28, 0.78);
+  --ring: #C84B4B;
+  --chart-1: #D85A5A;
+  --chart-2: #B86A3C;
+  --chart-3: #C84B4B;
+  --chart-4: #9E3535;
+  --chart-5: #B86A3C;
+  --sidebar: rgba(27, 18, 14, 0.95);
+  --sidebar-foreground: #F7F3EF;
+  --sidebar-primary: #C84B4B;
+  --sidebar-primary-foreground: #F7F3EF;
+  --sidebar-accent: rgba(200, 75, 75, 0.15);
+  --sidebar-accent-foreground: #F7F3EF;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-ring: #C84B4B;
+  --xp: #D85A5A;
+  --streak: #D85A5A;
+  --level: #B86A3C;
+  --success: #D85A5A;
+  --review: #B86A3C;
+  --swipe-right: #D85A5A;
+  --swipe-left: #B86A3C;
+}
+
 /* ===== LIGHT THEME ===== */
-:root:not(.dark) {
+:root:not(.dark):not(.cinematic) {
   --background: oklch(0.96 0.005 250);
   --foreground: oklch(0.18 0.01 285);
   --card: oklch(1.00 0 0);

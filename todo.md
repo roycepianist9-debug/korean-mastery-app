@@ -236,3 +236,11 @@
 ## Bug Fixes (May 2026 - Round 5)
 - [x] Remove "Tap to translate" button when AI Translation is ON — replaced with "Translation unavailable" message for graceful failure handling
 - [x] Diagnosed LLM translation failures: Gemini API quota exhausted (412 Precondition Failed error) — not a code bug, graceful UX implemented
+
+
+## Audio Playback & Theme Updates (May 2026 - Round 6)
+- [x] Add audio playback icon to Korean example sentences (speaker icon next to example)
+- [x] Add audio playback icon to Chinese example sentences (speaker icon next to example)
+- [x] Implement premium brown/red cinematic theme (third theme option)
+- [x] Update app branding: replace "Integration Test EN" with "SwipeFluent"
+- [x] Update app branding: replace "Integration Test FR" with "SwipeFluent"

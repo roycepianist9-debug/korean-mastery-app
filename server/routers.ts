@@ -518,8 +518,8 @@ export const appRouter = router({
       const taglineFr = await getAppConfig('taglineFr');
       return {
         logoUrl: logoUrl || null,
-        taglineEn: taglineEn || '',
-        taglineFr: taglineFr || '',
+        taglineEn: taglineEn || 'SwipeFluent — The fastest way to learn Korean & Chinese',
+        taglineFr: taglineFr || 'SwipeFluent — La manière la plus rapide d\'apprendre le coréen et le chinois',
       };
     }),
 

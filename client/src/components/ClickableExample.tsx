@@ -5,11 +5,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useAudio } from "@/hooks/useAudio";
 
 interface ClickableExampleProps {
   sentence: string;
+  language?: 'ko-KR' | 'zh-CN';
 }
 
 function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | null; meaning: string | null }) {
@@ -44,7 +46,8 @@ function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | n
   );
 }
 
-export default function ClickableExample({ sentence }: ClickableExampleProps) {
+export default function ClickableExample({ sentence, language = 'ko-KR' }: ClickableExampleProps & { language?: 'ko-KR' | 'zh-CN' }) {
+  const { speak } = useAudio();
   const tokensQuery = trpc.words.tokenize.useQuery(
     { sentence },
     { enabled: !!sentence, staleTime: 60 * 60 * 1000 }
@@ -62,18 +65,38 @@ export default function ClickableExample({ sentence }: ClickableExampleProps) {
   }
 
   if (!tokensQuery.data || tokensQuery.data.length === 0) {
-    return <span className="text-sm text-foreground">{sentence}</span>;
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-foreground">{sentence}</span>
+        <button
+          onClick={() => speak(sentence, language)}
+          className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors"
+          aria-label="Play audio"
+        >
+          <Volume2 className="w-4 h-4" />
+        </button>
+      </div>
+    );
   }
 
   return (
-    <span className="text-sm leading-relaxed inline">
-      {tokensQuery.data.map((token: any, i: number) => (
-        token.isWord ? (
-          <TokenWord key={i} text={token.text} wordId={token.wordId} meaning={token.meaning} />
-        ) : (
-          <span key={i} className="text-foreground">{token.text}</span>
-        )
-      ))}
-    </span>
+    <div className="flex items-center gap-2">
+      <span className="text-sm leading-relaxed inline">
+        {tokensQuery.data.map((token: any, i: number) => (
+          token.isWord ? (
+            <TokenWord key={i} text={token.text} wordId={token.wordId} meaning={token.meaning} />
+          ) : (
+            <span key={i} className="text-foreground">{token.text}</span>
+          )
+        ))}
+      </span>
+      <button
+        onClick={() => speak(sentence, language)}
+        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+        aria-label="Play audio"
+      >
+        <Volume2 className="w-4 h-4" />
+      </button>
+    </div>
   );
 }
