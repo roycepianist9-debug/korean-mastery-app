@@ -210,7 +210,10 @@ async function processBatchTranslation(
 
           const contentRaw = result?.choices?.[0]?.message?.content;
           console.log(`[Background Job ${jobId}] API RESPONSE: Raw content type: ${typeof contentRaw}, length: ${typeof contentRaw === 'string' ? contentRaw.length : 'N/A'}`);
+          console.log(`[Background Job ${jobId}] API RESPONSE FULL: ${JSON.stringify(result, null, 2).substring(0, 500)}`);
           const frenchTranslation = typeof contentRaw === 'string' ? contentRaw.trim().slice(0, 500) : null;
+          console.log(`[Background Job ${jobId}] TRANSLATION EXTRACTED: ${frenchTranslation ? 'YES (' + frenchTranslation.length + ' chars)' : 'NO - contentRaw was: ' + JSON.stringify(contentRaw)}`);
+
 
           if (frenchTranslation) {
             console.log(`[Background Job ${jobId}] API RESULT: Got translation for "${wordData.word}": "${frenchTranslation.substring(0, 50)}..."`);

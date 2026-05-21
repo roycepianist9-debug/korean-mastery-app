@@ -275,14 +275,16 @@ function FlashCard({
           </>
         ) : null}
 
-        {/* Meaning */}
-        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          {locale === 'fr' && word.meaningFr ? (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
-          ) : (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
-          )}
-        </div>
+        {/* Meaning - hide when showing examples since word is already displayed at top */}
+        {!showExamples && (
+          <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
+            {locale === 'fr' && word.meaningFr ? (
+              <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+            ) : (
+              <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+            )}
+          </div>
+        )}
 
         {/* Example sentence - Stack Korean and French */}
         {showExamples && word.koreanExample ? (
@@ -572,15 +574,11 @@ export default function SwipeGame() {
 
   // Undo is allowed only if the card being undone hasn't been persisted to the database
   // For authenticated users: undo is disabled for cards in persistedWordIds (already saved)
-  // For unauthenticated users: undo is always allowed (no persistence)
-  const canUndo = history.length > 0 && (
-    !isAuthenticated || !persistedWordIds.current.has(words[history[history.length - 1]]?.id)
-  );
+  // Allow undo as long as there's history (can review previous words anytime)
+  const canUndo = history.length > 0;
 
-  // Tooltip for disabled undo
-  const undoTooltip = !canUndo && isAuthenticated && history.length > 0
-    ? "Can't undo — this card's progress has been saved"
-    : undefined;
+  // No tooltip needed - undo is always available when there's history
+  const undoTooltip = undefined;
 
   const handleBack = useCallback(() => {
     if (!canUndo) return;
