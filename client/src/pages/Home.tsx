@@ -459,7 +459,7 @@ export default function Home() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {locale === 'fr' ? branding.data?.taglineFr : branding.data?.taglineEn}
+              {locale === 'fr' ? (branding.data as any)?.taglineFr : (branding.data as any)?.taglineEn}
             </p>
           </div>
           {isAuthenticated && gs && (

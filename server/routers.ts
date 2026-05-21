@@ -550,7 +550,7 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
         const examplesResult = await db.select({ koreanExample: words.koreanExample }).from(words).where(sql`${words.koreanExample} IS NOT NULL AND ${words.koreanExample} != ''`);
         console.log(`[Extract Words] Found ${examplesResult.length} unique example sentences`);
 
-        const allWords = new Set();
+        const allWords = new Set<string>();
         const KOREAN_PARTICLES = [
           '은', '는', '이', '가', '을', '를', '에', '에서', '에게', '에게서',
           '으로', '로', '와', '과', '의', '도', '만', '까지', '부터', '마다',
@@ -564,7 +564,7 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
           if (!sentence) continue;
 
           // Simple tokenization: split by spaces and punctuation
-          const tokens = sentence.split(/[\s.,!?;:\-—()[\]{}"'']/u).filter(t => t.length > 0);
+          const tokens = sentence.split(/[\s.,!?;:\-—()[\]{}"'']/g).filter(t => t.length > 0);
 
           for (const token of tokens) {
             // Add the token itself
@@ -613,24 +613,14 @@ ${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
 
     getAppBranding: protectedProcedure
       .query(async ({ ctx }) => {
-      // Only the owner (OWNER_OPEN_ID) can access admin config
-      const { ENV } = await import('./_core/env');
-      if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
-        throw new Error('Unauthorized');
-      }
       const db = await getDb();
-      const userRecord = db
-        ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
-        : null;
-      const freeWordCapStr = await getAppConfig('freeWordCap');
-      const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
+      const logoUrl = await getAppConfig('logoUrl');
+      const taglineEn = await getAppConfig('taglineEn');
+      const taglineFr = await getAppConfig('taglineFr');
       return {
-        proMonthlyPriceCents: parseInt(process.env.ADMIN_PRO_MONTHLY_CENTS || '999'),
-        proAnnualPriceCents: parseInt(process.env.ADMIN_PRO_ANNUAL_CENTS || '9999'),
-        adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
-        wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
-        freeWordCap: freeWordCap,
-        isOwner: true,
+        logoUrl: logoUrl || null,
+        taglineEn: taglineEn || '',
+        taglineFr: taglineFr || '',
       };
     }),
 
