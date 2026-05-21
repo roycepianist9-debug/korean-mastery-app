@@ -232,16 +232,14 @@ function FlashCard({
           </>
         ) : null}
 
-        {/* Meaning - hide when showing examples since word is already displayed at top */}
-        {!showExamples && (
-          <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-            {locale === 'fr' && word.meaningFr ? (
-              <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
-            ) : (
-              <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
-            )}
-          </div>
-        )}
+        {/* Meaning - always show */}
+        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
+          {locale === 'fr' && word.meaningFr ? (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+          ) : (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+          )}
+        </div>
 
         {/* Example sentence - Stack Korean and French */}
         {showExamples && word.koreanExample ? (
@@ -308,14 +306,7 @@ function SessionSummary({
   playVictory: () => void;
 }) {
   const { t } = useI18n();
-  const hasPlayed = useRef(false);
-  useEffect(() => {
-    if (!hasPlayed.current) {
-      hasPlayed.current = true;
-      const timer = setTimeout(() => playVictory(), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [playVictory]);
+  // Victory music removed per user request
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">

@@ -244,3 +244,7 @@
 - [x] Implement premium brown/red cinematic theme (third theme option)
 - [x] Update app branding: replace "Integration Test EN" with "SwipeFluent"
 - [x] Update app branding: replace "Integration Test FR" with "SwipeFluent"
+
+## UI Fixes (May 2026 - Round 7)
+- [x] Fix card layout: word definition now always visible, examples appear below (not replacing it)
+- [x] Remove victory music from session-complete screen
