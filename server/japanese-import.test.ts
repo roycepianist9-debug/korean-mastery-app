@@ -27,9 +27,9 @@ describe('Japanese Vocabulary Import (95 JLPT N5 words)', () => {
     });
   });
 
-  it('should have valid JLPT levels (N5 only)', () => {
+  it('should have valid JLPT levels (n5 only)', () => {
     JAPANESE_VOCAB_300.forEach(word => {
-      expect(word.jlptLevel).toBe('N5');
+      expect(word.jlptLevel).toBe('n5');
     });
   });
 
