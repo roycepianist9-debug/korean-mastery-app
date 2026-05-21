@@ -251,7 +251,7 @@ export async function getRandomWords(params: {
   hskLevel?: string;
   limit: number;
   excludeIds?: number[];
-  language?: 'korean' | 'chinese';
+  language?: 'korean' | 'chinese' | 'japanese';
   userId?: number;
   statuses?: string[];
 }) {
