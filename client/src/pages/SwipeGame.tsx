@@ -284,53 +284,35 @@ function FlashCard({
           )}
         </div>
 
-        {/* Example sentence */}
+        {/* Example sentence - Stack Korean and French */}
         {showExamples && word.koreanExample ? (
-          <div className="w-full space-y-1.5 text-center px-1">
-            {locale === 'fr' && word.exampleFrench ? (
-              <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
-            ) : (
-              <>
-                <ClickableExample sentence={word.koreanExample} />
-                {aiEnabled ? (
-                  translation ? (
-                    <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-                  ) : translationLoading ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Translating...</span>
-                    </div>
-                  ) : translationFailed ? (
-                    <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
-                  ) : null
-                ) : null}
-              </>
-            )}
+          <div className="w-full space-y-2 text-center px-1">
+            {/* Korean example */}
+            <div className="space-y-1">
+              <ClickableExample sentence={word.koreanExample} />
+            </div>
+            {/* French translation */}
+            {word.exampleFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
+              </div>
+            ) : null}
           </div>
         ) : showExamples && word.chineseExample ? (
-          <div className="w-full space-y-1.5 text-center px-1">
-            {locale === 'fr' && word.exampleChineseFrench ? (
-              <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
-            ) : (
-              <>
-                <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
-                {word.examplePinyin && (
-                  <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
-                )}
-                {aiEnabled ? (
-                  translation ? (
-                    <p className="text-xs text-muted-foreground italic leading-relaxed">{translation}</p>
-                  ) : translationLoading ? (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Translating...</span>
-                    </div>
-                  ) : translationFailed ? (
-                    <p className="text-xs text-muted-foreground/60 italic">Translation unavailable</p>
-                  ) : null
-                ) : null}
-              </>
-            )}
+          <div className="w-full space-y-2 text-center px-1">
+            {/* Chinese example */}
+            <div className="space-y-1">
+              <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+              {word.examplePinyin && (
+                <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
+              )}
+            </div>
+            {/* French translation */}
+            {word.exampleChineseFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
