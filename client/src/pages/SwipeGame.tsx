@@ -414,22 +414,39 @@ export default function SwipeGame() {
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
   const isChinese = language === 'chinese';
-  const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
-  const [levelFilter, setLevelFilter] = useState(
-    params.get("hskLevel") || params.get("level") ||
-    (language === 'chinese' ? '1' : 'beginner')
-  );
+  
+  // Persist settings to localStorage
+  const [posFilter, setPosFilter] = useState(() => {
+    try {
+      return params.get("pos") || localStorage.getItem(`swipe-pos-${language}`) || "all";
+    } catch { return "all"; }
+  });
+  
+  const [levelFilter, setLevelFilter] = useState(() => {
+    try {
+      return params.get("hskLevel") || params.get("level") ||
+        localStorage.getItem(`swipe-level-${language}`) ||
+        (language === 'chinese' ? '1' : 'beginner');
+    } catch { return language === 'chinese' ? '1' : 'beginner'; }
+  });
+  
+  const [deckSize, setDeckSize] = useState<number>(() => {
+    try {
+      const urlCount = params.get("count");
+      if (urlCount && DECK_SIZE_OPTIONS.includes(Number(urlCount) as any)) {
+        return Number(urlCount);
+      }
+      const saved = localStorage.getItem('swipe-deck-size');
+      return saved && DECK_SIZE_OPTIONS.includes(Number(saved) as any) ? Number(saved) : 10;
+    } catch { return 10; }
+  });
+  
   const [cardFilter, setCardFilter] = useState<CardFilter>('new');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
   const [history, setHistory] = useState<number[]>([]);
   const [sessionDone, setSessionDone] = useState(false);
-  const [deckSize, setDeckSize] = useState<number>(
-    DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
-      ? Number(params.get("count"))
-      : 10
-  );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -437,6 +454,25 @@ export default function SwipeGame() {
   const [showExamples, setShowExamples] = useState<boolean>(() => {
     try { return localStorage.getItem('swipe-show-examples') !== 'off'; } catch { return true; }
   });
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(`swipe-pos-${language}`, posFilter);
+    } catch {}
+  }, [posFilter, language]);
+  
+  useEffect(() => {
+    try {
+      localStorage.setItem(`swipe-level-${language}`, levelFilter);
+    } catch {}
+  }, [levelFilter, language]);
+  
+  useEffect(() => {
+    try {
+      localStorage.setItem('swipe-deck-size', deckSize.toString());
+    } catch {}
+  }, [deckSize]);
 
   const toggleExamples = useCallback(() => {
     setShowExamples(prev => {

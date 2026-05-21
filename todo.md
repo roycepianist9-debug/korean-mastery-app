@@ -254,3 +254,16 @@
 - [x] Add beep sounds to icon taps (X, info, checkmark buttons)
 - [x] Implement admin pen/edit button for word meanings during swipe game
 - [x] Fix cinematic theme toggle to cycle through all three themes (light → dark → cinematic)
+
+## Phase 1: Critical Bug Fixes (May 2026 - Round 9)
+- [x] Fix settings persistence: swipe level/POS/quantity saved to localStorage
+- [x] Fix WordList defaults: show "New" + "First Level" by default
+- [x] Add Chinese pinyin display to example sentences
+- [x] Reset branding to defaults (clear custom taglines from database)
+
+## Phase 2: Japanese Language Integration (May 2026 - Round 10)
+- [ ] Create database schema for Japanese words (japanese, hiragana, romaji, jlptLevel)
+- [ ] Build JMdict import script (15K words: JLPT N5-N1 + high-frequency tags)
+- [ ] Build Tatoeba sentence linking script (10K sentences matched to words)
+- [ ] Wire Japanese to UI (language selector, SwipeGame, WordList)
+- [ ] Test Japanese integration and verify data completeness
