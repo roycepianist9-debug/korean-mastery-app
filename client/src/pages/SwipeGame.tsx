@@ -33,70 +33,19 @@ interface SwipeResult {
 
 type CardFilter = 'new' | 'reviewing' | 'all';
 
-/* ─── Inline AI Translation Hook ─── */
-function useExampleTranslation(
-  sentence: string | null | undefined,
-  existingEnglish: string | null | undefined,
-  language: 'korean' | 'chinese' | undefined,
-  enabled: boolean
-) {
-  const translate = trpc.llm.translateExample.useMutation();
-  const [translation, setTranslation] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  const attempted = useRef<string | null>(null);
 
-  const doTranslate = useCallback((s: string) => {
-    setFailed(false);
-    translate.mutate(
-      { koreanSentence: s, language },
-      {
-        onSuccess: (data) => {
-          if (data?.translation) setTranslation(data.translation);
-          else setFailed(true);
-        },
-        onError: () => setFailed(true),
-      }
-    );
-  }, [translate, language]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (existingEnglish) {
-      setTranslation(existingEnglish);
-      setFailed(false);
-      return;
-    }
-    if (!sentence) { setTranslation(null); setFailed(false); return; }
-    if (attempted.current === sentence) return;
-    attempted.current = sentence;
-    doTranslate(sentence);
-  }, [enabled, sentence, existingEnglish, doTranslate]);
-
-  const retry = useCallback(() => {
-    if (sentence) { attempted.current = null; doTranslate(sentence); }
-  }, [sentence, doTranslate]);
-
-  return {
-    translation,
-    isLoading: translate.isPending && !translation,
-    failed,
-    retry,
-  };
-}
 
 /* ─── Flash Card ─── */
 function FlashCard({
   word,
   onSwipe,
   isTop,
-  aiEnabled,
   showExamples,
   onToggleExamples,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
-  aiEnabled: boolean;
   showExamples: boolean;
   onToggleExamples: () => void;
 }) {
@@ -112,15 +61,6 @@ function FlashCard({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const isChinese = !!word.chinese && !word.korean;
-  const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
-  const existingTranslation = isChinese ? null : word.exampleEnglish;
-
-  const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
-    isTop && aiEnabled ? exampleForTranslation : null,
-    isTop && aiEnabled ? existingTranslation : null,
-    isChinese ? 'chinese' : 'korean',
-    isTop && aiEnabled
-  );
 
   const SWIPE_THRESHOLD = 80;
 
@@ -453,18 +393,6 @@ export default function SwipeGame() {
   );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  // AI translation toggle — persisted in localStorage
-  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
-    try { return localStorage.getItem('swipe-ai-translation') !== 'off'; } catch { return true; }
-  });
-
-  const toggleAi = useCallback(() => {
-    setAiEnabled(prev => {
-      const next = !prev;
-      try { localStorage.setItem('swipe-ai-translation', next ? 'on' : 'off'); } catch {}
-      return next;
-    });
-  }, []);
 
   // Example sentence toggle — persisted in localStorage
   const [showExamples, setShowExamples] = useState<boolean>(() => {
@@ -816,11 +744,10 @@ export default function SwipeGame() {
             <FlashCard
               key={`next-${words[currentIndex + 1].id}`}
               word={words[currentIndex + 1]}
-              onSwipe={() => {}}
-              isTop={false}
-              aiEnabled={aiEnabled}
-              showExamples={showExamples}
-              onToggleExamples={toggleExamples}
+            onSwipe={() => {}}
+            isTop={false}
+            showExamples={showExamples}
+            onToggleExamples={toggleExamples}
             />
           )}
           <FlashCard
@@ -828,7 +755,6 @@ export default function SwipeGame() {
             word={currentWord}
             onSwipe={handleSwipe}
             isTop={true}
-            aiEnabled={aiEnabled}
             showExamples={showExamples}
             onToggleExamples={toggleExamples}
           />
