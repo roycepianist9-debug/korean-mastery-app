@@ -1,5 +1,5 @@
 import { words } from '../drizzle/schema';
-import { eq, and, isNotNull, ne } from 'drizzle-orm';
+import { eq, and, isNotNull, ne, isNull, or } from 'drizzle-orm';
 import { invokeLLM } from './_core/llm';
 import { getDb } from './db';
 
@@ -115,10 +115,10 @@ async function processBatchTranslation(
           eq(words.language, 'chinese'),
           isNotNull(words.chineseExample),
           ne(words.chineseExample, ''),
-          // Only select rows where exampleChineseFrench is NULL or empty
-          and(
-            ne(words.exampleChineseFrench, ''),
-            isNotNull(words.exampleChineseFrench)
+          // Only select rows where exampleChineseFrench is NULL or empty (needs translation)
+          or(
+            isNull(words.exampleChineseFrench),
+            eq(words.exampleChineseFrench, '')
           )
         )
       )
@@ -136,10 +136,10 @@ async function processBatchTranslation(
           eq(words.language, 'korean'),
           isNotNull(words.koreanExample),
           ne(words.koreanExample, ''),
-          // Only select rows where exampleFrench is NULL or empty
-          and(
-            ne(words.exampleFrench, ''),
-            isNotNull(words.exampleFrench)
+          // Only select rows where exampleFrench is NULL or empty (needs translation)
+          or(
+            isNull(words.exampleFrench),
+            eq(words.exampleFrench, '')
           )
         )
       )
