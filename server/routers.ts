@@ -81,16 +81,21 @@ export const appRouter = router({
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
         hskLevel: z.string().optional(),
+        jlptLevel: z.string().optional(),
         limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
         language: z.enum(['korean', 'chinese', 'japanese']).optional(),
         statuses: z.array(z.string()).optional(),
       }))
       .query(async ({ input, ctx }) => {
+        if (input.language === 'japanese') {
+          console.log('[DEBUG] words.random Japanese query:', { language: input.language, jlptLevel: input.jlptLevel, pos: input.pos, limit: input.limit });
+        }
         return getRandomWords({
           pos: input.pos,
           topikLevel: input.topikLevel,
           hskLevel: input.hskLevel,
+          jlptLevel: input.jlptLevel,
           limit: input.limit,
           excludeIds: input.excludeIds,
           language: input.language,

@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
+
 import {
   ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
   Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
@@ -436,30 +437,59 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
 /* ─── Main Component ─── */
 export default function SwipeGame() {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
-  const isChinese = language === 'chinese';
-  const isJapanese = language === 'japanese';
-  
-  // Persist settings to localStorage
+  // State declarations first
+  const [levelFilter, setLevelFilter] = useState('beginner');
   const [posFilter, setPosFilter] = useState(() => {
     try {
       return params.get("pos") || localStorage.getItem(`swipe-pos-${language}`) || "all";
     } catch { return "all"; }
   });
+
+  const isChinese = language === 'chinese';
+  const isJapanese = language === 'japanese';
   
-  const [levelFilter, setLevelFilter] = useState(() => {
-    try {
-      return params.get("hskLevel") || params.get("level") ||
-        localStorage.getItem(`swipe-level-${language}`) ||
-        (language === 'chinese' ? '1' : 'beginner');
-    } catch { return language === 'chinese' ? '1' : 'beginner'; }
-  });
+  // Get the correct level parameter name based on language
+  const getLevelParamName = () => {
+    if (isChinese) return 'hskLevel';
+    if (isJapanese) return 'jlptLevel';
+    return 'level';
+  };
+  const levelParamName = getLevelParamName();
+
+  // Read lang parameter from URL and update language context
+  useEffect(() => {
+    const urlLang = params.get('lang') as any;
+    if (urlLang && (urlLang === 'korean' || urlLang === 'chinese' || urlLang === 'japanese')) {
+      setLanguage(urlLang);
+    }
+  }, [params, setLanguage]);
+
+  // Update levelFilter when language changes (to handle Japanese/Chinese defaults)
+  useEffect(() => {
+    if (language === 'chinese') {
+      setLevelFilter('1');
+    } else if (language === 'japanese') {
+      setLevelFilter('n5');
+    } else {
+      setLevelFilter('beginner');
+    }
+  }, [language]);
+
+  // Update levelFilter from URL parameters when they change
+  useEffect(() => {
+    const urlLevel = params.get(levelParamName);
+    if (urlLevel) {
+      setLevelFilter(urlLevel);
+    }
+  }, [params, levelParamName]);
   
+  // Persist settings to localStorage
   const [deckSize, setDeckSize] = useState<number>(() => {
     try {
       const urlCount = params.get("count");
@@ -532,10 +562,11 @@ export default function SwipeGame() {
   const wordsQuery = trpc.words.random.useQuery(
     {
       pos: posFilter !== 'all' ? posFilter : undefined,
-      topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      topikLevel: !isChinese && !isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      jlptLevel: isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
-      language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined,
+      language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined,
       statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }

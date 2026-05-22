@@ -134,6 +134,7 @@ export default function Home() {
 
 
   const isChinese = language === 'chinese';
+  const isJapanese = language === 'japanese';
 
   const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
   const gameStats = trpc.gamification.getStats.useQuery();
@@ -226,14 +227,22 @@ export default function Home() {
       return { pos, total, learned };
     }).filter(p => p.total > 0);
   })();
-
   const levelLabel = (l: string) => {
     if (isChinese) return `HSK ${l}`;
+    if (isJapanese) {
+      const levelMap: Record<string, string> = {
+        'n5': 'JLPT N5',
+        'n4': 'JLPT N4',
+        'n3': 'JLPT N3',
+        'n2': 'JLPT N2',
+        'n1': 'JLPT N1',
+      };
+      return levelMap[l] || l;
+    }
     if (l === 'beginner') return t('swipe.beginner');
     if (l === 'intermediate') return t('swipe.intermediate');
     return t('swipe.advanced');
   };
-
   const posLabel = (p: string) => {
     if (p === 'noun') return t('swipe.noun');
     if (p === 'verb') return t('swipe.verb');
@@ -241,7 +250,6 @@ export default function Home() {
     if (p === 'adverb') return t('swipe.adverb');
     return p;
   };
-
   const levelColor = (l: string) => {
     if (isChinese) {
       const n = parseInt(l);
@@ -249,13 +257,17 @@ export default function Home() {
       if (n <= 4) return 'text-chart-3';
       return 'text-accent';
     }
+    if (isJapanese) {
+      if (l === 'n5' || l === 'n4') return 'text-primary';
+      if (l === 'n3') return 'text-chart-3';
+      return 'text-accent';
+    }
     return l === 'beginner' ? 'text-primary' : l === 'intermediate' ? 'text-chart-3' : 'text-accent';
   };
-
-  const langParam = isChinese ? '&lang=chinese' : '';
-
+  const langParam = isChinese ? '&lang=chinese' : isJapanese ? '&lang=japanese' : '';
   const levelFilterParam = (l: string) => {
     if (isChinese) return `/play?hskLevel=${l}&lang=chinese`;
+    if (isJapanese) return `/play?jlptLevel=${l}&lang=japanese`;
     return `/play?level=${l}`;
   };
 
@@ -759,7 +771,7 @@ export default function Home() {
             {/* Try Instantly */}
             <div className="game-card p-4 text-center space-y-3">
               <p className="text-xs font-bold text-accent uppercase">{t('landing.tryInstantly')}</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <Button
                   onClick={() => { sfx.whoosh(); setLocation('/play'); }}
                   className="bg-primary hover:bg-primary/90 text-white font-bold press-scale"
@@ -771,6 +783,12 @@ export default function Home() {
                   className="bg-chart-3 hover:bg-chart-3/90 text-white font-bold press-scale"
                 >
                   🇨🇳 {t('landing.startChinese')}
+                </Button>
+                <Button
+                  onClick={() => { sfx.whoosh(); setLocation('/play?lang=japanese'); }}
+                  className="bg-accent hover:bg-accent/90 text-white font-bold press-scale"
+                >
+                  🇯🇵 {t('landing.startJapanese')}
                 </Button>
               </div>
             </div>

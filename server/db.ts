@@ -271,6 +271,7 @@ export async function getRandomWords(params: {
   pos?: string;
   topikLevel?: string;
   hskLevel?: string;
+  jlptLevel?: string;
   limit: number;
   excludeIds?: number[];
   language?: 'korean' | 'chinese' | 'japanese';
@@ -294,6 +295,7 @@ export async function getRandomWords(params: {
     if (params.pos && params.pos !== 'all') baseConditions.push(eq(words.pos, params.pos));
     if (params.topikLevel && params.topikLevel !== 'all') baseConditions.push(eq(words.topikLevel, params.topikLevel as any));
     if (params.hskLevel && params.hskLevel !== 'all') baseConditions.push(eq(words.hskLevel, params.hskLevel as any));
+    if (params.jlptLevel && params.jlptLevel !== 'all') baseConditions.push(eq(words.jlptLevel, params.jlptLevel as any));
     if (params.excludeIds && params.excludeIds.length > 0) {
       baseConditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
     }
@@ -344,6 +346,7 @@ export async function getRandomWords(params: {
   if (params.pos && params.pos !== 'all') conditions.push(eq(words.pos, params.pos));
   if (params.topikLevel && params.topikLevel !== 'all') conditions.push(eq(words.topikLevel, params.topikLevel as any));
   if (params.hskLevel && params.hskLevel !== 'all') conditions.push(eq(words.hskLevel, params.hskLevel as any));
+  if (params.jlptLevel && params.jlptLevel !== 'all') conditions.push(eq(words.jlptLevel, params.jlptLevel as any));
   if (params.excludeIds && params.excludeIds.length > 0) {
     conditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
   }
@@ -368,6 +371,13 @@ export async function getRandomWords(params: {
     exampleChineseFrench: words.exampleChineseFrench,
     language: words.language,
     hskLevel: words.hskLevel,
+    japanese: words.japanese,
+    hiragana: words.hiragana,
+    romaji: words.romaji,
+    jlptLevel: words.jlptLevel,
+    japaneseExample: words.japaneseExample,
+    exampleRomaji: words.exampleRomaji,
+    exampleJapaneseFrench: words.exampleJapaneseFrench,
   })
     .from(words)
     .where(whereClause)
@@ -397,6 +407,23 @@ export async function getWordStats(language: 'korean' | 'chinese' | 'japanese' =
     return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
   }
 
+  if (language === 'japanese') {
+    const [totalResult, byLevel, byPos] = await Promise.all([
+      db.select({ total: count() }).from(words).where(langCondition),
+      db.select({ level: words.jlptLevel, count: count() })
+        .from(words)
+        .where(langCondition)
+        .groupBy(words.jlptLevel),
+      db.select({ pos: words.pos, count: count() })
+        .from(words)
+        .where(langCondition)
+        .groupBy(words.pos)
+        .orderBy(desc(count())),
+    ]);
+    return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
+  }
+
+  // Default to Korean
   const [totalResult, byLevel, byPos] = await Promise.all([
     db.select({ total: count() }).from(words).where(langCondition),
     db.select({ level: words.topikLevel, count: count() })
