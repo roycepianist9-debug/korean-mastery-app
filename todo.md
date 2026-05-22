@@ -297,3 +297,13 @@
 - [x] Verify all 22 Memory Game tests still pass
 - [x] Restart dev server with no TypeScript errors
 - [x] Confirm live deployment ready (Language picker loads cleanly)
+
+
+## Phase 4: Memory Game Redesign - Split Language Pools (May 2026 - Round 13)
+- [x] Redesign Memory Game component with split language pools (top: Korean/Chinese, bottom: French/English)
+- [x] Implement semantic matching logic (Korean↔French, Chinese↔English only, never same-language)
+- [x] Add visual feedback animations (green for match, red for mismatch, smooth flip animation)
+- [x] Update difficulty options to even grids (3×4, 4×4, 6×6 instead of 3×3, 4×4, 5×5)
+- [x] Lock language/settings during gameplay to prevent mid-game state bugs
+- [x] Test back button returns to settings menu
+- [x] Deploy updated Memory Game to production and verify on live site (31 tests passing)

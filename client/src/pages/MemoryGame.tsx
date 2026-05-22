@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+'use client';
+
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSound } from '@/contexts/SoundContext';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -15,17 +16,18 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { ChevronLeft, Volume2, RotateCcw } from 'lucide-react';
 import { useRouter } from 'wouter';
+import { useState, useEffect, useRef } from 'react';
 
-type Difficulty = '3x3' | '4x4' | '5x5';
+type Difficulty = '3x4' | '4x4' | '6x6';
 type GameStatus = 'settings' | 'playing' | 'completed';
 
 interface MemoryCard {
   id: string;
-  word: string;
-  meaning: string;
+  content: string;
+  isLanguage: boolean; // true = Korean/Chinese, false = French/English
   isFlipped: boolean;
   isMatched: boolean;
-  isDefinition: boolean;
+  matchId: string; // shared between language pair
 }
 
 export default function MemoryGame() {
@@ -35,8 +37,8 @@ export default function MemoryGame() {
   const user = auth.user;
   const { navigate } = useRouter();
 
-  // Settings
-  const [difficulty, setDifficulty] = useState<Difficulty>('3x3');
+  // Settings (locked during gameplay)
+  const [difficulty, setDifficulty] = useState<Difficulty>('3x4');
   const [level, setLevel] = useState<string>('');
   const [pos, setPos] = useState<string>('');
   const [gameStatus, setGameStatus] = useState<GameStatus>('settings');
@@ -48,17 +50,18 @@ export default function MemoryGame() {
   const [moves, setMoves] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [feedback, setFeedback] = useState<'match' | 'mismatch' | null>(null);
   const flippedCardsRef = useRef<string[]>([]);
 
   // Fetch words
-  const cardCount = difficulty === '3x3' ? 9 : difficulty === '4x4' ? 16 : 25;
+  const pairCount = difficulty === '3x4' ? 6 : difficulty === '4x4' ? 8 : 18;
   const { data: words, isLoading } = trpc.words.random.useQuery(
     {
       language: language as 'korean' | 'chinese',
       topikLevel: level || undefined,
       hskLevel: language === 'chinese' ? level : undefined,
       pos: pos || undefined,
-      limit: Math.ceil(cardCount / 2),
+      limit: pairCount,
     },
     { enabled: gameStatus === 'playing' }
   );
@@ -71,36 +74,44 @@ export default function MemoryGame() {
     ? ['TOPIK 1', 'TOPIK 2', 'TOPIK 3', 'TOPIK 4', 'TOPIK 5', 'TOPIK 6']
     : ['HSK 1', 'HSK 2', 'HSK 3', 'HSK 4', 'HSK 5', 'HSK 6'];
 
-  const posOptions = ['noun', 'verb', 'adjective', 'adverb', 'all'];
+  const posOptions = ['noun', 'verb', 'adjective', 'adverb'];
 
   // Initialize game when words are loaded
   useEffect(() => {
     if (words && words.length > 0 && gameStatus === 'playing') {
-      const cardCount = difficulty === '3x3' ? 9 : difficulty === '4x4' ? 16 : 25;
-      const pairs = words.slice(0, cardCount / 2);
-
+      const pairs = words.slice(0, pairCount);
       const gameCards: MemoryCard[] = [];
+
       pairs.forEach((word, idx) => {
+        const languageContent = language === 'korean' ? word.korean : word.chinese;
+        const translationContent = word.meaningFr || word.meaning;
+
+        // Add language card
         gameCards.push({
-          id: `word-${idx}`,
-          word: language === 'korean' ? word.korean : word.chinese,
-          meaning: word.meaning,
+          id: `lang-${idx}`,
+          content: languageContent,
+          isLanguage: true,
           isFlipped: false,
           isMatched: false,
-          isDefinition: false,
+          matchId: `pair-${idx}`,
         });
+
+        // Add translation card
         gameCards.push({
-          id: `def-${idx}`,
-          word: language === 'korean' ? word.korean : word.chinese,
-          meaning: word.meaning,
+          id: `trans-${idx}`,
+          content: translationContent,
+          isLanguage: false,
           isFlipped: false,
           isMatched: false,
-          isDefinition: true,
+          matchId: `pair-${idx}`,
         });
       });
 
-      // Shuffle cards
-      const shuffled = gameCards.sort(() => Math.random() - 0.5);
+      // Shuffle only within each pool to maintain split layout
+      const languageCards = gameCards.filter(c => c.isLanguage).sort(() => Math.random() - 0.5);
+      const translationCards = gameCards.filter(c => !c.isLanguage).sort(() => Math.random() - 0.5);
+      const shuffled = [...languageCards, ...translationCards];
+
       setCards(shuffled);
       setFlipped(new Set());
       setMatched(new Set());
@@ -109,7 +120,7 @@ export default function MemoryGame() {
       setElapsedTime(0);
       flippedCardsRef.current = [];
     }
-  }, [words, gameStatus, difficulty, language]);
+  }, [words, gameStatus, difficulty, language, pairCount]);
 
   // Timer
   useEffect(() => {
@@ -127,37 +138,48 @@ export default function MemoryGame() {
       const card1 = cards.find(c => c.id === id1);
       const card2 = cards.find(c => c.id === id2);
 
-      if (card1 && card2 && card1.word === card2.word && card1.isDefinition !== card2.isDefinition) {
-        // Match found
-        sfx.pop();
-        setMatched(prev => new Set([...prev, id1, id2]));
-        flippedCardsRef.current = [];
-
-        // Check if game is complete
-        if (matched.size + 2 === cards.length) {
-          setGameStatus('completed');
-          // Update stats
-          if (user?.id) {
-            const results = cards.slice(0, cards.length / 2).map((card, idx) => ({
-              wordId: idx,
-              known: true,
-            }));
-            updateStats.mutate({
-              results,
-              language: language as 'korean' | 'chinese',
-            });
-          }
-        }
-      } else {
-        // No match
-        setTimeout(() => {
-          setFlipped(new Set());
+      if (card1 && card2) {
+        // Check if it's a valid semantic match (different language pools)
+        if (
+          card1.matchId === card2.matchId &&
+          card1.isLanguage !== card2.isLanguage
+        ) {
+          // Match found
+          sfx.pop();
+          setFeedback('match');
+          setMatched(prev => new Set([...prev, id1, id2]));
           flippedCardsRef.current = [];
-        }, 1000);
+
+          // Check if game is complete
+          if (matched.size + 2 === cards.length) {
+            setGameStatus('completed');
+            // Update stats
+            if (user?.id) {
+              const results = words!.slice(0, pairCount).map((word, idx) => ({
+                wordId: word.id,
+                known: true,
+              }));
+              updateStats.mutate({
+                results,
+                language: language as 'korean' | 'chinese',
+              });
+            }
+          }
+
+          setTimeout(() => setFeedback(null), 500);
+        } else {
+          // No match or same-language match (invalid)
+          setFeedback('mismatch');
+          setTimeout(() => {
+            setFlipped(new Set());
+            flippedCardsRef.current = [];
+            setFeedback(null);
+          }, 1000);
+        }
       }
       setMoves(prev => prev + 1);
     }
-  }, [flipped, cards, matched, user, language, sfx, updateStats]);
+  }, [flipped, cards, matched, user, language, words, pairCount, sfx, updateStats]);
 
   const handleCardClick = (cardId: string) => {
     if (flipped.has(cardId) || matched.has(cardId) || flippedCardsRef.current.length >= 2) return;
@@ -182,8 +204,11 @@ export default function MemoryGame() {
     flippedCardsRef.current = [];
   };
 
-  const gridCols = difficulty === '3x3' ? 'grid-cols-3' : difficulty === '4x4' ? 'grid-cols-4' : 'grid-cols-5';
+  const gridCols = difficulty === '3x4' ? 'grid-cols-3' : difficulty === '4x4' ? 'grid-cols-4' : 'grid-cols-6';
+  const languageCards = cards.filter(c => c.isLanguage);
+  const translationCards = cards.filter(c => !c.isLanguage);
 
+  // Settings screen
   if (gameStatus === 'settings') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4">
@@ -207,14 +232,12 @@ export default function MemoryGame() {
                 <div className="flex gap-2">
                   <Button
                     variant={language === 'korean' ? 'default' : 'outline'}
-                    onClick={() => {}}
                     disabled
                   >
                     🇰🇷 Korean
                   </Button>
                   <Button
                     variant={language === 'chinese' ? 'default' : 'outline'}
-                    onClick={() => {}}
                     disabled
                   >
                     🇨🇳 Chinese
@@ -255,7 +278,7 @@ export default function MemoryGame() {
               <div>
                 <label className="block text-sm font-medium mb-2">Difficulty</label>
                 <div className="flex gap-2">
-                  {(['3x3', '4x4', '5x5'] as Difficulty[]).map(d => (
+                  {(['3x4', '4x4', '6x6'] as Difficulty[]).map(d => (
                     <Button
                       key={d}
                       variant={difficulty === d ? 'default' : 'outline'}
@@ -280,11 +303,22 @@ export default function MemoryGame() {
     );
   }
 
+  // Playing screen
   if (gameStatus === 'playing') {
     if (isLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <Spinner />
+        </div>
+      );
+    }
+
+    if (cards.length === 0) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500">No cards loaded</p>
+          </div>
         </div>
       );
     }
@@ -308,40 +342,82 @@ export default function MemoryGame() {
             </Button>
           </div>
 
-          {/* Game Grid */}
-          <div className={`grid ${gridCols} gap-3 mb-6`}>
-            {cards.map(card => (
-              <button
-                key={card.id}
-                onClick={() => handleCardClick(card.id)}
-                disabled={matched.has(card.id)}
-                className={`aspect-square rounded-lg font-bold text-sm p-2 transition-all transform ${
-                  matched.has(card.id)
-                    ? 'bg-green-500 text-white scale-95 opacity-75'
-                    : flipped.has(card.id)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
-                } ${matched.has(card.id) ? 'cursor-default' : 'cursor-pointer'}`}
-              >
-                {flipped.has(card.id) || matched.has(card.id) ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-1">
-                    {card.isDefinition ? (
-                      <span className="text-xs line-clamp-3">{card.meaning}</span>
-                    ) : (
-                      <>
-                        <span>{card.word}</span>
-                        <Volume2 className="w-3 h-3" />
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-2xl">?</div>
-                )}
-              </button>
-            ))}
+          {/* Language Pool (Top) */}
+          <div className="mb-8">
+            <h2 className="text-sm font-semibold mb-3 text-muted-foreground">
+              {language === 'korean' ? '🇰🇷 Korean' : '🇨🇳 Chinese'}
+            </h2>
+            <div className={`grid ${gridCols} gap-3`}>
+              {languageCards.map(card => (
+                <button
+                  key={card.id}
+                  onClick={() => handleCardClick(card.id)}
+                  disabled={matched.has(card.id)}
+                  className={`aspect-square rounded-lg font-bold text-sm p-2 transition-all transform ${
+                    matched.has(card.id)
+                      ? 'bg-green-500 text-white scale-95 opacity-75'
+                      : flipped.has(card.id)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                  } ${matched.has(card.id) ? 'cursor-default' : 'cursor-pointer'}`}
+                >
+                  {flipped.has(card.id) || matched.has(card.id) ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-1">
+                      <span className="text-xs line-clamp-2">{card.content}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-2xl">?</div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="text-center text-sm text-muted-foreground">
+          {/* Separator */}
+          <div className="border-t border-muted my-6"></div>
+
+          {/* Translation Pool (Bottom) */}
+          <div>
+            <h2 className="text-sm font-semibold mb-3 text-muted-foreground">
+              {language === 'korean' ? '🇫🇷 French' : '🇬🇧 English'}
+            </h2>
+            <div className={`grid ${gridCols} gap-3`}>
+              {translationCards.map(card => (
+                <button
+                  key={card.id}
+                  onClick={() => handleCardClick(card.id)}
+                  disabled={matched.has(card.id)}
+                  className={`aspect-square rounded-lg font-bold text-sm p-2 transition-all transform ${
+                    matched.has(card.id)
+                      ? 'bg-green-500 text-white scale-95 opacity-75'
+                      : flipped.has(card.id)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                  } ${matched.has(card.id) ? 'cursor-default' : 'cursor-pointer'}`}
+                >
+                  {flipped.has(card.id) || matched.has(card.id) ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-1">
+                      <span className="text-xs line-clamp-2">{card.content}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-2xl">?</div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Feedback */}
+          {feedback && (
+            <div className={`mt-6 text-center text-lg font-bold ${
+              feedback === 'match' ? 'text-green-500' : 'text-red-500'
+            }`}>
+              {feedback === 'match' ? '✓ Match!' : '✗ Try again'}
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="text-center text-sm text-muted-foreground mt-6">
             Matched: {matched.size / 2} / {cards.length / 2}
           </div>
         </div>
@@ -349,23 +425,28 @@ export default function MemoryGame() {
     );
   }
 
-  // Game completed
+  // Completed screen
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4 flex items-center justify-center">
       <Card className="p-8 text-center space-y-6 max-w-md">
-        <h1 className="text-4xl font-bold">🎉 You Won!</h1>
+        <h1 className="text-4xl font-bold">🎉 Game Complete!</h1>
         <div className="space-y-2">
-          <div className="text-2xl font-bold">{elapsedTime} seconds</div>
-          <div className="text-lg text-muted-foreground">{moves} moves</div>
+          <p className="text-lg">Time: {elapsedTime}s</p>
+          <p className="text-lg">Moves: {moves}</p>
         </div>
-        <div className="space-y-2">
-          <Button onClick={resetGame} className="w-full">
-            Play Again
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/play')} className="w-full">
-            Back to Play
-          </Button>
-        </div>
+        <Button
+          onClick={resetGame}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-bold"
+        >
+          Play Again
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/play')}
+          className="w-full"
+        >
+          Back to Play
+        </Button>
       </Card>
     </div>
   );
