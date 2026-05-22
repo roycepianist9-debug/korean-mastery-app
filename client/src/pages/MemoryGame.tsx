@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { ChevronLeft, Volume2, RotateCcw } from 'lucide-react';
-import { useRouter } from 'wouter';
+import { useLocation } from 'wouter';
 import { useState, useEffect, useRef } from 'react';
 
 type Difficulty = '3x4' | '4x4' | '6x6';
@@ -35,7 +35,7 @@ export default function MemoryGame() {
   const { play: sfx } = useSound();
   const auth = useAuth();
   const user = auth.user;
-  const { navigate } = useRouter();
+  const [, setLocation] = useLocation();
 
   // Settings (locked during gameplay)
   const [difficulty, setDifficulty] = useState<Difficulty>('3x4');
@@ -216,7 +216,7 @@ export default function MemoryGame() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/play')}
+            onClick={() => setLocation('/play')}
             className="mb-6"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />

@@ -326,3 +326,7 @@
 - [x] Implement lazy auth gates - only prompt login on explicit user action (Sign In button, premium features)
 - [x] Test guest flow: open app → choose language → play immediately without signup
 - [x] Deploy guest-first lazy auth to production
+
+
+## Bug Fixes (May 2026 - Round 16)
+- [x] Fixed Memory Game Back button navigation (useRouter → useLocation)
