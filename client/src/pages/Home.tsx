@@ -196,6 +196,23 @@ export default function Home() {
         });
     }
 
+    if (isJapanese) {
+      const jlptLevels = ['n5', 'n4', 'n3', 'n2', 'n1'];
+      const levelTotals: Record<string, number> = {};
+      for (const item of ws.byLevel) {
+        if (item.level) levelTotals[item.level] = item.count;
+      }
+      return jlptLevels
+        .filter(level => levelTotals[level] && levelTotals[level] > 0)
+        .map(level => {
+          const total = levelTotals[level] ?? 0;
+          const learned = progressByLevel.data
+            .filter((r: any) => r.jlptLevel === level && r.status === 'learned')
+            .reduce((sum: number, r: any) => sum + r.count, 0);
+          return { level, total, learned };
+        });
+    }
+
     // Korean
     const levels = ['beginner', 'intermediate', 'advanced'] as const;
     const levelTotals: Record<string, number> = {};

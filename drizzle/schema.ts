@@ -132,7 +132,7 @@ export type InsertUserProgress = typeof userProgress.$inferInsert;
 export const userStats = mysqlTable("user_stats", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
+  language: mysqlEnum("language", ["korean", "chinese", "japanese"]).notNull().default("korean"),
   xp: int("xp").notNull().default(0),
   currentStreak: int("currentStreak").notNull().default(0),
   longestStreak: int("longestStreak").notNull().default(0),

@@ -340,3 +340,12 @@
 - [x] Uncomment Japanese button in LanguageToggle.tsx
 - [x] Test Japanese swipe game end-to-end (build successful, dev server running)
 - [x] Verify Japanese words display correctly with all fields
+
+
+## Phase 4: Fix Japanese Swipe Game (In Progress)
+- [ ] Fix progress.save procedure to handle Japanese language (currently only Korean/Chinese)
+- [ ] Update dashboard to show "N5, N4, N3" instead of "Beginner, Intermediate, Advanced" for Japanese
+- [ ] Remove 152 duplicate words that exist in both Korean and Japanese tables
+- [ ] Verify word count is correct (92 unique Japanese words after deduplication)
+- [ ] Test swipe game progress saving works for Japanese
+- [ ] Complete remaining Jisho vocabulary import to 300+ words

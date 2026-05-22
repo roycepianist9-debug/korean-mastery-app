@@ -522,6 +522,18 @@ export async function getProgressByLevel(userId: number, language: 'korean' | 'c
       .groupBy(words.hskLevel, userProgress.status);
   }
 
+  if (language === 'japanese') {
+    return db.select({
+      jlptLevel: words.jlptLevel,
+      status: userProgress.status,
+      count: count(),
+    })
+      .from(userProgress)
+      .innerJoin(words, eq(userProgress.wordId, words.id))
+      .where(and(eq(userProgress.userId, userId), eq(words.language, 'japanese')))
+      .groupBy(words.jlptLevel, userProgress.status);
+  }
+
   return db.select({
     topikLevel: words.topikLevel,
     status: userProgress.status,
