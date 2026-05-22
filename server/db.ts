@@ -90,13 +90,35 @@ export async function searchWords(params: {
 
   if (params.query && params.query.trim()) {
     const q = `%${params.query.trim()}%`;
-    conditions.push(
-      or(
-        like(words.korean, q),
-        like(words.romanization, q),
-        like(words.meaning, q)
-      )
-    );
+    if (language === 'japanese') {
+      // For Japanese: search japanese characters, hiragana, romaji, and meaning
+      conditions.push(
+        or(
+          like(words.japanese, q),
+          like(words.hiragana, q),
+          like(words.romaji, q),
+          like(words.meaning, q)
+        )
+      );
+    } else if (language === 'chinese') {
+      // For Chinese: search chinese characters, pinyin, and meaning
+      conditions.push(
+        or(
+          like(words.chinese, q),
+          like(words.pinyin, q),
+          like(words.meaning, q)
+        )
+      );
+    } else {
+      // For Korean: search korean, romanization, and meaning
+      conditions.push(
+        or(
+          like(words.korean, q),
+          like(words.romanization, q),
+          like(words.meaning, q)
+        )
+      );
+    }
   }
 
   if (params.pos && params.pos !== 'all') {

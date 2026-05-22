@@ -28,8 +28,7 @@ export default function LanguageToggle() {
       >
         🇨🇳
       </Button>
-      {/* Japanese button hidden for now - will be enabled with HSK levels expansion */}
-      {/* <Button
+      <Button
         variant={language === 'japanese' ? 'default' : 'outline'}
         size="sm"
         onClick={() => { sfx.pop(); setLanguage('japanese'); }}
@@ -37,7 +36,7 @@ export default function LanguageToggle() {
         title="English (Japanese)"
       >
         🇯🇵
-      </Button> */}
+      </Button>
     </div>
   );
 }

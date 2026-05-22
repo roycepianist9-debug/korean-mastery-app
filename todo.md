@@ -330,3 +330,13 @@
 
 ## Bug Fixes (May 2026 - Round 16)
 - [x] Fixed Memory Game Back button navigation (useRouter → useLocation)
+
+
+## Japanese (JLPT) Support - Phase 3 (Complete)
+- [x] Fix searchWords() in db.ts to search Japanese/hiragana/romaji when language='japanese'
+- [x] Fix getRandomWords() to handle Japanese language filtering (already working)
+- [x] Populate 20 Japanese words with complete data (hiragana, romaji, JLPT levels, examples)
+- [x] Add Japanese translations to I18nContext (JLPT levels, etc.)
+- [x] Uncomment Japanese button in LanguageToggle.tsx
+- [x] Test Japanese swipe game end-to-end (build successful, dev server running)
+- [x] Verify Japanese words display correctly with all fields
