@@ -136,11 +136,11 @@ export default function Home() {
   const isChinese = language === 'chinese';
 
   const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
-  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
-  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined }, { enabled: isAuthenticated });
+  const gameStats = trpc.gamification.getStats.useQuery();
+  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -161,7 +161,7 @@ export default function Home() {
   });
   const dailyHistory = trpc.progress.dailyHistory.useQuery(
     { language: language === 'french' ? 'korean' : language, days: 30 },
-    { enabled: isAuthenticated && graphOpen }
+    { enabled: graphOpen }
   );
 
   const gs = gameStats.data;

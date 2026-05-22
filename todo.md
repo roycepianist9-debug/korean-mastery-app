@@ -307,3 +307,22 @@
 - [x] Lock language/settings during gameplay to prevent mid-game state bugs
 - [x] Test back button returns to settings menu
 - [x] Deploy updated Memory Game to production and verify on live site (31 tests passing)
+
+
+## Phase 6: Complete Auth Removal & Guest-First Architecture (May 2026 - Round 15)
+- [x] Remove global redirect trap from main.tsx (delete lines 13-38)
+- [x] Remove redirect effect from useAuth.ts (delete auth enforcement logic)
+- [x] Convert all protected gameplay endpoints to public: swipe, batchSwipe, getStats, todayCount, dailyHistory, getByLevel, getByPos, getForWords, markWord
+- [x] Implement guest progress tracking with database guest user records (numeric userId)
+- [x] Audit all components to ensure they never call auth-required APIs
+- [x] Test guest flow end-to-end without any OAuth prompts
+- [x] Deploy guest-first app to production
+
+
+## Phase 6: Guest-First Lazy Auth Refactoring (May 2026 - Round 15)
+- [x] Audit all tRPC procedures called during app bootstrap and ensure they're public
+- [x] Implement graceful context fallback - use guest ID when ctx.user is null
+- [x] Remove all hidden tRPC calls that might trigger auth redirects during initialization
+- [x] Implement lazy auth gates - only prompt login on explicit user action (Sign In button, premium features)
+- [x] Test guest flow: open app → choose language → play immediately without signup
+- [x] Deploy guest-first lazy auth to production

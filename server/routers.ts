@@ -107,31 +107,31 @@ export const appRouter = router({
   }),
 
   progress: router({
-    getStats: protectedProcedure
+    getStats: publicProcedure
       .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getUserProgressStats(ctx.user.id, input?.language || 'korean');
+        return getUserProgressStats(ctx.guestId, input?.language || 'korean');
       }),
 
-    getByLevel: protectedProcedure
+    getByLevel: publicProcedure
       .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getProgressByLevel(ctx.user.id, input?.language || 'korean');
+        return getProgressByLevel(ctx.guestId, input?.language || 'korean');
       }),
 
-    getByPos: protectedProcedure
+    getByPos: publicProcedure
       .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getProgressByPos(ctx.user.id, input?.language || 'korean');
+        return getProgressByPos(ctx.guestId, input?.language || 'korean');
       }),
 
-    getForWords: protectedProcedure
+    getForWords: publicProcedure
       .input(z.object({ wordIds: z.array(z.number()) }))
       .query(async ({ ctx, input }) => {
-        return getUserProgress(ctx.user.id, input.wordIds);
+        return getUserProgress(ctx.guestId, input.wordIds);
       }),
 
-    markWord: protectedProcedure
+    markWord: publicProcedure
       .input(z.object({
         wordId: z.number(),
         status: z.enum(['learned', 'reviewing', 'new']),
@@ -140,25 +140,25 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Paywall check: count learned words for this language
         if (input.status === 'learned') {
-          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
+          const stats = await getUserProgressStats(ctx.guestId, input.language || 'korean');
           const db = await getDb();
-          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1) : [];
           const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
           if (stats.learned >= limit) {
             return { status: 'paywall_blocked' as const, learnedCount: stats.learned, limit };
           }
         }
         const correct = input.status === 'learned';
-        await upsertWordProgress(ctx.user.id, input.wordId, input.status, correct);
+        await upsertWordProgress(ctx.guestId, input.wordId, input.status, correct);
         if (input.status !== 'new') {
           const xpGained = input.status === 'learned' ? 10 : 3;
           const wordsLearned = input.status === 'learned' ? 1 : 0;
-          await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
+          await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', wordsLearned);
         }
         return { status: input.status };
       }),
 
-    swipe: protectedProcedure
+    swipe: publicProcedure
       .input(z.object({
         wordId: z.number(),
         known: z.boolean(),
@@ -167,9 +167,9 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Paywall check for "learned" swipes
         if (input.known) {
-          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
+          const stats = await getUserProgressStats(ctx.guestId, input.language || 'korean');
           const db = await getDb();
-          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1) : [];
           const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
           if (stats.learned >= limit) {
             return { status: 'paywall_blocked' as const, xpGained: 0, learnedCount: stats.learned, limit };
@@ -177,17 +177,17 @@ export const appRouter = router({
         }
 
         const status = input.known ? 'learned' as const : 'reviewing' as const;
-        await upsertWordProgress(ctx.user.id, input.wordId, status, input.known);
+        await upsertWordProgress(ctx.guestId, input.wordId, status, input.known);
 
         // XP: 10 for learned, 3 for reviewing
         const xpGained = input.known ? 10 : 3;
         const wordsLearned = input.known ? 1 : 0;
-        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
+        await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', wordsLearned);
 
         return { status, xpGained };
       }),
 
-    batchSwipe: protectedProcedure
+    batchSwipe: publicProcedure
       .input(z.object({
         results: z.array(z.object({
           wordId: z.number(),
@@ -201,31 +201,31 @@ export const appRouter = router({
 
         for (const result of input.results) {
           const status = result.known ? 'learned' as const : 'reviewing' as const;
-          await upsertWordProgress(ctx.user.id, result.wordId, status, result.known);
+          await upsertWordProgress(ctx.guestId, result.wordId, status, result.known);
           totalXp += result.known ? 10 : 3;
           if (result.known) totalLearned += 1;
         }
 
-        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', totalLearned);
+        await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', totalLearned);
 
         return { totalXp, totalLearned, totalReviewed: input.results.length };
       }),
 
-    todayCount: protectedProcedure
+    todayCount: publicProcedure
       .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        const count = await getTodayLearnedCount(ctx.user.id, input?.language || 'korean');
+        const count = await getTodayLearnedCount(ctx.guestId, input?.language || 'korean');
         return { count };
       }),
 
-    dailyHistory: protectedProcedure
+    dailyHistory: publicProcedure
       .input(z.object({
         language: z.enum(['korean', 'chinese', 'japanese']).optional(),
         days: z.number().min(7).max(90).default(30),
       }).optional())
       .query(async ({ ctx, input }) => {
         return getDailyLearnedHistory(
-          ctx.user.id,
+          ctx.guestId,
           input?.language || 'korean',
           input?.days || 30
         );
@@ -234,7 +234,7 @@ export const appRouter = router({
 
   gamification: router({
     getStats: protectedProcedure.query(async ({ ctx }) => {
-      const stats = await getOrCreateUserStats(ctx.user.id);
+      const stats = await getOrCreateUserStats(ctx.guestId);
       if (!stats) return {
         xp: 0, currentStreak: 0, longestStreak: 0,
         totalWordsLearned: 0, totalReviews: 0, level: 1, levelTitle: 'Beginner',
@@ -284,9 +284,9 @@ export const appRouter = router({
         try {
           const session = await stripe.checkout.sessions.create({
             customer_email: ctx.user.email || undefined,
-            client_reference_id: ctx.user.id.toString(),
+            client_reference_id: ctx.guestId.toString(),
             metadata: {
-              user_id: ctx.user.id.toString(),
+              user_id: ctx.guestId.toString(),
               customer_email: ctx.user.email || "",
               customer_name: ctx.user.name || "",
             },
@@ -342,7 +342,7 @@ export const appRouter = router({
         }
 
         // Get user from database to check subscription status
-        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1);
         const userRecord = userRecords[0];
 
         if (!userRecord?.stripeSubscriptionId) {
@@ -389,7 +389,7 @@ export const appRouter = router({
           throw new Error("Database not available");
         }
 
-        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1);
         const userRecord = userRecords[0];
 
         if (!userRecord?.stripeCustomerId) {
@@ -421,7 +421,7 @@ export const appRouter = router({
         }
         const db = await getDb();
         const userRecord = db
-          ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
+          ? (await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1))[0]
           : null;
         const freeWordCapStr = await getAppConfig('freeWordCap');
         const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
@@ -536,7 +536,7 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error('Database not available');
         const newLimit = input.enabled ? 999999 : 150;
-        await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.user.id));
+        await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.guestId));
         return { success: true, wordAccessLimit: newLimit };
       }),
 

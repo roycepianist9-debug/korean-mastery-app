@@ -579,24 +579,22 @@ export default function SwipeGame() {
     // Track locally
     if (known) localLearnedCount.current += 1;
 
-    // Save progress immediately after each swipe
-    if (isAuthenticated) {
-      persistedWordIds.current.add(wordId);
-      swipeMutation.mutate(
-        { wordId, known, language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
-        {
-          onSuccess: (data) => {
-            if (data.status === 'paywall_blocked') {
-              // Server confirmed block — show modal and revert local count
-              localLearnedCount.current -= 1;
-              setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
-              setPaywallOpen(true);
-            }
-          },
-          onError: () => toast.error("Failed to save this card's progress"),
-        }
-      );
-    }
+    // Save progress immediately after each swipe (for both authenticated and guest users)
+    persistedWordIds.current.add(wordId);
+    swipeMutation.mutate(
+      { wordId, known, language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
+      {
+        onSuccess: (data) => {
+          if (data.status === 'paywall_blocked') {
+            // Server confirmed block — show modal and revert local count
+            localLearnedCount.current -= 1;
+            setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
+            setPaywallOpen(true);
+          }
+        },
+        onError: () => toast.error("Failed to save this card's progress"),
+      }
+    );
 
     if (currentIndex + 1 >= words.length) {
       setSessionDone(true);
