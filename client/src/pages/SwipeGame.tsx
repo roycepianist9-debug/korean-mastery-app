@@ -25,6 +25,8 @@ import { useSound } from "@/contexts/SoundContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import { useI18n } from "@/contexts/I18nContext";
 import { useAudio } from "@/hooks/useAudio";
+import { useGuestProgress } from "@/hooks/useGuestProgress";
+import SignupPromptModal from "@/components/SignupPromptModal";
 
 interface SwipeResult {
   wordId: number;
@@ -48,8 +50,9 @@ function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
         aria-label="Play audio"
       >
         <Volume2 className="w-4 h-4" />
-      </button>
+      </BottomNav>
     </div>
+    </>
   );
 }
 
@@ -441,6 +444,7 @@ export default function SwipeGame() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
+  const { isGuestMode, trackWordProgress, showSignupPrompt, setShowSignupPrompt, wordsCount } = useGuestProgress();
 
   const isChinese = language === 'chinese';
   const isJapanese = language === 'japanese';
@@ -562,6 +566,12 @@ export default function SwipeGame() {
   const handleSwipe = useCallback((known: boolean) => {
     if (!words[currentIndex]) return;
 
+    // Check guest mode limit
+    if (isGuestMode && known && wordsCount >= 100) {
+      setShowSignupPrompt(true);
+      return; // Don't advance the card
+    }
+
     // Pre-check paywall: if marking as known and at limit, block immediately
     if (known && isAuthenticated && localLearnedCount.current >= wordLimit) {
       setPaywallInfo({ learnedCount: localLearnedCount.current, limit: wordLimit });
@@ -577,7 +587,13 @@ export default function SwipeGame() {
     setHistory(prev => [...prev, currentIndex]);
 
     // Track locally
-    if (known) localLearnedCount.current += 1;
+    if (known) {
+      localLearnedCount.current += 1;
+      // Track guest progress
+      if (isGuestMode) {
+        trackWordProgress(1);
+      }
+    }
 
     // Save progress immediately after each swipe
     if (isAuthenticated) {
@@ -653,7 +669,13 @@ export default function SwipeGame() {
 
   /* ─── Session Start Screen ─── */
   if (!sessionStarted) {
-    return (
+  return (
+    <>
+      <SignupPromptModal
+        isOpen={showSignupPrompt}
+        onClose={() => setShowSignupPrompt(false)}
+        wordsLearned={wordsCount}
+      />
       <div className="min-h-screen bg-background pb-24">
         <div className="px-4 pt-6 pb-4">
           <button onClick={() => { sfx.tap(); setLocation("/"); }} className="flex items-center gap-1 text-muted-foreground mb-4 press-scale">
