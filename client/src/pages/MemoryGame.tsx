@@ -216,7 +216,7 @@ export default function MemoryGame() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation('/play')}
+            onClick={() => setLocation('/')}
             className="mb-6"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
@@ -328,7 +328,7 @@ export default function MemoryGame() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <Button variant="ghost" size="sm" onClick={resetGame}>
+            <Button variant="ghost" size="sm" onClick={() => setLocation('/')}>
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
             </Button>

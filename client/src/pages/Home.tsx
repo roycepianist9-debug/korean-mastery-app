@@ -746,20 +746,127 @@ export default function Home() {
           <MilestoneCard language={language} learnedCount={ps?.learned ?? 0} />
         )}
 
-        {/* Word Stats (unauthenticated) */}
-        {!isAuthenticated && ws && (
-          <div className="game-card p-3.5">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-primary" />
-              <span className="text-sm font-black text-foreground">{t('home.dictionaryStats')}</span>
+        {/* Guest Landing Intro */}
+        {!isAuthenticated && (
+          <div className="space-y-4">
+            {/* Hero Section */}
+            <div className="game-card p-6 text-center space-y-3">
+              <h2 className="text-2xl font-black text-foreground">{t('landing.tagline')}</h2>
+              <p className="text-sm font-bold text-chart-3">{t('landing.subtitle')}</p>
+              <p className="text-xs text-muted-foreground">{t('landing.features')}</p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              {ws.byLevel.map((item: any) => (
-                <div key={item.level}>
-                  <p className="text-lg font-black text-foreground">{item.count.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase">{levelLabel(item.level)}</p>
+
+            {/* Try Instantly */}
+            <div className="game-card p-4 text-center space-y-3">
+              <p className="text-xs font-bold text-accent uppercase">{t('landing.tryInstantly')}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => { sfx.whoosh(); setLocation('/play'); }}
+                  className="bg-primary hover:bg-primary/90 text-white font-bold press-scale"
+                >
+                  🇰🇷 {t('landing.startKorean')}
+                </Button>
+                <Button
+                  onClick={() => { sfx.whoosh(); setLocation('/play?lang=chinese'); }}
+                  className="bg-chart-3 hover:bg-chart-3/90 text-white font-bold press-scale"
+                >
+                  🇨🇳 {t('landing.startChinese')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Learn Like a Game */}
+            <div className="game-card p-4 space-y-3">
+              <h3 className="text-sm font-black text-foreground text-center">{t('landing.learnLikeGame')}</h3>
+              <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                <div>
+                  <p className="font-black text-accent">🔥</p>
+                  <p className="text-muted-foreground">{t('landing.dailyStreaks')}</p>
                 </div>
-              ))}
+                <div>
+                  <p className="font-black text-primary">⚡</p>
+                  <p className="text-muted-foreground">{t('landing.xpProgression')}</p>
+                </div>
+                <div>
+                  <p className="font-black text-chart-3">🧠</p>
+                  <p className="text-muted-foreground">{t('landing.memoryTraining')}</p>
+                </div>
+                <div>
+                  <p className="font-black text-accent">🏆</p>
+                  <p className="text-muted-foreground">{t('landing.unlockNewLevels')}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Your Language Journey */}
+            <div className="game-card p-4 space-y-3">
+              <h3 className="text-sm font-black text-foreground text-center">{t('landing.yourJourney')}</h3>
+              <div className="space-y-2 text-xs">
+                {isChinese ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">HSK 1</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-primary rounded-full" />
+                      <span className="text-muted-foreground font-bold">{t('landing.free')}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">HSK 2</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
+                      <span className="text-muted-foreground font-bold">{t('landing.preview')}</span>
+                    </div>
+                    <div className="flex justify-between items-center opacity-50">
+                      <span className="text-muted-foreground">HSK 3-6</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
+                      <span className="text-muted-foreground font-bold">🔒 {t('landing.premium')}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">TOPIK 1</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-primary rounded-full" />
+                      <span className="text-muted-foreground font-bold">{t('landing.free')}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">TOPIK 2</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
+                      <span className="text-muted-foreground font-bold">{t('landing.preview')}</span>
+                    </div>
+                    <div className="flex justify-between items-center opacity-50">
+                      <span className="text-muted-foreground">TOPIK 3-6</span>
+                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
+                      <span className="text-muted-foreground font-bold">🔒 {t('landing.premium')}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Free Access */}
+            <div className="game-card p-4 space-y-3">
+              <h3 className="text-sm font-black text-foreground text-center">{t('landing.freeAccess')}</h3>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li>✓ {t('landing.beginnerCards')}</li>
+                <li>✓ {t('landing.memoryMode')}</li>
+                <li>✓ {t('landing.previewCards')}</li>
+              </ul>
+            </div>
+
+            {/* Unlock Premium */}
+            <div className="game-card p-4 space-y-3 border-2 border-accent/30">
+              <h3 className="text-sm font-black text-foreground text-center">💎 {t('landing.unlockPremium')}</h3>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li>✔ {t('landing.fullLibrary')}</li>
+                <li>✔ {t('landing.unlimitedLevels')}</li>
+                <li>✔ {t('landing.crossDeviceSync')}</li>
+                <li>✔ {t('landing.leaderboards')}</li>
+                <li>✔ {t('landing.futureAI')}</li>
+              </ul>
+            </div>
+
+            {/* Tagline */}
+            <div className="text-center py-2">
+              <p className="text-xs text-muted-foreground italic">\"{t('landing.taglineBottom')}\"</p>
             </div>
           </div>
         )}
