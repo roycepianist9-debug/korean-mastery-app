@@ -1,23 +1,13 @@
 import { useI18n, Locale } from "@/contexts/I18nContext";
 import { useState } from "react";
-import { useNavigate } from "wouter";
 
 export default function LocalePicker() {
   const { setLocale, setHasChosenLocale } = useI18n();
   const [selected, setSelected] = useState<Locale>("en");
-  const [, navigate] = useNavigate();
 
   const handleContinue = () => {
     setLocale(selected);
     setHasChosenLocale(true);
-  };
-
-  const handleGuestMode = () => {
-    setLocale(selected);
-    setHasChosenLocale(true);
-    localStorage.setItem('guest-mode', 'true');
-    localStorage.setItem('guest-words-count', '0');
-    navigate('/');
   };
 
   return (
@@ -84,19 +74,6 @@ export default function LocalePicker() {
         >
           {selected === "fr" ? "Continuer" : "Continue"}
         </button>
-
-        {/* Guest mode button */}
-        <div className="pt-4 border-t border-border">
-          <p className="text-xs text-muted-foreground mb-3">
-            {selected === "fr" ? "Ou essayez en mode invité" : "Or try guest mode"}
-          </p>
-          <button
-            onClick={handleGuestMode}
-            className="w-full py-3 rounded-xl bg-secondary text-foreground font-semibold text-sm press-scale transition-transform hover:bg-secondary/80 border border-border"
-          >
-            {selected === "fr" ? "Essayer 100 mots" : "Try 100 words"}
-          </button>
-        </div>
       </div>
     </div>
   );

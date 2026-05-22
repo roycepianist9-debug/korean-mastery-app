@@ -6,11 +6,10 @@ import { useCallback, useEffect, useMemo } from "react";
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
   redirectPath?: string;
-  allowGuest?: boolean;
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl(), allowGuest = false } =
+  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
 
@@ -43,25 +42,15 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    const guestMode = allowGuest && !meQuery.data && typeof window !== 'undefined';
-    const guestUser = guestMode ? {
-      id: 'guest',
-      email: 'guest@demo.local',
-      name: 'Guest User',
-      role: 'user' as const,
-      isGuest: true,
-    } : null;
-    
     localStorage.setItem(
       "manus-runtime-user-info",
-      JSON.stringify(meQuery.data || guestUser)
+      JSON.stringify(meQuery.data)
     );
     return {
-      user: meQuery.data ?? guestUser ?? null,
+      user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,
       error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data) || guestMode,
-      isGuest: guestMode,
+      isAuthenticated: Boolean(meQuery.data),
     };
   }, [
     meQuery.data,
@@ -87,17 +76,9 @@ export function useAuth(options?: UseAuthOptions) {
     state.user,
   ]);
 
-  const exitGuestMode = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('guest-progress');
-      window.location.href = redirectPath;
-    }
-  }, [redirectPath]);
-
   return {
     ...state,
     refresh: () => meQuery.refetch(),
     logout,
-    exitGuestMode,
   };
 }
