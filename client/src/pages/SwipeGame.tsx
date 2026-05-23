@@ -295,15 +295,23 @@ function FlashCard({
           </div>
         </div>
 
-        {/* Example sentence - Stack Korean and French */}
+        {/* Example sentence - Display translation based on interface language */}
         {showExamples && word.koreanExample ? (
           <div className="w-full space-y-2 text-center px-1">
             {/* Korean example */}
             <div className="space-y-1">
               <ClickableExample sentence={word.koreanExample} language="ko-KR" />
             </div>
-            {/* French translation */}
-            {word.exampleFrench ? (
+            {/* Translation (French or English based on interface language) */}
+            {locale === 'fr' && word.exampleFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
+              </div>
+            ) : locale === 'en' && word.exampleEnglish ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+              </div>
+            ) : word.exampleFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
               </div>
@@ -318,8 +326,16 @@ function FlashCard({
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* French translation */}
-            {word.exampleChineseFrench ? (
+            {/* Translation (French or English based on interface language) */}
+            {locale === 'fr' && word.exampleChineseFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
+              </div>
+            ) : locale === 'en' && word.exampleEnglish ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+              </div>
+            ) : word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>

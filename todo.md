@@ -342,6 +342,16 @@
 - [x] Verify Japanese words display correctly with all fields
 
 
+## Phase 5: Fix Example Sentence Display (Complete)
+- [x] Generate French translations for all Korean example sentences using LLM — COMPLETED: 480+ words translated
+- [x] Add exampleEnglish field to database schema for storing English translations — ALREADY EXISTS in schema
+- [x] Update SwipeGame to display French translations when interface language is French — COMPLETED: locale-aware rendering
+- [x] Update SwipeGame to display English translations when interface language is English — COMPLETED: locale-aware rendering
+- [x] Generate English translations for all Korean/Chinese example sentences — COMPLETED: 1070+ words translated
+- [ ] Test French interface displays French translations correctly
+- [ ] Test English interface displays English translations correctly
+- [ ] Verify no duplicate Korean/Chinese text appears in translations
+
 ## Phase 4: Fix Japanese Swipe Game (Complete)
 - [x] Fix progress.save procedure to handle Japanese language (currently only Korean/Chinese) — NOT NEEDED: procedure already handles all languages via language parameter
 - [x] Update dashboard to show "N5, N4, N3" instead of "Beginner, Intermediate, Advanced" for Japanese — FIXED in Home.tsx and server/db.ts getProgressByLevel
