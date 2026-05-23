@@ -311,10 +311,6 @@ function FlashCard({
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
-            ) : word.exampleFrench ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
-              </div>
             ) : null}
           </div>
         ) : showExamples && word.chineseExample ? (
@@ -334,10 +330,6 @@ function FlashCard({
             ) : locale === 'en' && word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
-              </div>
-            ) : word.exampleChineseFrench ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
             ) : null}
           </div>
