@@ -71,3 +71,407 @@ function useExampleTranslation(
     attempted.current = sentence;
     doTranslate(sentence);
   }, [enabled, sentence, existingEnglish, doTranslate]);
+
+  const retry = useCallback(() => {
+    if (sentence) { attempted.current = null; doTranslate(sentence); }
+  }, [sentence, doTranslate]);
+
+  return {
+    translation,
+    isLoading: translate.isPending && !translation,
+    failed,
+    retry,
+  };
+}
+
+/* ─── Flash Card ─── */
+function FlashCard({
+  word,
+  onSwipe,
+  isTop,
+  aiEnabled,
+  showExamples,
+  onToggleExamples,
+}: {
+  word: any;
+  onSwipe: (known: boolean) => void;
+  isTop: boolean;
+  aiEnabled: boolean;
+  showExamples: boolean;
+  onToggleExamples: () => void;
+}) {
+  const { language } = useLanguage();
+  const { locale, t } = useI18n();
+  const { speak, isSupported } = useAudio();
+  const audioSupported = isSupported();
+  const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [exitDir, setExitDir] = useState<'left' | 'right' | null>(null);
+  const startPos = useRef({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const isChinese = !!word.chinese && !word.korean;
+  const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
+  const existingTranslation = isChinese ? null : word.exampleEnglish;
+
+  const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
+    isTop && aiEnabled ? exampleForTranslation : null,
+    isTop && aiEnabled ? existingTranslation : null,
+    isChinese ? 'chinese' : 'korean',
+    isTop && aiEnabled
+  );
+
+  const SWIPE_THRESHOLD = 80;
+
+  const handleStart = useCallback((clientX: number, clientY: number) => {
+    if (!isTop) return;
+    startPos.current = { x: clientX, y: clientY };
+    setIsDragging(true);
+  }, [isTop]);
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging || !isTop) return;
+    setDragX(clientX - startPos.current.x);
+    setDragY((clientY - startPos.current.y) * 0.3);
+  }, [isDragging, isTop]);
+
+  const handleEnd = useCallback(() => {
+    if (!isDragging || !isTop) return;
+    setIsDragging(false);
+    if (Math.abs(dragX) > SWIPE_THRESHOLD) {
+      const known = dragX < 0;
+      setExitDir(known ? 'left' : 'right');
+      setTimeout(() => onSwipe(known), 300);
+    } else {
+      setDragX(0);
+      setDragY(0);
+    }
+  }, [isDragging, isTop, dragX, onSwipe]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY), [handleStart]);
+  const onTouchMove = useCallback((e: React.TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY), [handleMove]);
+  const onTouchEnd = useCallback(() => handleEnd(), [handleEnd]);
+  const onMouseDown = useCallback((e: React.MouseEvent) => { e.preventDefault(); handleStart(e.clientX, e.clientY); }, [handleStart]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const onUp = () => handleEnd();
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [isDragging, handleMove, handleEnd]);
+
+  const rotation = dragX * 0.08;
+  const swipeIndicator = dragX > 30 ? 'right' : dragX < -30 ? 'left' : null;
+
+  const cardStyle: React.CSSProperties = exitDir
+    ? {
+        transform: `translateX(${exitDir === 'right' ? '150%' : '-150%'}) rotate(${exitDir === 'right' ? '20deg' : '-20deg'})`,
+        opacity: 0,
+        transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s',
+      }
+    : {
+        transform: `translateX(${dragX}px) translateY(${dragY}px) rotate(${rotation}deg)`,
+        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
+      };
+
+  if (!isTop) {
+    return (
+      <div className="absolute inset-0 game-card rounded-2xl p-6 flex items-center justify-center scale-[0.95] opacity-60">
+        <span className="text-4xl font-black text-foreground/30">🇰🇷</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className="absolute inset-0 select-none touch-none cursor-grab active:cursor-grabbing"
+      style={cardStyle}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onMouseDown={onMouseDown}
+    >
+      {/* Swipe indicators */}
+      {swipeIndicator === 'left' && (
+        <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg] animate-xp-pop">
+          <span className="text-primary font-black text-lg">LEARNED ✓</span>
+        </div>
+      )}
+      {swipeIndicator === 'right' && (
+        <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[12deg] animate-xp-pop">
+          <span className="text-destructive font-black text-lg">REVIEW ✗</span>
+        </div>
+      )}
+
+      {/* Card content */}
+      <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center game-card-glow overflow-hidden">
+
+        {/* Level badge */}
+        <div className="absolute top-3 right-3">
+          {word.hskLevel ? (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              parseInt(word.hskLevel) <= 2 ? 'bg-primary/20 text-primary' :
+              parseInt(word.hskLevel) <= 4 ? 'bg-chart-3/20 text-chart-3' : 'bg-accent/20 text-accent'
+            }`}>
+              HSK {word.hskLevel}
+            </span>
+          ) : (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+              word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
+              word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' : 'bg-accent/20 text-accent'
+            }`}>
+              {word.topikLevel === 'beginner' ? t('swipe.beginner') :
+               word.topikLevel === 'intermediate' ? t('swipe.intermediate') : t('swipe.advanced')}
+            </span>
+          )}
+        </div>
+
+        {/* Word display */}
+        {word.korean ? (
+          <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
+            <div className="flex items-center justify-center gap-3">
+              <p className="text-5xl font-black text-foreground">{word.korean}</p>
+              {audioSupported && (
+                <button onClick={() => speak(word.korean || '', 'ko-KR')} className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95">
+                  <Volume2 className="w-5 h-5 text-primary" />
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground font-medium">{word.romanization}</p>
+          </div>
+        ) : word.chinese ? (
+          <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
+            <div className="flex items-center justify-center gap-3">
+              <p className="text-5xl font-black text-foreground">{word.chinese}</p>
+              {audioSupported && (
+                <button onClick={() => speak(word.chinese || '', 'zh-CN')} className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95">
+                  <Volume2 className="w-5 h-5 text-primary" />
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground font-medium">{word.pinyin}</p>
+          </div>
+        ) : null}
+
+        {/* Meaning */}
+        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
+          {locale === 'fr' && word.meaningFr ? (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+          ) : (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+          )}
+        </div>
+
+        {/* Example sentence - Strong bilingual support */}
+        {showExamples && (word.koreanExample || word.chineseExample) ? (
+          <div className="w-full space-y-2 text-center px-1">
+            {/* Original example */}
+            <div className="space-y-1">
+              {word.koreanExample ? (
+                <ClickableExample sentence={word.koreanExample} />
+              ) : word.chineseExample ? (
+                <>
+                  <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+                  {word.examplePinyin && (
+                    <p className="text-xs text-muted-foreground/80 font-medium">{word.examplePinyin}</p>
+                  )}
+                </>
+              ) : null}
+            </div>
+
+            {/* Translation - Strong fallback */}
+            {locale === 'fr' ? (
+              /* French user */
+              (word.exampleFrench || word.exampleChineseFrench) ? (
+                <div className="space-y-1 border-t border-muted pt-2">
+                  <p className="text-sm text-foreground leading-relaxed italic">
+                    {word.exampleFrench || word.exampleChineseFrench}
+                  </p>
+                </div>
+              ) : word.exampleEnglish ? (
+                <div className="space-y-1 border-t border-muted pt-2">
+                  <p className="text-sm text-foreground leading-relaxed italic text-amber-600">
+                    [EN] {word.exampleEnglish}
+                  </p>
+                </div>
+              ) : null
+            ) : (
+              /* English user */
+              word.exampleEnglish ? (
+                <div className="space-y-1 border-t border-muted pt-2">
+                  <p className="text-sm text-foreground leading-relaxed italic">
+                    {word.exampleEnglish}
+                  </p>
+                </div>
+              ) : (word.exampleFrench || word.exampleChineseFrench) ? (
+                <div className="space-y-1 border-t border-muted pt-2">
+                  <p className="text-sm text-foreground leading-relaxed italic text-amber-600">
+                    [FR fallback] {word.exampleFrench || word.exampleChineseFrench}
+                  </p>
+                </div>
+              ) : null
+            )}
+          </div>
+        ) : null}
+
+        <div className="mt-auto pt-3 flex flex-col items-center gap-2 w-full">
+          <button
+            onClick={onToggleExamples}
+            className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors relative z-50 pointer-events-auto"
+            style={{
+              backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
+              color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
+            }}
+          >
+            {showExamples ? 'Examples ON' : 'Examples OFF'}
+          </button>
+          <p className="text-[10px] text-muted-foreground/50">
+            ← Know it · Swipe · Review →
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Session Summary ─── */
+function SessionSummary({
+  results,
+  onRestart,
+  onHome,
+  playVictory,
+}: {
+  results: { totalXp: number; totalLearned: number; totalReviewed: number };
+  onRestart: () => void;
+  onHome: () => void;
+  playVictory: () => void;
+}) {
+  const { t } = useI18n();
+  const hasPlayed = useRef(false);
+  useEffect(() => {
+    if (!hasPlayed.current) {
+      hasPlayed.current = true;
+      const timer = setTimeout(() => playVictory(), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [playVictory]);
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+      <div className="text-center space-y-6 max-w-sm w-full">
+        <div className="animate-xp-pop">
+          <Trophy className="w-16 h-16 text-chart-3 mx-auto mb-2" />
+          <h2 className="text-2xl font-black text-foreground">{t('swipe.sessionComplete')}</h2>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="game-card p-4 text-center">
+            <Zap className="w-5 h-5 text-primary mx-auto mb-1" />
+            <p className="text-xl font-black text-primary xp-glow">+{results.totalXp}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">XP Earned</p>
+          </div>
+          <div className="game-card p-4 text-center">
+            <Check className="w-5 h-5 text-primary mx-auto mb-1" />
+            <p className="text-xl font-black text-primary">{results.totalLearned}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">{t('swipe.learned')}</p>
+          </div>
+          <div className="game-card p-4 text-center">
+            <RotateCcw className="w-5 h-5 text-chart-3 mx-auto mb-1" />
+            <p className="text-xl font-black text-chart-3">{results.totalReviewed - results.totalLearned}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">{t('swipe.review')}</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Button size="lg" className="w-full font-bold press-scale" onClick={onRestart}>
+            <Sparkles className="w-5 h-5 mr-2" />
+            {t('swipe.playAgain')}
+          </Button>
+          <Button size="lg" variant="outline" className="w-full font-bold press-scale" onClick={onHome}>
+            {t('swipe.backToHome')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Deck Size Options ─── */
+const DECK_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+
+/* ─── Card Filter Options ─── */
+const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.ReactNode; descKey: string }[] = [
+  { key: 'new', labelKey: 'words.new', icon: <Plus className="w-4 h-4" />, descKey: 'swipe.onlyUnseenWords' },
+  { key: 'reviewing', labelKey: 'words.reviewing', icon: <RotateCcw className="w-4 h-4" />, descKey: 'swipe.wordsToReview' },
+  { key: 'all', labelKey: 'words.all', icon: <BookOpen className="w-4 h-4" />, descKey: 'swipe.allWords' },
+];
+
+/* ─── Main Component ─── */
+export default function SwipeGame() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { language } = useLanguage();
+  const { t } = useI18n();
+  const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
+
+  const isChinese = language === 'chinese';
+  const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
+  const [levelFilter, setLevelFilter] = useState(
+    params.get("hskLevel") || params.get("level") ||
+    (language === 'chinese' ? '1' : 'beginner')
+  );
+  const [cardFilter, setCardFilter] = useState<CardFilter>('new');
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
+  const [history, setHistory] = useState<number[]>([]);
+  const [sessionDone, setSessionDone] = useState(false);
+  const [deckSize, setDeckSize] = useState<number>(
+    DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
+      ? Number(params.get("count"))
+      : 10
+  );
+  const [detailWord, setDetailWord] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem('swipe-ai-translation') !== 'off'; } catch { return true; }
+  });
+
+  const [showExamples, setShowExamples] = useState<boolean>(() => {
+    try { return localStorage.getItem('swipe-show-examples') !== 'off'; } catch { return true; }
+  });
+
+  const toggleExamples = useCallback(() => {
+    setShowExamples(prev => {
+      const next = !prev;
+      try { localStorage.setItem('swipe-show-examples', next ? 'on' : 'off'); } catch {}
+      return next;
+    });
+  }, []);
+
+  const wordsQuery = trpc.words.random.useQuery(
+    {
+      pos: posFilter !== 'all' ? posFilter : undefined,
+      topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      limit: deckSize,
+      language: language === 'french' ? 'korean' : language,
+      statuses: cardFilter === 'all' ? undefined : [cardFilter],
+    },
+    { enabled: sessionStarted, refetchOnWindowFocus: false }
+  );
+
+  // ... (rest of the main component stays the same - I kept it short here for clarity, but you can keep your existing logic for handleSwipe, etc.)
+
+  // Paste the rest of your main component (from "const words = ..." down to the end) if you want me to give the complete thing again.
+
+  // For now, test with this FlashCard fix first.
