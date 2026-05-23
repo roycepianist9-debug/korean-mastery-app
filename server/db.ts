@@ -77,7 +77,7 @@ export async function searchWords(params: {
   userId?: number;
   page: number;
   pageSize: number;
-  language?: 'korean' | 'chinese' | 'japanese';
+  language?: 'korean' | 'chinese';
 }) {
   const db = await getDb();
   if (!db) return { words: [], total: 0 };
@@ -90,35 +90,13 @@ export async function searchWords(params: {
 
   if (params.query && params.query.trim()) {
     const q = `%${params.query.trim()}%`;
-    if (language === 'japanese') {
-      // For Japanese: search japanese characters, hiragana, romaji, and meaning
-      conditions.push(
-        or(
-          like(words.japanese, q),
-          like(words.hiragana, q),
-          like(words.romaji, q),
-          like(words.meaning, q)
-        )
-      );
-    } else if (language === 'chinese') {
-      // For Chinese: search chinese characters, pinyin, and meaning
-      conditions.push(
-        or(
-          like(words.chinese, q),
-          like(words.pinyin, q),
-          like(words.meaning, q)
-        )
-      );
-    } else {
-      // For Korean: search korean, romanization, and meaning
-      conditions.push(
-        or(
-          like(words.korean, q),
-          like(words.romanization, q),
-          like(words.meaning, q)
-        )
-      );
-    }
+    conditions.push(
+      or(
+        like(words.korean, q),
+        like(words.romanization, q),
+        like(words.meaning, q)
+      )
+    );
   }
 
   if (params.pos && params.pos !== 'all') {
@@ -271,10 +249,9 @@ export async function getRandomWords(params: {
   pos?: string;
   topikLevel?: string;
   hskLevel?: string;
-  jlptLevel?: string;
   limit: number;
   excludeIds?: number[];
-  language?: 'korean' | 'chinese' | 'japanese';
+  language?: 'korean' | 'chinese';
   userId?: number;
   statuses?: string[];
 }) {
@@ -295,7 +272,6 @@ export async function getRandomWords(params: {
     if (params.pos && params.pos !== 'all') baseConditions.push(eq(words.pos, params.pos));
     if (params.topikLevel && params.topikLevel !== 'all') baseConditions.push(eq(words.topikLevel, params.topikLevel as any));
     if (params.hskLevel && params.hskLevel !== 'all') baseConditions.push(eq(words.hskLevel, params.hskLevel as any));
-    if (params.jlptLevel && params.jlptLevel !== 'all') baseConditions.push(eq(words.jlptLevel, params.jlptLevel as any));
     if (params.excludeIds && params.excludeIds.length > 0) {
       baseConditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
     }
@@ -346,7 +322,6 @@ export async function getRandomWords(params: {
   if (params.pos && params.pos !== 'all') conditions.push(eq(words.pos, params.pos));
   if (params.topikLevel && params.topikLevel !== 'all') conditions.push(eq(words.topikLevel, params.topikLevel as any));
   if (params.hskLevel && params.hskLevel !== 'all') conditions.push(eq(words.hskLevel, params.hskLevel as any));
-  if (params.jlptLevel && params.jlptLevel !== 'all') conditions.push(eq(words.jlptLevel, params.jlptLevel as any));
   if (params.excludeIds && params.excludeIds.length > 0) {
     conditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
   }
@@ -371,13 +346,6 @@ export async function getRandomWords(params: {
     exampleChineseFrench: words.exampleChineseFrench,
     language: words.language,
     hskLevel: words.hskLevel,
-    japanese: words.japanese,
-    hiragana: words.hiragana,
-    romaji: words.romaji,
-    jlptLevel: words.jlptLevel,
-    japaneseExample: words.japaneseExample,
-    exampleRomaji: words.exampleRomaji,
-    exampleJapaneseFrench: words.exampleJapaneseFrench,
   })
     .from(words)
     .where(whereClause)
@@ -385,7 +353,7 @@ export async function getRandomWords(params: {
     .limit(params.limit);
 }
 
-export async function getWordStats(language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+export async function getWordStats(language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return { total: 0, byLevel: [], byPos: [] };
 
@@ -407,23 +375,6 @@ export async function getWordStats(language: 'korean' | 'chinese' | 'japanese' =
     return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
   }
 
-  if (language === 'japanese') {
-    const [totalResult, byLevel, byPos] = await Promise.all([
-      db.select({ total: count() }).from(words).where(langCondition),
-      db.select({ level: words.jlptLevel, count: count() })
-        .from(words)
-        .where(langCondition)
-        .groupBy(words.jlptLevel),
-      db.select({ pos: words.pos, count: count() })
-        .from(words)
-        .where(langCondition)
-        .groupBy(words.pos)
-        .orderBy(desc(count())),
-    ]);
-    return { total: totalResult[0]?.total ?? 0, byLevel, byPos };
-  }
-
-  // Default to Korean
   const [totalResult, byLevel, byPos] = await Promise.all([
     db.select({ total: count() }).from(words).where(langCondition),
     db.select({ level: words.topikLevel, count: count() })
@@ -483,7 +434,7 @@ export async function upsertWordProgress(userId: number, wordId: number, status:
   }
 }
 
-export async function getUserProgressStats(userId: number, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+export async function getUserProgressStats(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return { new: 0, reviewing: 0, learned: 0, total: 0 };
 
@@ -506,7 +457,7 @@ export async function getUserProgressStats(userId: number, language: 'korean' | 
   return stats;
 }
 
-export async function getProgressByLevel(userId: number, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+export async function getProgressByLevel(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return [];
 
@@ -522,18 +473,6 @@ export async function getProgressByLevel(userId: number, language: 'korean' | 'c
       .groupBy(words.hskLevel, userProgress.status);
   }
 
-  if (language === 'japanese') {
-    return db.select({
-      jlptLevel: words.jlptLevel,
-      status: userProgress.status,
-      count: count(),
-    })
-      .from(userProgress)
-      .innerJoin(words, eq(userProgress.wordId, words.id))
-      .where(and(eq(userProgress.userId, userId), eq(words.language, 'japanese')))
-      .groupBy(words.jlptLevel, userProgress.status);
-  }
-
   return db.select({
     topikLevel: words.topikLevel,
     status: userProgress.status,
@@ -545,7 +484,7 @@ export async function getProgressByLevel(userId: number, language: 'korean' | 'c
     .groupBy(words.topikLevel, userProgress.status);
 }
 
-export async function getProgressByPos(userId: number, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+export async function getProgressByPos(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return [];
 
@@ -560,7 +499,7 @@ export async function getProgressByPos(userId: number, language: 'korean' | 'chi
     .groupBy(words.pos, userProgress.status);
 }
 
-export async function getOrCreateUserStats(userId: number, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+export async function getOrCreateUserStats(userId: number, language: 'korean' | 'chinese' = 'korean') {
   const db = await getDb();
   if (!db) return null;
 
@@ -591,7 +530,7 @@ export async function getOrCreateUserStats(userId: number, language: 'korean' | 
   return result[0] ?? null;
 }
 
-export async function updateUserStatsAfterSwipe(userId: number, language: 'korean' | 'chinese' | 'japanese', learnedCount: number) {
+export async function updateUserStatsAfterSwipe(userId: number, language: 'korean' | 'chinese', learnedCount: number) {
   const db = await getDb();
   if (!db) return;
 
@@ -623,7 +562,7 @@ export async function updateUserStatsAfterSwipe(userId: number, language: 'korea
  */
 export async function getDailyLearnedHistory(
   userId: number,
-  language: 'korean' | 'chinese' | 'japanese' = 'korean',
+  language: 'korean' | 'chinese' = 'korean',
   days: number = 30
 ) {
   const db = await getDb();
@@ -668,7 +607,7 @@ export async function getDailyLearnedHistory(
  */
 export async function getTodayLearnedCount(
   userId: number,
-  language: 'korean' | 'chinese' | 'japanese' | 'japanese' = 'korean'
+  language: 'korean' | 'chinese' = 'korean'
 ) {
   const db = await getDb();
   if (!db) return 0;

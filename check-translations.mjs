@@ -1,44 +1,30 @@
-import { getDb } from "./server/db.js";
+import { drizzle } from 'drizzle-orm/mysql2/promise';
+import mysql from 'mysql2/promise';
+import { koreanWords, chineseWords } from './drizzle/schema.ts';
+import { eq, isNull } from 'drizzle-orm';
 
-const db = await getDb();
-if (!db) {
-  console.error("Database connection failed");
-  process.exit(1);
-}
+const connection = await mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
 
-try {
-  const rows = await db.query.words.findMany({
-    columns: {},
-  });
+const db = drizzle(connection);
 
-  // Manual count using raw queries
-  const result = await db.execute(`
-    SELECT 
-      COUNT(*) as total_words,
-      SUM(CASE WHEN koreanExample IS NOT NULL AND koreanExample != '' THEN 1 ELSE 0 END) as korean_examples,
-      SUM(CASE WHEN koreanExample IS NOT NULL AND koreanExample != '' AND (exampleEnglish IS NULL OR exampleEnglish = '') THEN 1 ELSE 0 END) as korean_missing_english,
-      SUM(CASE WHEN koreanExample IS NOT NULL AND koreanExample != '' AND (exampleFrench IS NULL OR exampleFrench = '') THEN 1 ELSE 0 END) as korean_missing_french,
-      SUM(CASE WHEN chineseExample IS NOT NULL AND chineseExample != '' THEN 1 ELSE 0 END) as chinese_examples,
-      SUM(CASE WHEN chineseExample IS NOT NULL AND chineseExample != '' AND (exampleChineseFrench IS NULL OR exampleChineseFrench = '') THEN 1 ELSE 0 END) as chinese_missing_french
-    FROM words
-  `);
+// Check Korean example translations
+const koreanStats = await db.select({
+  total: 'COUNT(*)',
+  translated: 'SUM(CASE WHEN exampleFrench IS NOT NULL AND exampleFrench != "" THEN 1 ELSE 0 END)',
+}).from(koreanWords);
 
-  // Extract the first row from result
-  if (Array.isArray(result) && result.length > 0) {
-    const data = result[0];
-    console.log("Translation Status Report:");
-    console.log("==========================");
-    console.log(`Total words: ${data.total_words}`);
-    console.log(`\nKorean Examples:`);
-    console.log(`  - Total with examples: ${data.korean_examples}`);
-    console.log(`  - Missing English: ${data.korean_missing_english}`);
-    console.log(`  - Missing French: ${data.korean_missing_french}`);
-    console.log(`\nChinese Examples:`);
-    console.log(`  - Total with examples: ${data.chinese_examples}`);
-    console.log(`  - Missing French: ${data.chinese_missing_french}`);
-  }
-} catch (err) {
-  console.error("Error:", err.message);
-} finally {
-  process.exit(0);
-}
+// Check Chinese example translations
+const chineseStats = await db.select({
+  total: 'COUNT(*)',
+  translated: 'SUM(CASE WHEN exampleChineseFrench IS NOT NULL AND exampleChineseFrench != "" THEN 1 ELSE 0 END)',
+}).from(chineseWords);
+
+console.log('Korean Example Translations:', koreanStats[0]);
+console.log('Chinese Example Translations:', chineseStats[0]);
+
+await connection.end();

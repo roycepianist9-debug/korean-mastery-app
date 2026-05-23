@@ -9,7 +9,7 @@ import { getLoginUrl } from "@/const";
 import {
   Flame, Trophy, CalendarDays, BookOpen, Zap, Target,
   ChevronRight, TrendingUp, Gamepad2, LogIn, Volume2, VolumeX, Sun, Moon, X, Award, CheckCircle2, Circle,
-  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe, Loader2, Palette,
+  Menu, Settings, CreditCard, Info, LogOut, Shield, Globe, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -44,25 +44,10 @@ const CHINESE_MILESTONES = [
   { level: 'HSK 7-9', words: 11000, labelKey: 'swipe.nativeProficiency' },
 ];
 
-const JAPANESE_MILESTONES = [
-  { level: 'JLPT N5', words: 800, labelKey: 'swipe.elementary' },
-  { level: 'JLPT N4', words: 1500, labelKey: 'swipe.elementaryPlus' },
-  { level: 'JLPT N3', words: 3000, labelKey: 'swipe.intermediate' },
-  { level: 'JLPT N2', words: 6000, labelKey: 'swipe.advancedProf' },
-  { level: 'JLPT N1', words: 10000, labelKey: 'swipe.nativeProficiency' },
-];
-
 function MilestoneCard({ language, learnedCount }: { language: string; learnedCount: number }) {
   const { t } = useI18n();
-  let milestones = KOREAN_MILESTONES;
-  let title = 'TOPIK Milestones';
-  if (language === 'chinese') {
-    milestones = CHINESE_MILESTONES;
-    title = 'HSK Milestones';
-  } else if (language === 'japanese') {
-    milestones = JAPANESE_MILESTONES;
-    title = 'JLPT Milestones';
-  }
+  const milestones = language === 'chinese' ? CHINESE_MILESTONES : KOREAN_MILESTONES;
+  const title = language === 'chinese' ? 'HSK Milestones' : 'TOPIK Milestones';
 
   return (
     <div className="game-card p-3.5">
@@ -134,14 +119,13 @@ export default function Home() {
 
 
   const isChinese = language === 'chinese';
-  const isJapanese = language === 'japanese';
 
-  const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const gameStats = trpc.gamification.getStats.useQuery();
-  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const wordStats = trpc.words.stats.useQuery({ language: language === 'french' ? 'korean' : language });
+  const gameStats = trpc.gamification.getStats.useQuery(undefined, { enabled: isAuthenticated });
+  const progressStats = trpc.progress.getStats.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: language === 'french' ? 'korean' : language }, { enabled: isAuthenticated });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -162,7 +146,7 @@ export default function Home() {
   });
   const dailyHistory = trpc.progress.dailyHistory.useQuery(
     { language: language === 'french' ? 'korean' : language, days: 30 },
-    { enabled: graphOpen }
+    { enabled: isAuthenticated && graphOpen }
   );
 
   const gs = gameStats.data;
@@ -191,23 +175,6 @@ export default function Home() {
           const total = levelTotals[level] ?? 0;
           const learned = progressByLevel.data
             .filter((r: any) => r.hskLevel === level && r.status === 'learned')
-            .reduce((sum: number, r: any) => sum + r.count, 0);
-          return { level, total, learned };
-        });
-    }
-
-    if (isJapanese) {
-      const jlptLevels = ['n5', 'n4', 'n3', 'n2', 'n1'];
-      const levelTotals: Record<string, number> = {};
-      for (const item of ws.byLevel) {
-        if (item.level) levelTotals[item.level] = item.count;
-      }
-      return jlptLevels
-        .filter(level => levelTotals[level] && levelTotals[level] > 0)
-        .map(level => {
-          const total = levelTotals[level] ?? 0;
-          const learned = progressByLevel.data
-            .filter((r: any) => r.jlptLevel === level && r.status === 'learned')
             .reduce((sum: number, r: any) => sum + r.count, 0);
           return { level, total, learned };
         });
@@ -244,22 +211,14 @@ export default function Home() {
       return { pos, total, learned };
     }).filter(p => p.total > 0);
   })();
+
   const levelLabel = (l: string) => {
     if (isChinese) return `HSK ${l}`;
-    if (isJapanese) {
-      const levelMap: Record<string, string> = {
-        'n5': 'JLPT N5',
-        'n4': 'JLPT N4',
-        'n3': 'JLPT N3',
-        'n2': 'JLPT N2',
-        'n1': 'JLPT N1',
-      };
-      return levelMap[l] || l;
-    }
     if (l === 'beginner') return t('swipe.beginner');
     if (l === 'intermediate') return t('swipe.intermediate');
     return t('swipe.advanced');
   };
+
   const posLabel = (p: string) => {
     if (p === 'noun') return t('swipe.noun');
     if (p === 'verb') return t('swipe.verb');
@@ -267,6 +226,7 @@ export default function Home() {
     if (p === 'adverb') return t('swipe.adverb');
     return p;
   };
+
   const levelColor = (l: string) => {
     if (isChinese) {
       const n = parseInt(l);
@@ -274,17 +234,13 @@ export default function Home() {
       if (n <= 4) return 'text-chart-3';
       return 'text-accent';
     }
-    if (isJapanese) {
-      if (l === 'n5' || l === 'n4') return 'text-primary';
-      if (l === 'n3') return 'text-chart-3';
-      return 'text-accent';
-    }
     return l === 'beginner' ? 'text-primary' : l === 'intermediate' ? 'text-chart-3' : 'text-accent';
   };
-  const langParam = isChinese ? '&lang=chinese' : isJapanese ? '&lang=japanese' : '';
+
+  const langParam = isChinese ? '&lang=chinese' : '';
+
   const levelFilterParam = (l: string) => {
     if (isChinese) return `/play?hskLevel=${l}&lang=chinese`;
-    if (isJapanese) return `/play?jlptLevel=${l}&lang=japanese`;
     return `/play?level=${l}`;
   };
 
@@ -299,9 +255,9 @@ export default function Home() {
               <button
                 onClick={() => { sfx.pop(); toggleTheme(); }}
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-secondary/60 hover:bg-secondary transition-all press-scale"
-                aria-label={`Current theme: ${theme}. Click to cycle themes.`}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-foreground" /> : theme === 'light' ? <Moon className="w-4 h-4 text-foreground" /> : <Palette className="w-4 h-4 text-foreground" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-foreground" /> : <Moon className="w-4 h-4 text-foreground" />}
               </button>
             )}
             <button
@@ -503,7 +459,7 @@ export default function Home() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {locale === 'fr' ? (branding.data as any)?.taglineFr : (branding.data as any)?.taglineEn}
+              {locale === 'fr' ? branding.data?.taglineFr : branding.data?.taglineEn}
             </p>
           </div>
           {isAuthenticated && gs && (
@@ -669,22 +625,13 @@ export default function Home() {
         )}
 
         {/* Quick Start */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
-            className="h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
-          >
-            <Gamepad2 className="w-6 h-6 mr-2" />
-            Swipe
-          </Button>
-          <Button
-            onClick={() => { sfx.whoosh(); setLocation('/memory'); }}
-            className="h-14 text-lg font-black bg-accent hover:bg-accent/90 press-scale rounded-2xl"
-          >
-            <Trophy className="w-6 h-6 mr-2" />
-            Memory
-          </Button>
-        </div>
+        <Button
+          onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
+          className="w-full h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
+        >
+          <Gamepad2 className="w-6 h-6 mr-2" />
+          {t('home.tagline').includes('swipant') ? 'Commencer le Swipe' : 'Start Swipe Game'}
+        </Button>
 
         {/* Clickable Progress Stats */}
         {isAuthenticated && ps && (
@@ -775,133 +722,20 @@ export default function Home() {
           <MilestoneCard language={language} learnedCount={ps?.learned ?? 0} />
         )}
 
-        {/* Guest Landing Intro */}
-        {!isAuthenticated && (
-          <div className="space-y-4">
-            {/* Hero Section */}
-            <div className="game-card p-6 text-center space-y-3">
-              <h2 className="text-2xl font-black text-foreground">{t('landing.tagline')}</h2>
-              <p className="text-sm font-bold text-chart-3">{t('landing.subtitle')}</p>
-              <p className="text-xs text-muted-foreground">{t('landing.features')}</p>
+        {/* Word Stats (unauthenticated) */}
+        {!isAuthenticated && ws && (
+          <div className="game-card p-3.5">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-4 h-4 text-primary" />
+              <span className="text-sm font-black text-foreground">{t('home.dictionaryStats')}</span>
             </div>
-
-            {/* Try Instantly */}
-            <div className="game-card p-4 text-center space-y-3">
-              <p className="text-xs font-bold text-accent uppercase">{t('landing.tryInstantly')}</p>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  onClick={() => { sfx.whoosh(); setLocation('/play'); }}
-                  className="bg-primary hover:bg-primary/90 text-white font-bold press-scale"
-                >
-                  🇰🇷 {t('landing.startKorean')}
-                </Button>
-                <Button
-                  onClick={() => { sfx.whoosh(); setLocation('/play?lang=chinese'); }}
-                  className="bg-chart-3 hover:bg-chart-3/90 text-white font-bold press-scale"
-                >
-                  🇨🇳 {t('landing.startChinese')}
-                </Button>
-                <Button
-                  onClick={() => { sfx.whoosh(); setLocation('/play?lang=japanese'); }}
-                  className="bg-accent hover:bg-accent/90 text-white font-bold press-scale"
-                >
-                  🇯🇵 {t('landing.startJapanese')}
-                </Button>
-              </div>
-            </div>
-
-            {/* Learn Like a Game */}
-            <div className="game-card p-4 space-y-3">
-              <h3 className="text-sm font-black text-foreground text-center">{t('landing.learnLikeGame')}</h3>
-              <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                <div>
-                  <p className="font-black text-accent">🔥</p>
-                  <p className="text-muted-foreground">{t('landing.dailyStreaks')}</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {ws.byLevel.map((item: any) => (
+                <div key={item.level}>
+                  <p className="text-lg font-black text-foreground">{item.count.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">{levelLabel(item.level)}</p>
                 </div>
-                <div>
-                  <p className="font-black text-primary">⚡</p>
-                  <p className="text-muted-foreground">{t('landing.xpProgression')}</p>
-                </div>
-                <div>
-                  <p className="font-black text-chart-3">🧠</p>
-                  <p className="text-muted-foreground">{t('landing.memoryTraining')}</p>
-                </div>
-                <div>
-                  <p className="font-black text-accent">🏆</p>
-                  <p className="text-muted-foreground">{t('landing.unlockNewLevels')}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Your Language Journey */}
-            <div className="game-card p-4 space-y-3">
-              <h3 className="text-sm font-black text-foreground text-center">{t('landing.yourJourney')}</h3>
-              <div className="space-y-2 text-xs">
-                {isChinese ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">HSK 1</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-primary rounded-full" />
-                      <span className="text-muted-foreground font-bold">{t('landing.free')}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">HSK 2</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
-                      <span className="text-muted-foreground font-bold">{t('landing.preview')}</span>
-                    </div>
-                    <div className="flex justify-between items-center opacity-50">
-                      <span className="text-muted-foreground">HSK 3-6</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
-                      <span className="text-muted-foreground font-bold">🔒 {t('landing.premium')}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">TOPIK 1</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-primary rounded-full" />
-                      <span className="text-muted-foreground font-bold">{t('landing.free')}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">TOPIK 2</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
-                      <span className="text-muted-foreground font-bold">{t('landing.preview')}</span>
-                    </div>
-                    <div className="flex justify-between items-center opacity-50">
-                      <span className="text-muted-foreground">TOPIK 3-6</span>
-                      <div className="flex-1 mx-2 h-1.5 bg-secondary rounded-full" />
-                      <span className="text-muted-foreground font-bold">🔒 {t('landing.premium')}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Free Access */}
-            <div className="game-card p-4 space-y-3">
-              <h3 className="text-sm font-black text-foreground text-center">{t('landing.freeAccess')}</h3>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li>✓ {t('landing.beginnerCards')}</li>
-                <li>✓ {t('landing.memoryMode')}</li>
-                <li>✓ {t('landing.previewCards')}</li>
-              </ul>
-            </div>
-
-            {/* Unlock Premium */}
-            <div className="game-card p-4 space-y-3 border-2 border-accent/30">
-              <h3 className="text-sm font-black text-foreground text-center">💎 {t('landing.unlockPremium')}</h3>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li>✔ {t('landing.fullLibrary')}</li>
-                <li>✔ {t('landing.unlimitedLevels')}</li>
-                <li>✔ {t('landing.crossDeviceSync')}</li>
-                <li>✔ {t('landing.leaderboards')}</li>
-                <li>✔ {t('landing.futureAI')}</li>
-              </ul>
-            </div>
-
-            {/* Tagline */}
-            <div className="text-center py-2">
-              <p className="text-xs text-muted-foreground italic">\"{t('landing.taglineBottom')}\"</p>
+              ))}
             </div>
           </div>
         )}

@@ -1,1 +1,0 @@
-ALTER TABLE `user_stats` MODIFY COLUMN `language` enum('korean','chinese','japanese') NOT NULL DEFAULT 'korean';

@@ -5,11 +5,10 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
-
 import {
   ArrowLeft, Check, X, Undo2, RotateCcw, Zap,
   Trophy, Sparkles, Gamepad2, Info, Loader2, ChevronRight, LogIn,
-  BookOpen, Star, Plus, Volume2, Edit,
+  BookOpen, Star, Plus, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,24 +33,55 @@ interface SwipeResult {
 
 type CardFilter = 'new' | 'reviewing' | 'all';
 
+/* ─── Inline AI Translation Hook ─── */
+function useExampleTranslation(
+  sentence: string | null | undefined,
+  existingEnglish: string | null | undefined,
+  language: 'korean' | 'chinese' | undefined,
+  enabled: boolean
+) {
+  const translate = trpc.llm.translateExample.useMutation();
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const attempted = useRef<string | null>(null);
 
+  const doTranslate = useCallback((s: string) => {
+    setFailed(false);
+    translate.mutate(
+      { koreanSentence: s, language },
+      {
+        onSuccess: (data) => {
+          if (data?.translation) setTranslation(data.translation);
+          else setFailed(true);
+        },
+        onError: () => setFailed(true),
+      }
+    );
+  }, [translate, language]);
 
-/* ─── Chinese Example with Audio ─── */
-function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
-  const { speak } = useAudio();
-  const { user } = useAuth();
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <p className="text-sm text-foreground leading-relaxed">{sentence}</p>
-      <button
-        onClick={() => speak(sentence, 'zh-CN')}
-        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
-        aria-label="Play audio"
-      >
-        <Volume2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
+  useEffect(() => {
+    if (!enabled) return;
+    if (existingEnglish) {
+      setTranslation(existingEnglish);
+      setFailed(false);
+      return;
+    }
+    if (!sentence) { setTranslation(null); setFailed(false); return; }
+    if (attempted.current === sentence) return;
+    attempted.current = sentence;
+    doTranslate(sentence);
+  }, [enabled, sentence, existingEnglish, doTranslate]);
+
+  const retry = useCallback(() => {
+    if (sentence) { attempted.current = null; doTranslate(sentence); }
+  }, [sentence, doTranslate]);
+
+  return {
+    translation,
+    isLoading: translate.isPending && !translation,
+    failed,
+    retry,
+  };
 }
 
 /* ─── Flash Card ─── */
@@ -59,24 +89,16 @@ function FlashCard({
   word,
   onSwipe,
   isTop,
+  aiEnabled,
   showExamples,
   onToggleExamples,
-  isAuthenticated,
-  user,
-  setDetailWord,
-  setDetailOpen,
-  sfx,
 }: {
   word: any;
   onSwipe: (known: boolean) => void;
   isTop: boolean;
+  aiEnabled: boolean;
   showExamples: boolean;
   onToggleExamples: () => void;
-  isAuthenticated: boolean;
-  user: any;
-  setDetailWord: (word: any) => void;
-  setDetailOpen: (open: boolean) => void;
-  sfx: any;
 }) {
   const { language } = useLanguage();
   const { locale, t } = useI18n();
@@ -90,6 +112,15 @@ function FlashCard({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const isChinese = !!word.chinese && !word.korean;
+  const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
+  const existingTranslation = isChinese ? null : word.exampleEnglish;
+
+  const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
+    isTop && aiEnabled ? exampleForTranslation : null,
+    isTop && aiEnabled ? existingTranslation : null,
+    isChinese ? 'chinese' : 'korean',
+    isTop && aiEnabled
+  );
 
   const SWIPE_THRESHOLD = 80;
 
@@ -193,14 +224,6 @@ function FlashCard({
             }`}>
               HSK {word.hskLevel}
             </span>
-          ) : word.jlptLevel ? (
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-              word.jlptLevel === 'n5' || word.jlptLevel === 'n4' ? 'bg-primary/20 text-primary' :
-              word.jlptLevel === 'n3' ? 'bg-chart-3/20 text-chart-3' :
-              'bg-accent/20 text-accent'
-            }`}>
-              JLPT {word.jlptLevel.toUpperCase()}
-            </span>
           ) : (
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
               word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
@@ -250,68 +273,26 @@ function FlashCard({
               <p className="text-xs text-muted-foreground font-medium">{word.pinyin}</p>
             </div>
           </>
-        ) : word.japanese ? (
-          <>
-            <div className="flex flex-col items-center justify-center gap-1 mb-3 mt-4">
-              <div className="flex items-center justify-center gap-3">
-                <p className="text-5xl font-black text-foreground">{word.japanese}</p>
-                {audioSupported && (
-                  <button
-                    onClick={() => speak(word.japanese || '', 'ja-JP')}
-                    className="p-2 rounded-lg hover:bg-secondary/60 transition-colors active:scale-95"
-                    title="Pronounce"
-                  >
-                    <Volume2 className="w-5 h-5 text-primary" />
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col items-center gap-0.5">
-                <p className="text-xs text-muted-foreground font-medium">{word.hiragana}</p>
-                <p className="text-xs text-muted-foreground/70 font-medium">{word.romaji}</p>
-              </div>
-            </div>
-          </>
         ) : null}
 
-        {/* Meaning - always show */}
-        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3 relative">
-          <div className="flex items-center justify-center gap-2">
-            <div className="flex-1">
-              {locale === 'fr' && word.meaningFr ? (
-                <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
-              ) : (
-                <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
-              )}
-            </div>
-            {isAuthenticated && user?.role === 'admin' && (
-              <button
-                onClick={() => { sfx?.beep?.(); setDetailWord(word); setDetailOpen(true); }}
-                className="flex-shrink-0 p-1 rounded hover:bg-primary/20 transition-colors"
-                title="Edit meaning"
-              >
-                <Edit className="w-4 h-4 text-primary" />
-              </button>
-            )}
-          </div>
+        {/* Meaning */}
+        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
+          {locale === 'fr' && word.meaningFr ? (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
+          ) : (
+            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
+          )}
         </div>
 
-        {/* Example sentence - Display translation based on interface language */}
+        {/* Example sentence - Stack Korean and French */}
         {showExamples && word.koreanExample ? (
           <div className="w-full space-y-2 text-center px-1">
             {/* Korean example */}
             <div className="space-y-1">
-              <ClickableExample sentence={word.koreanExample} language="ko-KR" />
+              <ClickableExample sentence={word.koreanExample} />
             </div>
-            {/* Translation (French or English based on interface language) */}
-            {locale === 'fr' && word.exampleFrench ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
-              </div>
-            ) : locale === 'en' && word.exampleEnglish ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
-              </div>
-            ) : word.exampleFrench ? (
+            {/* French translation */}
+            {word.exampleFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
               </div>
@@ -321,21 +302,13 @@ function FlashCard({
           <div className="w-full space-y-2 text-center px-1">
             {/* Chinese example */}
             <div className="space-y-1">
-              <ChineseExampleWithAudio sentence={word.chineseExample} />
+              <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
               {word.examplePinyin && (
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* Translation (French or English based on interface language) */}
-            {locale === 'fr' && word.exampleChineseFrench ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
-              </div>
-            ) : locale === 'en' && word.exampleEnglish ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
-              </div>
-            ) : word.exampleChineseFrench ? (
+            {/* French translation */}
+            {word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
@@ -452,103 +425,49 @@ const CARD_FILTER_OPTIONS: { key: CardFilter; labelKey: string; icon: React.Reac
 
 /* ─── Main Component ─── */
 export default function SwipeGame() {
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { language } = useLanguage();
   const { t } = useI18n();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const params = useMemo(() => new URLSearchParams(searchString), [searchString]);
 
-  // State declarations first
-  const [levelFilter, setLevelFilter] = useState('beginner');
-  const [posFilter, setPosFilter] = useState(() => {
-    try {
-      return params.get("pos") || localStorage.getItem(`swipe-pos-${language}`) || "all";
-    } catch { return "all"; }
-  });
-
   const isChinese = language === 'chinese';
-  const isJapanese = language === 'japanese';
-  
-  // Get the correct level parameter name based on language
-  const getLevelParamName = () => {
-    if (isChinese) return 'hskLevel';
-    if (isJapanese) return 'jlptLevel';
-    return 'level';
-  };
-  const levelParamName = getLevelParamName();
-
-  // Read lang parameter from URL and update language context
-  useEffect(() => {
-    const urlLang = params.get('lang') as any;
-    if (urlLang && (urlLang === 'korean' || urlLang === 'chinese' || urlLang === 'japanese')) {
-      setLanguage(urlLang);
-    }
-  }, [params, setLanguage]);
-
-  // Update levelFilter when language changes (to handle Japanese/Chinese defaults)
-  useEffect(() => {
-    if (language === 'chinese') {
-      setLevelFilter('1');
-    } else if (language === 'japanese') {
-      setLevelFilter('n5');
-    } else {
-      setLevelFilter('beginner');
-    }
-  }, [language]);
-
-  // Update levelFilter from URL parameters when they change
-  useEffect(() => {
-    const urlLevel = params.get(levelParamName);
-    if (urlLevel) {
-      setLevelFilter(urlLevel);
-    }
-  }, [params, levelParamName]);
-  
-  // Persist settings to localStorage
-  const [deckSize, setDeckSize] = useState<number>(() => {
-    try {
-      const urlCount = params.get("count");
-      if (urlCount && DECK_SIZE_OPTIONS.includes(Number(urlCount) as any)) {
-        return Number(urlCount);
-      }
-      const saved = localStorage.getItem('swipe-deck-size');
-      return saved && DECK_SIZE_OPTIONS.includes(Number(saved) as any) ? Number(saved) : 10;
-    } catch { return 10; }
-  });
-  
+  const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
+  const [levelFilter, setLevelFilter] = useState(
+    params.get("hskLevel") || params.get("level") ||
+    (language === 'chinese' ? '1' : 'beginner')
+  );
   const [cardFilter, setCardFilter] = useState<CardFilter>('new');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeResults, setSwipeResults] = useState<SwipeResult[]>([]);
   const [history, setHistory] = useState<number[]>([]);
   const [sessionDone, setSessionDone] = useState(false);
+  const [deckSize, setDeckSize] = useState<number>(
+    DECK_SIZE_OPTIONS.includes(Number(params.get("count")) as any)
+      ? Number(params.get("count"))
+      : 10
+  );
   const [detailWord, setDetailWord] = useState<any>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // AI translation toggle — persisted in localStorage
+  const [aiEnabled, setAiEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem('swipe-ai-translation') !== 'off'; } catch { return true; }
+  });
+
+  const toggleAi = useCallback(() => {
+    setAiEnabled(prev => {
+      const next = !prev;
+      try { localStorage.setItem('swipe-ai-translation', next ? 'on' : 'off'); } catch {}
+      return next;
+    });
+  }, []);
 
   // Example sentence toggle — persisted in localStorage
   const [showExamples, setShowExamples] = useState<boolean>(() => {
     try { return localStorage.getItem('swipe-show-examples') !== 'off'; } catch { return true; }
   });
-
-  // Save settings to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem(`swipe-pos-${language}`, posFilter);
-    } catch {}
-  }, [posFilter, language]);
-  
-  useEffect(() => {
-    try {
-      localStorage.setItem(`swipe-level-${language}`, levelFilter);
-    } catch {}
-  }, [levelFilter, language]);
-  
-  useEffect(() => {
-    try {
-      localStorage.setItem('swipe-deck-size', deckSize.toString());
-    } catch {}
-  }, [deckSize]);
 
   const toggleExamples = useCallback(() => {
     setShowExamples(prev => {
@@ -578,11 +497,10 @@ export default function SwipeGame() {
   const wordsQuery = trpc.words.random.useQuery(
     {
       pos: posFilter !== 'all' ? posFilter : undefined,
-      topikLevel: !isChinese && !isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
+      topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
       hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
-      jlptLevel: isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
       limit: deckSize,
-      language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined,
+      language: language === 'french' ? 'korean' : language,
       statuses: statusesForQuery,
     },
     { enabled: sessionStarted, refetchOnWindowFocus: false }
@@ -626,22 +544,24 @@ export default function SwipeGame() {
     // Track locally
     if (known) localLearnedCount.current += 1;
 
-    // Save progress immediately after each swipe (for both authenticated and guest users)
-    persistedWordIds.current.add(wordId);
-    swipeMutation.mutate(
-      { wordId, known, language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
-      {
-        onSuccess: (data) => {
-          if (data.status === 'paywall_blocked') {
-            // Server confirmed block — show modal and revert local count
-            localLearnedCount.current -= 1;
-            setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
-            setPaywallOpen(true);
-          }
-        },
-        onError: () => toast.error("Failed to save this card's progress"),
-      }
-    );
+    // Save progress immediately after each swipe
+    if (isAuthenticated) {
+      persistedWordIds.current.add(wordId);
+      swipeMutation.mutate(
+        { wordId, known, language: language === 'french' ? 'korean' : language },
+        {
+          onSuccess: (data) => {
+            if (data.status === 'paywall_blocked') {
+              // Server confirmed block — show modal and revert local count
+              localLearnedCount.current -= 1;
+              setPaywallInfo({ learnedCount: (data as any).learnedCount, limit: (data as any).limit });
+              setPaywallOpen(true);
+            }
+          },
+          onError: () => toast.error("Failed to save this card's progress"),
+        }
+      );
+    }
 
     if (currentIndex + 1 >= words.length) {
       setSessionDone(true);
@@ -652,11 +572,15 @@ export default function SwipeGame() {
 
   // Undo is allowed only if the card being undone hasn't been persisted to the database
   // For authenticated users: undo is disabled for cards in persistedWordIds (already saved)
-  // Allow undo as long as there's history (can review previous words anytime)
-  const canUndo = history.length > 0;
+  // For unauthenticated users: undo is always allowed (no persistence)
+  const canUndo = history.length > 0 && (
+    !isAuthenticated || !persistedWordIds.current.has(words[history[history.length - 1]]?.id)
+  );
 
-  // No tooltip needed - undo is always available when there's history
-  const undoTooltip = undefined;
+  // Tooltip for disabled undo
+  const undoTooltip = !canUndo && isAuthenticated && history.length > 0
+    ? "Can't undo — this card's progress has been saved"
+    : undefined;
 
   const handleBack = useCallback(() => {
     if (!canUndo) return;
@@ -712,7 +636,7 @@ export default function SwipeGame() {
         <div className="px-4 space-y-4">
           <div className="game-card p-4 space-y-4">
             <div>
-              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : isJapanese ? 'JLPT Level' : t('swipe.topikLevel')}</label>
+              <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : t('swipe.topikLevel')}</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
                   <SelectValue />
@@ -727,14 +651,6 @@ export default function SwipeGame() {
                       <SelectItem value="4">HSK 4</SelectItem>
                       <SelectItem value="5">HSK 5</SelectItem>
                       <SelectItem value="6">HSK 6</SelectItem>
-                    </>
-                  ) : isJapanese ? (
-                    <>
-                      <SelectItem value="n5">JLPT N5</SelectItem>
-                      <SelectItem value="n4">JLPT N4</SelectItem>
-                      <SelectItem value="n3">JLPT N3</SelectItem>
-                      <SelectItem value="n2">JLPT N2</SelectItem>
-                      <SelectItem value="n1">JLPT N1</SelectItem>
                     </>
                   ) : (
                     <>
@@ -904,13 +820,9 @@ export default function SwipeGame() {
               word={words[currentIndex + 1]}
               onSwipe={() => {}}
               isTop={false}
+              aiEnabled={aiEnabled}
               showExamples={showExamples}
               onToggleExamples={toggleExamples}
-              isAuthenticated={isAuthenticated}
-              user={user}
-              setDetailWord={setDetailWord}
-              setDetailOpen={setDetailOpen}
-              sfx={sfx}
             />
           )}
           <FlashCard
@@ -918,13 +830,9 @@ export default function SwipeGame() {
             word={currentWord}
             onSwipe={handleSwipe}
             isTop={true}
+            aiEnabled={aiEnabled}
             showExamples={showExamples}
             onToggleExamples={toggleExamples}
-            isAuthenticated={isAuthenticated}
-            user={user}
-            setDetailWord={setDetailWord}
-            setDetailOpen={setDetailOpen}
-            sfx={sfx}
           />
         </div>
       </div>
@@ -945,7 +853,7 @@ export default function SwipeGame() {
         </button>
 
         <button
-          onClick={() => { sfx.beep(); handleSwipe(false); }}
+          onClick={() => handleSwipe(false)}
           className="w-16 h-16 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center press-scale transition-transform"
         >
           <X className="w-7 h-7 text-destructive" />
@@ -957,7 +865,7 @@ export default function SwipeGame() {
           <Info className="w-5 h-5 text-accent" />
         </button>
         <button
-          onClick={() => { sfx.beep(); handleSwipe(true); }}
+          onClick={() => handleSwipe(true)}
           className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center press-scale transition-transform"
         >
           <Check className="w-7 h-7 text-primary" />

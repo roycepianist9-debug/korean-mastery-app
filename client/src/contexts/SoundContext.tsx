@@ -101,30 +101,26 @@ function playWhoosh(volume: number) {
   source.start(ctx.currentTime);
 }
 
-/** Play the session-complete mp3 jingle — 4 seconds */
+/** Play the session-complete mp3 jingle — capped at 5 seconds */
 function playVictoryJingle(volume: number) {
   try {
-    const audio = new Audio("/manus-storage/session-complete-tune-4s_3d1f13dd.mp3");
-    audio.volume = volume * 0.6;
+    const audio = new Audio("/manus-storage/session-complete_972bd950.mp3");
+    audio.volume = volume * 0.55;
     audio.play().catch(() => {});
+    // Fade out and stop after 5 seconds
+    setTimeout(() => {
+      const fadeOut = setInterval(() => {
+        if (audio.volume > 0.05) {
+          audio.volume = Math.max(0, audio.volume - 0.05);
+        } else {
+          audio.pause();
+          clearInterval(fadeOut);
+        }
+      }, 50);
+    }, 4500);
   } catch {
     // ignore
   }
-}
-
-/** Standard beep sound for icon taps — 0.08s */
-function playBeep(volume: number) {
-  const ctx = getAudioCtx();
-  if (!ctx) return;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(800, ctx.currentTime);
-  gain.gain.setValueAtTime(volume * 0.4, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.08);
 }
 
 /* ─── Context ─── */
@@ -138,7 +134,6 @@ interface SoundContextValue {
     pop: () => void;
     whoosh: () => void;
     victory: () => void;
-    beep: () => void;
   };
 }
 
@@ -172,7 +167,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     pop: useCallback(() => { if (!mutedRef.current) playPop(volume); }, []),
     whoosh: useCallback(() => { if (!mutedRef.current) playWhoosh(volume); }, []),
     victory: useCallback(() => { if (!mutedRef.current) playVictoryJingle(volume); }, []),
-    beep: useCallback(() => { if (!mutedRef.current) playBeep(volume); }, []),
   };
 
   return (
@@ -186,7 +180,7 @@ export function useSound() {
   const ctx = useContext(SoundContext);
   if (!ctx) {
     // Fallback: return no-op sounds if outside provider
-  return {
+    return {
       muted: false,
       toggleMute: () => {},
       play: {
@@ -196,7 +190,6 @@ export function useSound() {
         pop: () => {},
         whoosh: () => {},
         victory: () => {},
-        beep: () => {},
       },
     };
   }

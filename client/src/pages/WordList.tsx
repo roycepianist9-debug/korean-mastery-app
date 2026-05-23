@@ -165,27 +165,10 @@ export default function WordList() {
   const isChinese = language === 'chinese';
   const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : "beginner");
   const defaultStatuses = hasAnyUrlParam ? [] : ["new"];
-  
-  // Load persisted level filter from localStorage
-  const getPersistedLevel = () => {
-    try {
-      const persisted = localStorage.getItem('wordListLevelFilter');
-      if (persisted) return persisted;
-    } catch {}
-    return defaultLevel;
-  };
-  
   const [posFilter, setPosFilter] = useState(params.get("pos") || "all");
   const [levelFilter, setLevelFilter] = useState(
-    params.get("hskLevel") || params.get("level") || getPersistedLevel()
+    params.get("hskLevel") || params.get("level") || defaultLevel
   );
-  
-  // Persist level filter to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('wordListLevelFilter', levelFilter);
-    } catch {}
-  }, [levelFilter]);
   const [statusFilter, setStatusFilter] = useState<string[]>(() => {
     const s = params.get("statuses");
     return s ? s.split(",").filter(Boolean) : defaultStatuses;
@@ -213,7 +196,7 @@ export default function WordList() {
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
-    language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined,
+    language: language === 'french' ? 'korean' : language,
   });
 
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -413,7 +396,7 @@ export default function WordList() {
               onClick={() => { setDetailWord(word); setDetailOpen(true); }}
               onMarkLearned={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'learned', language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
+                  { wordId: word.id, status: 'learned', language: language === 'french' ? 'korean' : language },
                   { onSuccess: (data) => {
                     if ((data as any).status !== 'paywall_blocked') {
                       toast.success(`${word.korean || word.chinese} marked as learned ✓`);
@@ -423,7 +406,7 @@ export default function WordList() {
               }}
               onMarkReviewing={() => {
                 markWord.mutate(
-                  { wordId: word.id, status: 'reviewing', language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' },
+                  { wordId: word.id, status: 'reviewing', language: language === 'french' ? 'korean' : language },
                   { onSuccess: () => toast.success(`${word.korean || word.chinese} added to review`) }
                 );
               }}

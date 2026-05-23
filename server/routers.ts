@@ -2,7 +2,6 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
 import Stripe from "stripe";
@@ -11,8 +10,6 @@ import { getDb } from "./db";
 import { users, words, appConfig } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { startBatchTranslationJob, getJobStatus } from "./backgroundJobs";
-import { JAPANESE_VOCAB_300 } from "./japanese-vocab-300";
-import { adminProcedure } from "./_core/trpc";
 import { storagePut } from "./storage";
 import {
   searchWords,
@@ -55,7 +52,7 @@ export const appRouter = router({
         statuses: z.array(z.string()).optional(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(30),
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .query(async ({ input, ctx }) => {
         return searchWords({
@@ -81,21 +78,16 @@ export const appRouter = router({
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
         hskLevel: z.string().optional(),
-        jlptLevel: z.string().optional(),
         limit: z.number().min(1).max(100).default(10),
         excludeIds: z.array(z.number()).optional(),
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
         statuses: z.array(z.string()).optional(),
       }))
       .query(async ({ input, ctx }) => {
-        if (input.language === 'japanese') {
-          console.log('[DEBUG] words.random Japanese query:', { language: input.language, jlptLevel: input.jlptLevel, pos: input.pos, limit: input.limit });
-        }
         return getRandomWords({
           pos: input.pos,
           topikLevel: input.topikLevel,
           hskLevel: input.hskLevel,
-          jlptLevel: input.jlptLevel,
           limit: input.limit,
           excludeIds: input.excludeIds,
           language: input.language,
@@ -105,76 +97,76 @@ export const appRouter = router({
       }),
 
     stats: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
       .query(async ({ input }) => {
         return getWordStats(input?.language || 'korean');
       }),
   }),
 
   progress: router({
-    getStats: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+    getStats: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getUserProgressStats(ctx.guestId, input?.language || 'korean');
+        return getUserProgressStats(ctx.user.id, input?.language || 'korean');
       }),
 
-    getByLevel: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+    getByLevel: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getProgressByLevel(ctx.guestId, input?.language || 'korean');
+        return getProgressByLevel(ctx.user.id, input?.language || 'korean');
       }),
 
-    getByPos: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+    getByPos: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        return getProgressByPos(ctx.guestId, input?.language || 'korean');
+        return getProgressByPos(ctx.user.id, input?.language || 'korean');
       }),
 
-    getForWords: publicProcedure
+    getForWords: protectedProcedure
       .input(z.object({ wordIds: z.array(z.number()) }))
       .query(async ({ ctx, input }) => {
-        return getUserProgress(ctx.guestId, input.wordIds);
+        return getUserProgress(ctx.user.id, input.wordIds);
       }),
 
-    markWord: publicProcedure
+    markWord: protectedProcedure
       .input(z.object({
         wordId: z.number(),
         status: z.enum(['learned', 'reviewing', 'new']),
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Paywall check: count learned words for this language
         if (input.status === 'learned') {
-          const stats = await getUserProgressStats(ctx.guestId, input.language || 'korean');
+          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
           const db = await getDb();
-          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1) : [];
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
           const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
           if (stats.learned >= limit) {
             return { status: 'paywall_blocked' as const, learnedCount: stats.learned, limit };
           }
         }
         const correct = input.status === 'learned';
-        await upsertWordProgress(ctx.guestId, input.wordId, input.status, correct);
+        await upsertWordProgress(ctx.user.id, input.wordId, input.status, correct);
         if (input.status !== 'new') {
           const xpGained = input.status === 'learned' ? 10 : 3;
           const wordsLearned = input.status === 'learned' ? 1 : 0;
-          await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', wordsLearned);
+          await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
         }
         return { status: input.status };
       }),
 
-    swipe: publicProcedure
+    swipe: protectedProcedure
       .input(z.object({
         wordId: z.number(),
         known: z.boolean(),
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Paywall check for "learned" swipes
         if (input.known) {
-          const stats = await getUserProgressStats(ctx.guestId, input.language || 'korean');
+          const stats = await getUserProgressStats(ctx.user.id, input.language || 'korean');
           const db = await getDb();
-          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1) : [];
+          const userRecord = db ? await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1) : [];
           const limit = userRecord[0]?.wordAccessLimit ?? FREE_WORD_LIMIT;
           if (stats.learned >= limit) {
             return { status: 'paywall_blocked' as const, xpGained: 0, learnedCount: stats.learned, limit };
@@ -182,23 +174,23 @@ export const appRouter = router({
         }
 
         const status = input.known ? 'learned' as const : 'reviewing' as const;
-        await upsertWordProgress(ctx.guestId, input.wordId, status, input.known);
+        await upsertWordProgress(ctx.user.id, input.wordId, status, input.known);
 
         // XP: 10 for learned, 3 for reviewing
         const xpGained = input.known ? 10 : 3;
         const wordsLearned = input.known ? 1 : 0;
-        await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', wordsLearned);
+        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', wordsLearned);
 
         return { status, xpGained };
       }),
 
-    batchSwipe: publicProcedure
+    batchSwipe: protectedProcedure
       .input(z.object({
         results: z.array(z.object({
           wordId: z.number(),
           known: z.boolean(),
         })),
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         let totalXp = 0;
@@ -206,31 +198,31 @@ export const appRouter = router({
 
         for (const result of input.results) {
           const status = result.known ? 'learned' as const : 'reviewing' as const;
-          await upsertWordProgress(ctx.guestId, result.wordId, status, result.known);
+          await upsertWordProgress(ctx.user.id, result.wordId, status, result.known);
           totalXp += result.known ? 10 : 3;
           if (result.known) totalLearned += 1;
         }
 
-        await updateUserStatsAfterSwipe(ctx.guestId, input.language || 'korean', totalLearned);
+        await updateUserStatsAfterSwipe(ctx.user.id, input.language || 'korean', totalLearned);
 
         return { totalXp, totalLearned, totalReviewed: input.results.length };
       }),
 
-    todayCount: publicProcedure
-      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+    todayCount: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese']).optional() }).optional())
       .query(async ({ ctx, input }) => {
-        const count = await getTodayLearnedCount(ctx.guestId, input?.language || 'korean');
+        const count = await getTodayLearnedCount(ctx.user.id, input?.language || 'korean');
         return { count };
       }),
 
-    dailyHistory: publicProcedure
+    dailyHistory: protectedProcedure
       .input(z.object({
-        language: z.enum(['korean', 'chinese', 'japanese']).optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
         days: z.number().min(7).max(90).default(30),
       }).optional())
       .query(async ({ ctx, input }) => {
         return getDailyLearnedHistory(
-          ctx.guestId,
+          ctx.user.id,
           input?.language || 'korean',
           input?.days || 30
         );
@@ -239,7 +231,7 @@ export const appRouter = router({
 
   gamification: router({
     getStats: protectedProcedure.query(async ({ ctx }) => {
-      const stats = await getOrCreateUserStats(ctx.guestId);
+      const stats = await getOrCreateUserStats(ctx.user.id);
       if (!stats) return {
         xp: 0, currentStreak: 0, longestStreak: 0,
         totalWordsLearned: 0, totalReviews: 0, level: 1, levelTitle: 'Beginner',
@@ -289,9 +281,9 @@ export const appRouter = router({
         try {
           const session = await stripe.checkout.sessions.create({
             customer_email: ctx.user.email || undefined,
-            client_reference_id: ctx.guestId.toString(),
+            client_reference_id: ctx.user.id.toString(),
             metadata: {
-              user_id: ctx.guestId.toString(),
+              user_id: ctx.user.id.toString(),
               customer_email: ctx.user.email || "",
               customer_name: ctx.user.name || "",
             },
@@ -347,7 +339,7 @@ export const appRouter = router({
         }
 
         // Get user from database to check subscription status
-        const userRecords = await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1);
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
         const userRecord = userRecords[0];
 
         if (!userRecord?.stripeSubscriptionId) {
@@ -394,7 +386,7 @@ export const appRouter = router({
           throw new Error("Database not available");
         }
 
-        const userRecords = await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1);
+        const userRecords = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
         const userRecord = userRecords[0];
 
         if (!userRecord?.stripeCustomerId) {
@@ -414,119 +406,155 @@ export const appRouter = router({
     }),
   }),
 
-  llm: router({}),
+  llm: router({
+    getWordTips: protectedProcedure
+      .input(z.object({
+        korean: z.string(),
+        meaning: z.string(),
+        pos: z.string(),
+        koreanExample: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a Korean language tutor. Given a Korean word, provide:
+1. A brief grammar tip (1-2 sentences) about how this word is used
+2. Two additional example sentences in Korean with English translations
+3. A usage note about nuance, formality level, or common mistakes
+
+Format your response as JSON with this exact structure:
+{
+  "grammarTip": "...",
+  "examples": [
+    { "korean": "...", "english": "..." },
+    { "korean": "...", "english": "..." }
+  ],
+  "usageNote": "..."
+}`
+              },
+              {
+                role: "user",
+                content: `Word: ${input.korean}
+Meaning: ${input.meaning}
+Part of speech: ${input.pos}
+${input.koreanExample ? `Example: ${input.koreanExample}` : ''}`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "word_tips",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    grammarTip: { type: "string" },
+                    examples: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          korean: { type: "string" },
+                          english: { type: "string" },
+                        },
+                        required: ["korean", "english"],
+                        additionalProperties: false,
+                      },
+                    },
+                    usageNote: { type: "string" },
+                  },
+                  required: ["grammarTip", "examples", "usageNote"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const content = response.choices?.[0]?.message?.content;
+          if (content && typeof content === 'string') {
+            return JSON.parse(content);
+          }
+          return null;
+        } catch (error) {
+          console.error("[LLM] Failed to generate word tips:", error);
+          return null;
+        }
+      }),
+    translateExample: publicProcedure
+      .input(z.object({
+        koreanSentence: z.string(),
+        wordContext: z.string().optional(),
+        language: z.enum(['korean', 'chinese']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const isChinese = input.language === 'chinese';
+        const langLabel = isChinese ? 'Chinese' : 'Korean';
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a ${langLabel}-English translator. Translate the given ${langLabel} sentence to natural English. Return ONLY a JSON object with a single key "translation" containing the English translation. Be accurate and natural.`
+              },
+              {
+                role: "user",
+                content: `Translate this ${langLabel} sentence to English: ${input.koreanSentence}`
+              }
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "translation",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    translation: { type: "string" },
+                  },
+                  required: ["translation"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          });
+
+          const content = response.choices?.[0]?.message?.content;
+          if (content && typeof content === 'string') {
+            const parsed = JSON.parse(content);
+            return { translation: parsed.translation };
+          }
+          return { translation: null };
+        } catch (error) {
+          console.error("[LLM] Failed to translate example:", error);
+          return { translation: null };
+        }
+      }),
+  }),
 
   admin: router({
     // Get current pricing config and admin status
-    getConfig: protectedProcedure
-      .query(async ({ ctx }) => {
-        const { ENV } = await import('./_core/env');
-        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access only' });
-        }
-        const db = await getDb();
-        const userRecord = db
-          ? (await db.select().from(users).where(eq(users.id, ctx.guestId)).limit(1))[0]
-          : null;
-        const freeWordCapStr = await getAppConfig('freeWordCap');
-        const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
-        const proMonthlyStr = await getAppConfig('proMonthlyPriceCents');
-        const proAnnualStr = await getAppConfig('proAnnualPriceCents');
-        return {
-          proMonthlyPriceCents: proMonthlyStr ? parseInt(proMonthlyStr) : 999,
-          proAnnualPriceCents: proAnnualStr ? parseInt(proAnnualStr) : 9999,
-          adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
-          wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
-          freeWordCap,
-          isOwner: ctx.user.openId === ENV.ownerOpenId,
-        };
-      }),
-
-    extractAndAddExampleWords: protectedProcedure
-      .mutation(async ({ ctx }) => {
-        const { ENV } = await import('./_core/env');
-        if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
-          throw new Error('Unauthorized');
-        }
-
-        const db = await getDb();
-        if (!db) throw new Error('Database not available');
-
-        // Get all Korean example sentences
-        const examplesResult = await db.select({ koreanExample: words.koreanExample }).from(words).where(sql`${words.koreanExample} IS NOT NULL AND ${words.koreanExample} != ''`);
-        console.log(`[Extract Words] Found ${examplesResult.length} unique example sentences`);
-
-        const allWords = new Set<string>();
-        const KOREAN_PARTICLES = [
-          '은', '는', '이', '가', '을', '를', '에', '에서', '에게', '에게서',
-          '으로', '로', '와', '과', '의', '도', '만', '까지', '부터', '마다',
-          '처럼', '같이', '보다', '한테', '한테서', '께', '께서', '이나', '나',
-          '이란', '란', '이라', '라', '이며', '며', '이고', '고', '이요', '요',
-        ];
-
-        // Extract words from all examples
-        for (const row of examplesResult) {
-          const sentence = row.koreanExample;
-          if (!sentence) continue;
-
-          // Simple tokenization: split by spaces and punctuation
-          const tokens = sentence.split(/[\s.,!?;:\-—()[\]{}"'']/g).filter(t => t.length > 0);
-
-          for (const token of tokens) {
-            // Add the token itself
-            allWords.add(token);
-
-            // Add forms without particles
-            for (const p of KOREAN_PARTICLES.sort((a, b) => b.length - a.length)) {
-              if (token.endsWith(p) && token.length > p.length) {
-                allWords.add(token.slice(0, -p.length));
-              }
-            }
-          }
-        }
-
-        console.log(`[Extract Words] Extracted ${allWords.size} unique words`);
-
-        // Check which words are already in the database
-        const dbWordsResult = await db.select({ korean: words.korean }).from(words).where(sql`${words.korean} IS NOT NULL`);
-        const existingWords = new Set(dbWordsResult.map(r => r.korean || ''));
-        console.log(`[Extract Words] Database has ${existingWords.size} words`);
-
-        // Find missing words
-        const missingWords = Array.from(allWords).filter(w => !existingWords.has(w) && w.length > 0);
-        console.log(`[Extract Words] Found ${missingWords.length} missing words`);
-
-        if (missingWords.length === 0) {
-          return {
-            success: true,
-            message: 'All words from examples are already in the database!',
-            missingCount: 0,
-            sampleMissing: [],
-          };
-        }
-
-        // Show sample of missing words
-        const sampleMissing = missingWords.slice(0, 30);
-
-        return {
-          success: true,
-          message: `Found ${missingWords.length} missing words from example sentences`,
-          missingCount: missingWords.length,
-          sampleMissing,
-          nextStep: 'Use batch translation to populate meanings for these words, or add them manually.',
-        };
-      }),
-
-    getAppBranding: protectedProcedure
-      .query(async ({ ctx }) => {
+    getConfig: protectedProcedure.query(async ({ ctx }) => {
+      // Only the owner (OWNER_OPEN_ID) can access admin config
+      const { ENV } = await import('./_core/env');
+      if (ctx.user.openId !== ENV.ownerOpenId && ctx.user.role !== 'admin') {
+        throw new Error('Unauthorized');
+      }
       const db = await getDb();
-      const logoUrl = await getAppConfig('logoUrl');
-      const taglineEn = await getAppConfig('taglineEn');
-      const taglineFr = await getAppConfig('taglineFr');
+      const userRecord = db
+        ? (await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1))[0]
+        : null;
+      const freeWordCapStr = await getAppConfig('freeWordCap');
+      const freeWordCap = freeWordCapStr ? parseInt(freeWordCapStr) : 150;
       return {
-        logoUrl: logoUrl || null,
-        taglineEn: taglineEn || 'SwipeFluent — The fastest way to learn Korean & Chinese',
-        taglineFr: taglineFr || 'SwipeFluent — La manière la plus rapide d\'apprendre le coréen et le chinois',
+        proMonthlyPriceCents: parseInt(process.env.ADMIN_PRO_MONTHLY_CENTS || '999'),
+        proAnnualPriceCents: parseInt(process.env.ADMIN_PRO_ANNUAL_CENTS || '9999'),
+        adminBypass: (userRecord?.wordAccessLimit ?? 0) >= 999999,
+        wordAccessLimit: userRecord?.wordAccessLimit ?? 150,
+        freeWordCap: freeWordCap,
+        isOwner: true,
       };
     }),
 
@@ -541,7 +569,7 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error('Database not available');
         const newLimit = input.enabled ? 999999 : 150;
-        await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.guestId));
+        await db.update(users).set({ wordAccessLimit: newLimit }).where(eq(users.id, ctx.user.id));
         return { success: true, wordAccessLimit: newLimit };
       }),
 
@@ -648,46 +676,6 @@ export const appRouter = router({
         return { success: true, taglineEn: input.taglineEn, taglineFr: input.taglineFr };
       }),
 
-    // Import 300 Japanese JLPT N5 words
-    importJapanese300: adminProcedure
-      .mutation(async ({ ctx }) => {
-        try {
-          const db = await getDb();
-          if (!db) throw new Error('Database not available');
-          
-          let inserted = 0;
-          for (const word of JAPANESE_VOCAB_300) {
-            try {
-              await db.insert(words).values({
-                japanese: word.japanese,
-                hiragana: word.hiragana,
-                romaji: word.romaji,
-                meaning: word.meaning,
-                jlptLevel: word.jlptLevel,
-                pos: word.pos,
-                language: 'japanese',
-                japaneseExample: word.japaneseExample,
-                exampleRomaji: word.exampleRomaji,
-                exampleJapaneseFrench: word.exampleJapaneseFrench,
-              }).onDuplicateKeyUpdate({
-                set: {
-                  hiragana: word.hiragana,
-                  meaning: word.meaning,
-                },
-              });
-              inserted++;
-            } catch (e) {
-              console.warn(`Failed to insert ${word.japanese}:`, e);
-            }
-          }
-          console.log(`[Admin] Imported ${inserted}/${JAPANESE_VOCAB_300.length} Japanese words`);
-          return { success: true, inserted, total: JAPANESE_VOCAB_300.length };
-        } catch (error) {
-          console.error('[Admin] Japanese import failed:', error);
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Import failed' });
-        }
-      }),
-
     // Upload logo and save URL to appConfig
     uploadLogo: protectedProcedure
       .input(z.object({
@@ -725,7 +713,27 @@ export const appRouter = router({
         }
       }),
 
-
+    // Get current tagline and logo from appConfig
+    getAppBranding: publicProcedure.query(async () => {
+      try {
+        const taglineEn = await getAppConfig('taglineEn');
+        const taglineFr = await getAppConfig('taglineFr');
+        const logoUrl = await getAppConfig('logoUrl');
+        
+        return {
+          taglineEn: taglineEn || 'SwipeFluent — The fastest way to learn Korean & Chinese',
+          taglineFr: taglineFr || 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
+          logoUrl: logoUrl || null,
+        };
+      } catch (error) {
+        console.error('[Admin] Failed to fetch app branding:', error);
+        return {
+          taglineEn: 'SwipeFluent — The fastest way to learn Korean & Chinese',
+          taglineFr: 'La manière la plus rapide d\'apprendre le coréen et le chinois.',
+          logoUrl: null,
+        };
+      }
+    }),
   }),
 });
 
