@@ -302,12 +302,16 @@ function FlashCard({
             <div className="space-y-1">
               <ClickableExample sentence={word.koreanExample} language="ko-KR" />
             </div>
-            {/* Translation: always show English (same as WordDetail page) */}
-            {word.exampleEnglish && (
+            {/* Translation: French in French UI, English in English UI */}
+            {locale === 'fr' && word.exampleFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
+              </div>
+            ) : word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
-            )}
+            ) : null}
           </div>
         ) : showExamples && word.chineseExample ? (
           <div className="w-full space-y-2 text-center px-1">
@@ -318,12 +322,16 @@ function FlashCard({
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* Translation: always show English (same as WordDetail page) */}
-            {word.exampleEnglish && (
+            {/* Translation: French in French UI, English in English UI */}
+            {locale === 'fr' && word.exampleChineseFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
+              </div>
+            ) : word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
-            )}
+            ) : null}
           </div>
         ) : null}
 
