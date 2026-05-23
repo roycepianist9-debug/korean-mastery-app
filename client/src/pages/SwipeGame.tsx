@@ -84,7 +84,6 @@ function useExampleTranslation(
   };
 }
 
-/* ─── Flash Card ─── */
 function FlashCard({
   word,
   onSwipe,
@@ -101,7 +100,7 @@ function FlashCard({
   onToggleExamples: () => void;
 }) {
   const { language } = useLanguage();
-  const { locale, t } = useI18n();
+  const { locale } = useI18n();
   const { speak, isSupported } = useAudio();
   const audioSupported = isSupported();
   const [dragX, setDragX] = useState(0);
@@ -109,34 +108,24 @@ function FlashCard({
   const [isDragging, setIsDragging] = useState(false);
   const [exitDir, setExitDir] = useState<'left' | 'right' | null>(null);
   const startPos = useRef({ x: 0, y: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const isChinese = !!word.chinese && !word.korean;
-  const exampleForTranslation = isChinese ? word.chineseExample : word.koreanExample;
-  const existingTranslation = isChinese ? null : word.exampleEnglish;
-
-  const { translation, isLoading: translationLoading, failed: translationFailed, retry: retryTranslation } = useExampleTranslation(
-    isTop && aiEnabled ? exampleForTranslation : null,
-    isTop && aiEnabled ? existingTranslation : null,
-    isChinese ? 'chinese' : 'korean',
-    isTop && aiEnabled
-  );
-
   const SWIPE_THRESHOLD = 80;
 
-  const handleStart = useCallback((clientX: number, clientY: number) => {
+  // Simple drag handlers
+  const handleStart = (clientX: number, clientY: number) => {
     if (!isTop) return;
     startPos.current = { x: clientX, y: clientY };
     setIsDragging(true);
-  }, [isTop]);
+  };
 
-  const handleMove = useCallback((clientX: number, clientY: number) => {
+  const handleMove = (clientX: number, clientY: number) => {
     if (!isDragging || !isTop) return;
     setDragX(clientX - startPos.current.x);
     setDragY((clientY - startPos.current.y) * 0.3);
-  }, [isDragging, isTop]);
+  };
 
-  const handleEnd = useCallback(() => {
+  const handleEnd = () => {
     if (!isDragging || !isTop) return;
     setIsDragging(false);
     if (Math.abs(dragX) > SWIPE_THRESHOLD) {
@@ -147,57 +136,31 @@ function FlashCard({
       setDragX(0);
       setDragY(0);
     }
-  }, [isDragging, isTop, dragX, onSwipe]);
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => handleStart(e.touches[0].clientX, e.touches[0].clientY), [handleStart]);
-  const onTouchMove = useCallback((e: React.TouchEvent) => handleMove(e.touches[0].clientX, e.touches[0].clientY), [handleMove]);
-  const onTouchEnd = useCallback(() => handleEnd(), [handleEnd]);
-  const onMouseDown = useCallback((e: React.MouseEvent) => { e.preventDefault(); handleStart(e.clientX, e.clientY); }, [handleStart]);
-
-  useEffect(() => {
-    if (!isDragging) return;
-    const onMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
-    const onUp = () => handleEnd();
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-  }, [isDragging, handleMove, handleEnd]);
+  };
 
   const rotation = dragX * 0.08;
   const swipeIndicator = dragX > 30 ? 'right' : dragX < -30 ? 'left' : null;
 
-  const cardStyle: React.CSSProperties = exitDir
-    ? {
-        transform: `translateX(${exitDir === 'right' ? '150%' : '-150%'}) rotate(${exitDir === 'right' ? '20deg' : '-20deg'})`,
-        opacity: 0,
-        transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s',
-      }
-    : {
-        transform: `translateX(${dragX}px) translateY(${dragY}px) rotate(${rotation}deg)`,
-        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)',
-      };
+  const cardStyle = exitDir
+    ? { transform: `translateX(${exitDir === 'right' ? '150%' : '-150%'}) rotate(${exitDir === 'right' ? '20deg' : '-20deg'})`, opacity: 0 }
+    : { transform: `translateX(${dragX}px) translateY(${dragY}px) rotate(${rotation}deg)` };
 
   if (!isTop) {
-    return (
-      <div className="absolute inset-0 game-card rounded-2xl p-6 flex items-center justify-center scale-[0.95] opacity-60">
-        <span className="text-4xl font-black text-foreground/30">🇰🇷</span>
-      </div>
-    );
+    return <div className="absolute inset-0 game-card rounded-2xl p-6 flex items-center justify-center scale-[0.95] opacity-60"><span className="text-4xl font-black text-foreground/30">🇰🇷</span></div>;
   }
 
   return (
     <div
-      ref={cardRef}
       className="absolute inset-0 select-none touch-none cursor-grab active:cursor-grabbing"
       style={cardStyle}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
+      onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchEnd={handleEnd}
+      onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX, e.clientY); }}
+      onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+      onMouseUp={handleEnd}
     >
+<<<<<<< Updated upstream
       {/* Swipe indicators */}
       {swipeIndicator === 'left' && (
         <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg] animate-xp-pop">
@@ -259,16 +222,28 @@ function FlashCard({
             <p className="text-xs text-muted-foreground font-medium">{word.pinyin}</p>
           </div>
         ) : null}
+=======
+      {/* Indicators */}
+      {swipeIndicator === 'left' && <div className="absolute top-6 left-6 z-10 px-4 py-2 rounded-xl border-2 border-primary bg-primary/20 rotate-[-12deg]">LEARNED ✓</div>}
+      {swipeIndicator === 'right' && <div className="absolute top-6 right-6 z-10 px-4 py-2 rounded-xl border-2 border-destructive bg-destructive/20 rotate-[12deg]">REVIEW ✗</div>}
+
+      <div className="w-full h-full game-card rounded-2xl p-5 flex flex-col items-center justify-center overflow-hidden">
+
+        {/* Word */}
+        <div className="mb-4 text-center">
+          <div className="text-5xl font-black mb-1">{word.korean || word.chinese}</div>
+          <div className="text-sm text-muted-foreground">{word.romanization || word.pinyin}</div>
+        </div>
+>>>>>>> Stashed changes
 
         {/* Meaning */}
-        <div className="w-full bg-secondary/50 rounded-xl p-3 mb-3">
-          {locale === 'fr' && word.meaningFr ? (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
-          ) : (
-            <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
-          )}
+        <div className="w-full bg-secondary/50 rounded-xl p-4 mb-4 text-center">
+          <p className="text-lg font-bold text-primary">
+            {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
+          </p>
         </div>
 
+<<<<<<< Updated upstream
         {/* === DEBUG EXAMPLE SECTION === */}
         {showExamples && (word.koreanExample || word.chineseExample) ? (
           <div className="w-full space-y-3 text-center px-1 bg-secondary/30 rounded-xl p-3">
@@ -304,23 +279,34 @@ function FlashCard({
                 {word.exampleEnglish || word.exampleFrench || word.exampleChineseFrench || "No English translation"}
               </p>
             )}
-          </div>
-        ) : null}
+=======
+        {/* Example + Translation */}
+        {showExamples && (word.koreanExample || word.chineseExample) && (
+          <div className="w-full text-center space-y-3 px-2">
+            <div>
+              {word.koreanExample ? (
+                <ClickableExample sentence={word.koreanExample} />
+              ) : (
+                <p className="text-sm">{word.chineseExample}</p>
+              )}
+            </div>
 
-        <div className="mt-auto pt-3 flex flex-col items-center gap-2 w-full">
-          <button
-            onClick={onToggleExamples}
-            className="px-3 py-1.5 rounded-full text-xs font-bold transition-colors relative z-50 pointer-events-auto"
-            style={{
-              backgroundColor: showExamples ? 'rgb(34, 197, 94, 0.2)' : 'rgb(107, 114, 128, 0.2)',
-              color: showExamples ? 'rgb(34, 197, 94)' : 'rgb(107, 114, 128)',
-            }}
-          >
+            <div className="border-t border-muted pt-3">
+              <p className="text-sm italic text-foreground">
+                {locale === 'fr' 
+                  ? (word.exampleFrench || word.exampleChineseFrench || word.exampleEnglish)
+                  : (word.exampleEnglish || word.exampleChineseFrench)
+                }
+              </p>
+            </div>
+>>>>>>> Stashed changes
+          </div>
+        )}
+
+        <div className="mt-auto pt-6">
+          <button onClick={onToggleExamples} className="text-xs font-bold px-4 py-2 rounded-full" style={{backgroundColor: showExamples ? '#22c55e30' : '#6b728030', color: showExamples ? '#22c55e' : '#6b7280'}}>
             {showExamples ? 'Examples ON' : 'Examples OFF'}
           </button>
-          <p className="text-[10px] text-muted-foreground/50">
-            ← Know it · Swipe · Review →
-          </p>
         </div>
       </div>
     </div>

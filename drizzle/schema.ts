@@ -6,11 +6,13 @@ import { timestamp } from "drizzle-orm/mysql-core";
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 64 }).unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  // Guest session tracking
+  guestSessionId: varchar("guestSessionId", { length: 255 }).unique(),
   // Stripe subscription fields
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
@@ -51,7 +53,7 @@ export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
  */
 export const words = mysqlTable("words", {
   id: int("id").autoincrement().primaryKey(),
-  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
+  language: mysqlEnum("language", ["korean", "chinese", "japanese"]).notNull().default("korean"),
   // Korean fields
   korean: varchar("korean", { length: 255 }),
   romanization: varchar("romanization", { length: 255 }).notNull().default(""),
@@ -69,6 +71,14 @@ export const words = mysqlTable("words", {
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
   exampleChineseFrench: text("exampleChineseFrench"),
+  // Japanese fields
+  japanese: varchar("japanese", { length: 255 }),
+  hiragana: varchar("hiragana", { length: 255 }).notNull().default(""),
+  romaji: varchar("romaji", { length: 255 }).notNull().default(""),
+  jlptLevel: mysqlEnum("jlptLevel", ["n5", "n4", "n3", "n2", "n1"]),
+  japaneseExample: text("japaneseExample"),
+  exampleRomaji: text("exampleRomaji"),
+  exampleJapaneseFrench: text("exampleJapaneseFrench"),
 }, (table) => [
   index("idx_words_language").on(table.language),
   index("idx_words_korean").on(table.korean),
@@ -78,12 +88,15 @@ export const words = mysqlTable("words", {
   index("idx_words_hsk").on(table.hskLevel),
   index("idx_words_romanization").on(table.romanization),
   index("idx_words_meaning_fr").on(table.meaningFr),
+  index("idx_words_japanese").on(table.japanese),
+  index("idx_words_jlpt").on(table.jlptLevel),
 ]);
 
 // Note: French translations are cached from Claude API batch job
 // meaningFr: French translation of meaning (e.g., "eau" for "water")
 // exampleFrench: French translation of koreanExample
 // exampleChineseFrench: French translation of chineseExample
+// exampleJapaneseFrench: French translation of japaneseExample
 export type Word = typeof words.$inferSelect;
 export type InsertWord = typeof words.$inferInsert;
 
@@ -94,7 +107,7 @@ export const userProgress = mysqlTable("user_progress", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   wordId: int("wordId").notNull(),
-  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
+  language: mysqlEnum("language", ["korean", "chinese", "japanese"]).notNull().default("korean"),
   status: mysqlEnum("status", ["new", "reviewing", "learned"]).notNull().default("new"),
   timesReviewed: int("timesReviewed").notNull().default(0),
   timesCorrect: int("timesCorrect").notNull().default(0),
@@ -119,7 +132,7 @@ export type InsertUserProgress = typeof userProgress.$inferInsert;
 export const userStats = mysqlTable("user_stats", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  language: mysqlEnum("language", ["korean", "chinese"]).notNull().default("korean"),
+  language: mysqlEnum("language", ["korean", "chinese", "japanese"]).notNull().default("korean"),
   xp: int("xp").notNull().default(0),
   currentStreak: int("currentStreak").notNull().default(0),
   longestStreak: int("longestStreak").notNull().default(0),
