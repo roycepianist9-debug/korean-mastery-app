@@ -322,12 +322,12 @@ function FlashCard({
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* Translation: French in French UI, English otherwise */}
+            {/* Translation: French in French UI, English in English UI */}
             {locale === 'fr' && word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
-            ) : word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
