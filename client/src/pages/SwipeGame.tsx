@@ -269,54 +269,40 @@ function FlashCard({
           )}
         </div>
 
-        {/* Example sentence - Strong bilingual support */}
+        {/* === DEBUG EXAMPLE SECTION === */}
         {showExamples && (word.koreanExample || word.chineseExample) ? (
-          <div className="w-full space-y-2 text-center px-1">
-            {/* Original example */}
+          <div className="w-full space-y-3 text-center px-1 bg-secondary/30 rounded-xl p-3">
+            {/* Original Example */}
             <div className="space-y-1">
               {word.koreanExample ? (
                 <ClickableExample sentence={word.koreanExample} />
               ) : word.chineseExample ? (
                 <>
-                  <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
-                  {word.examplePinyin && (
-                    <p className="text-xs text-muted-foreground/80 font-medium">{word.examplePinyin}</p>
-                  )}
+                  <p className="text-sm text-foreground">{word.chineseExample}</p>
+                  {word.examplePinyin && <p className="text-xs text-muted-foreground">{word.examplePinyin}</p>}
                 </>
               ) : null}
             </div>
 
-            {/* Translation - Strong fallback */}
+            {/* What translations exist? */}
+            <div className="text-[10px] text-left space-y-1 border-t border-muted pt-2">
+              <p><strong>Available:</strong></p>
+              {word.exampleEnglish && <p className="text-green-600">✅ English: {word.exampleEnglish}</p>}
+              {word.exampleFrench && <p className="text-blue-600">✅ French: {word.exampleFrench}</p>}
+              {word.exampleChineseFrench && <p className="text-blue-600">✅ Chinese-French: {word.exampleChineseFrench}</p>}
+              {!word.exampleEnglish && !word.exampleFrench && !word.exampleChineseFrench && 
+                <p className="text-amber-600">No translations found</p>}
+            </div>
+
+            {/* Display based on language */}
             {locale === 'fr' ? (
-              /* French user */
-              (word.exampleFrench || word.exampleChineseFrench) ? (
-                <div className="space-y-1 border-t border-muted pt-2">
-                  <p className="text-sm text-foreground leading-relaxed italic">
-                    {word.exampleFrench || word.exampleChineseFrench}
-                  </p>
-                </div>
-              ) : word.exampleEnglish ? (
-                <div className="space-y-1 border-t border-muted pt-2">
-                  <p className="text-sm text-foreground leading-relaxed italic text-amber-600">
-                    [EN] {word.exampleEnglish}
-                  </p>
-                </div>
-              ) : null
+              <p className="text-sm italic text-blue-600">
+                {word.exampleFrench || word.exampleChineseFrench || word.exampleEnglish || "No French translation"}
+              </p>
             ) : (
-              /* English user */
-              word.exampleEnglish ? (
-                <div className="space-y-1 border-t border-muted pt-2">
-                  <p className="text-sm text-foreground leading-relaxed italic">
-                    {word.exampleEnglish}
-                  </p>
-                </div>
-              ) : (word.exampleFrench || word.exampleChineseFrench) ? (
-                <div className="space-y-1 border-t border-muted pt-2">
-                  <p className="text-sm text-foreground leading-relaxed italic text-amber-600">
-                    [FR fallback] {word.exampleFrench || word.exampleChineseFrench}
-                  </p>
-                </div>
-              ) : null
+              <p className="text-sm italic text-green-600">
+                {word.exampleEnglish || word.exampleFrench || word.exampleChineseFrench || "No English translation"}
+              </p>
             )}
           </div>
         ) : null}
