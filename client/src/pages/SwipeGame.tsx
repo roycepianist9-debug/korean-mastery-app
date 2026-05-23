@@ -284,20 +284,45 @@ function FlashCard({
           )}
         </div>
 
-        {/* Example sentence - Stack Korean and French */}
-        {showExamples && word.koreanExample ? (
-          <div className="w-full space-y-2 text-center px-1">
-            {/* Korean example */}
-            <div className="space-y-1">
-              <ClickableExample sentence={word.koreanExample} />
-            </div>
-            {/* French translation */}
-            {word.exampleFrench ? (
-              <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
-              </div>
-            ) : null}
-          </div>
+        {/* Example sentence - Proper bilingual support */}
+{showExamples && (word.koreanExample || word.chineseExample) ? (
+  <div className="w-full space-y-2 text-center px-1">
+    {/* Original example */}
+    <div className="space-y-1">
+      {word.koreanExample ? (
+        <ClickableExample sentence={word.koreanExample} />
+      ) : word.chineseExample ? (
+        <>
+          <p className="text-sm text-foreground leading-relaxed">{word.chineseExample}</p>
+          {word.examplePinyin && (
+            <p className="text-xs text-muted-foreground/80 font-medium">{word.examplePinyin}</p>
+          )}
+        </>
+      ) : null}
+    </div>
+
+    {/* Translation based on current language */}
+    {locale === 'fr' ? (
+      /* French user */
+      word.exampleFrench || word.exampleChineseFrench ? (
+        <div className="space-y-1 border-t border-muted pt-2">
+          <p className="text-sm text-foreground leading-relaxed italic">
+            {word.exampleFrench || word.exampleChineseFrench}
+          </p>
+        </div>
+      ) : null
+    ) : (
+      /* English user */
+      word.exampleEnglish ? (
+        <div className="space-y-1 border-t border-muted pt-2">
+          <p className="text-sm text-foreground leading-relaxed italic">
+            {word.exampleEnglish}
+          </p>
+        </div>
+      ) : null
+    )}
+  </div>
+) : null}
         ) : showExamples && word.chineseExample ? (
           <div className="w-full space-y-2 text-center px-1">
             {/* Chinese example */}
