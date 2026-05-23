@@ -9,51 +9,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  Sparkles, BookOpen, MessageSquare, Lightbulb,
-  Loader2, ExternalLink,
+  BookOpen, MessageSquare,
+  Loader2, ExternalLink, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import ClickableExample from "./ClickableExample";
+import { useAudio } from "@/hooks/useAudio";
 
-/* ─── Auto-translation hook for the detail sheet ─── */
-function useAutoTranslation(
-  sentence: string | null | undefined,
-  existingTranslation: string | null | undefined,
-  language: 'korean' | 'chinese',
-  enabled: boolean
-) {
-  const translate = trpc.llm.translateExample.useMutation();
-  const [translation, setTranslation] = useState<string | null>(null);
-  const attempted = useRef(false);
 
-  const doTranslate = useCallback((s: string) => {
-    translate.mutate(
-      { koreanSentence: s, language },
-      {
-        onSuccess: (data) => { if (data?.translation) setTranslation(data.translation); },
-        onError: () => {},
-      }
-    );
-  }, [translate, language]);
-
-  useEffect(() => {
-    if (!enabled || attempted.current) return;
-    if (existingTranslation) { setTranslation(existingTranslation); return; }
-    if (!sentence) return;
-    attempted.current = true;
-    doTranslate(sentence);
-  }, [enabled, sentence, existingTranslation, doTranslate]);
-
-  // Reset when sheet closes
-  const reset = useCallback(() => {
-    setTranslation(null);
-    attempted.current = false;
-  }, []);
-
-  return { translation, isLoading: translate.isPending && !translation, reset };
-}
 
 interface WordDetailSheetProps {
   word: {
@@ -82,8 +47,7 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   const { isAuthenticated } = useAuth();
   const { locale } = useI18n();
   const [, setLocation] = useLocation();
-  const [tipsRequested, setTipsRequested] = useState(false);
-  const tipsMutation = trpc.llm.getWordTips.useMutation();
+
 
   const isChinese = word?.language === 'chinese';
   const headword = isChinese ? (word?.chinese ?? '') : (word?.korean ?? '');
@@ -91,37 +55,13 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   const exampleSentence = isChinese ? word?.chineseExample : word?.koreanExample;
   const exampleTranslation = isChinese ? word?.examplePinyin : word?.exampleEnglish;
 
-  const handleGetTips = () => {
-    if (!word || !isAuthenticated) return;
-    setTipsRequested(true);
-    tipsMutation.mutate({
-      korean: headword,
-      meaning: word.meaning,
-      pos: word.pos,
-      koreanExample: exampleSentence || undefined,
-    });
-  };
 
-  // For Chinese: exampleTranslation is pinyin, not English — always request AI English translation
-  const autoTranslation = useAutoTranslation(
-    exampleSentence,
-    isChinese ? null : exampleTranslation, // don't use pinyin as translation
-    isChinese ? 'chinese' : 'korean',
-    open && !!exampleSentence
-  );
 
   const handleOpenChange = (v: boolean) => {
-    if (!v) {
-      setTipsRequested(false);
-      tipsMutation.reset();
-      autoTranslation.reset();
-    }
     onOpenChange(v);
   };
 
   if (!word) return null;
-
-  const tips = tipsMutation.data;
 
   // Level badge
   const levelLabel = isChinese
@@ -177,7 +117,7 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
               {exampleSentence && (
                 <div className="mb-1">
                   {isChinese ? (
-                    <p className="text-base font-bold text-foreground">{exampleSentence}</p>
+                    <ChineseExampleWithAudio sentence={exampleSentence} />
                   ) : (
                     <ClickableExample sentence={exampleSentence} />
                   )}
@@ -189,85 +129,11 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
                   {word.examplePinyin}
                 </p>
               )}
-              {/* AI translation shown automatically below example (and below pinyin for Chinese) */}
-              {autoTranslation.isLoading ? (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Translating...</span>
-                </div>
-              ) : autoTranslation.translation ? (
-                <p className="text-xs text-muted-foreground italic mt-1 leading-relaxed">
-                  {autoTranslation.translation}
-                </p>
-              ) : null}
+
             </div>
           )}
 
-          {/* AI Tips */}
-          {!tipsRequested ? (
-            <Button
-              variant="outline"
-              className="w-full h-11 press-scale border-accent/30 hover:bg-accent/10"
-              onClick={handleGetTips}
-              disabled={!isAuthenticated}
-            >
-              <Sparkles className="w-4 h-4 mr-2 text-accent" />
-              <span className="font-bold text-accent text-sm">
-                {isAuthenticated ? 'Get AI Grammar Tips' : 'Sign in for AI Tips'}
-              </span>
-            </Button>
-          ) : tipsMutation.isPending ? (
-            <div className="game-card p-3.5">
-              <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="w-3.5 h-3.5 text-accent animate-spin" />
-                <span className="text-[10px] font-bold text-accent uppercase tracking-wider">AI is thinking...</span>
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-3/4" />
-              </div>
-            </div>
-          ) : tips ? (
-            <div className="space-y-2.5 animate-slide-up">
-              <div className="game-card p-3.5">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Lightbulb className="w-3.5 h-3.5 text-accent" />
-                  <span className="text-[10px] font-bold text-accent uppercase tracking-wider">Grammar Tip</span>
-                </div>
-                <p className="text-sm text-foreground/90">{tips.grammarTip}</p>
-              </div>
 
-              {tips.examples?.length > 0 && (
-                <div className="game-card p-3.5">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">More Examples</span>
-                  </div>
-                  <div className="space-y-2">
-                    {tips.examples.map((ex: any, i: number) => (
-                      <div key={i} className="border-l-2 border-primary/30 pl-2.5">
-                        <p className="text-sm text-foreground">{ex.korean}</p>
-                        <p className="text-xs text-muted-foreground italic">{ex.english}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="game-card p-3.5">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-chart-3" />
-                  <span className="text-[10px] font-bold text-chart-3 uppercase tracking-wider">Usage Note</span>
-                </div>
-                <p className="text-sm text-foreground/90">{tips.usageNote}</p>
-              </div>
-            </div>
-          ) : tipsMutation.isError ? (
-            <div className="game-card p-3.5 text-center">
-              <p className="text-xs text-muted-foreground">Could not generate tips.</p>
-              <Button variant="outline" size="sm" className="mt-2" onClick={handleGetTips}>Retry</Button>
-            </div>
-          ) : null}
 
           {/* Full page link */}
           <Button
@@ -282,5 +148,21 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
+  const { speak } = useAudio();
+  return (
+    <div className="flex items-center gap-2">
+      <p className="text-base font-bold text-foreground flex-1">{sentence}</p>
+      <button
+        onClick={() => speak(sentence, 'zh-CN')}
+        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
+        aria-label="Play audio"
+      >
+        <Volume2 className="w-4 h-4" />
+      </button>
+    </div>
   );
 }

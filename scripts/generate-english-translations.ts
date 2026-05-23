@@ -1,128 +1,118 @@
-import { getDb } from "../server/db";
-import { words } from "../drizzle/schema";
-import { isNull, and, eq } from "drizzle-orm";
-import { invokeLLM } from "../server/_core/llm";
+import { getDb } from '../server/db';
+import { words } from '../drizzle/schema';
+import { eq, and, isNull } from 'drizzle-orm';
+import { invokeLLM } from '../server/_core/llm';
 
-const db = getDb();
-
-interface TranslationBatch {
-  id: number;
-  korean: string;
-  koreanExample: string | null;
-}
-
-/**
- * Batch generate English translations for Korean examples using LLM
- * Processes words with empty exampleEnglish fields
- * Preserves existing French translations
- */
 async function generateEnglishTranslations() {
-  console.log("🚀 Starting English translation generation...\n");
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
 
-  // Get all words with empty exampleEnglish
-  const emptyEnglish = await db
-    .select({
-      id: words.id,
-      korean: words.korean,
-      koreanExample: words.koreanExample,
-    })
-    .from(words)
-    .where(
-      and(
-        eq(words.language, "korean"),
-        isNull(words.exampleEnglish)
-      )
-    )
-    .limit(10000); // Start with first 10k for testing
+  console.log('Generating English translations for all example sentences...');
 
-  console.log(`Found ${emptyEnglish.length} words needing English translations\n`);
+  // Get Korean words without English translations
+  const koreanWords = await db.select().from(words)
+    .where(and(
+      eq(words.language, 'korean'),
+      isNull(words.exampleEnglish)
+    ));
 
-  if (emptyEnglish.length === 0) {
-    console.log("✅ All words already have English translations!");
-    return;
+  // Get Chinese words without English translations
+  const chineseWords = await db.select().from(words)
+    .where(and(
+      eq(words.language, 'chinese'),
+      isNull(words.exampleEnglish)
+    ));
+
+  console.log(`Found ${koreanWords.length} Korean words without English translations`);
+  console.log(`Found ${chineseWords.length} Chinese words without English translations`);
+
+  let translatedCount = 0;
+  const batchSize = 10;
+  let batch: typeof koreanWords = [];
+
+  // Process Korean words
+  console.log('\n📝 Processing Korean words...');
+  for (const word of koreanWords) {
+    if (!word.koreanExample) continue;
+
+    batch.push(word);
+    if (batch.length >= batchSize) {
+      await processBatch(db, batch, 'korean');
+      translatedCount += batch.length;
+      batch = [];
+      console.log(`  Processed ${translatedCount} Korean words...`);
+    }
   }
 
-  // Process in batches of 50
-  const BATCH_SIZE = 50;
-  let processed = 0;
-  let successful = 0;
-  let failed = 0;
+  if (batch.length > 0) {
+    await processBatch(db, batch, 'korean');
+    translatedCount += batch.length;
+  }
 
-  for (let i = 0; i < emptyEnglish.length; i += BATCH_SIZE) {
-    const batch = emptyEnglish.slice(i, i + BATCH_SIZE);
-    
-    // Create prompt for batch translation
-    const examples = batch
-      .map((w) => `Korean: ${w.korean}\nExample: ${w.koreanExample || "(no example)"}`)
-      .join("\n\n");
+  // Process Chinese words
+  console.log('\n📝 Processing Chinese words...');
+  batch = [];
+  let chineseTranslatedCount = 0;
 
-    const prompt = `Translate these Korean example sentences to English. Return ONLY the translations, one per line, in the same order as the input.
+  for (const word of chineseWords) {
+    if (!word.chineseExample) continue;
 
-${examples}`;
+    batch.push(word);
+    if (batch.length >= batchSize) {
+      await processBatch(db, batch, 'chinese');
+      chineseTranslatedCount += batch.length;
+      batch = [];
+      console.log(`  Processed ${chineseTranslatedCount} Chinese words...`);
+    }
+  }
 
+  if (batch.length > 0) {
+    await processBatch(db, batch, 'chinese');
+    chineseTranslatedCount += batch.length;
+  }
+
+  console.log(`\n✅ Complete!`);
+  console.log(`   Korean translations: ${translatedCount}`);
+  console.log(`   Chinese translations: ${chineseTranslatedCount}`);
+  console.log(`   Total: ${translatedCount + chineseTranslatedCount}`);
+}
+
+async function processBatch(db: any, batch: any[], language: 'korean' | 'chinese') {
+  for (const word of batch) {
     try {
+      const example = language === 'korean' ? word.koreanExample : word.chineseExample;
+      const wordText = language === 'korean' ? word.korean : word.chinese;
+
+      // Generate English translation using LLM
       const response = await invokeLLM({
         messages: [
           {
-            role: "system",
-            content:
-              "You are a Korean-English translator. Translate Korean example sentences to natural English. Be concise and accurate.",
+            role: 'system',
+            content: `You are a professional ${language === 'korean' ? 'Korean-to-English' : 'Chinese-to-English'} translator. Translate the given ${language === 'korean' ? 'Korean' : 'Chinese'} sentence to English. Respond with ONLY the English translation, nothing else.`,
           },
           {
-            role: "user",
-            content: prompt,
+            role: 'user',
+            content: example,
           },
         ],
       });
 
-      const translationsText =
-        typeof response.choices[0].message.content === "string"
-          ? response.choices[0].message.content
-          : "";
+      const englishTranslation = response.choices[0]?.message?.content?.trim();
 
-      const translations = translationsText
-        .split("\n")
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
+      if (englishTranslation && englishTranslation !== example) {
+        // Update the database
+        await db.update(words)
+          .set({ exampleEnglish: englishTranslation })
+          .where(eq(words.id, word.id));
 
-      // Update database with translations
-      for (let j = 0; j < batch.length && j < translations.length; j++) {
-        const word = batch[j];
-        const translation = translations[j];
-
-        if (translation && translation.length > 0) {
-          await db
-            .update(words)
-            .set({ exampleEnglish: translation })
-            .where(eq(words.id, word.id));
-
-          successful++;
-        } else {
-          failed++;
-        }
+        console.log(`   ✅ ${wordText}: "${englishTranslation}"`);
+      } else {
+        console.log(`   ⚠️  ${wordText}: Translation failed or identical`);
       }
-
-      processed += batch.length;
-      console.log(
-        `Progress: ${processed}/${emptyEnglish.length} (${successful} successful, ${failed} failed)`
-      );
-
-      // Rate limit: wait 1 second between batches
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error(`Batch error at index ${i}:`, error);
-      failed += batch.length;
-      processed += batch.length;
+    } catch (error: any) {
+      console.error(`   ❌ Error: ${error.message}`);
     }
   }
-
-  console.log("\n✅ Translation generation complete!");
-  console.log(`Total processed: ${processed}`);
-  console.log(`Successful: ${successful}`);
-  console.log(`Failed: ${failed}`);
 }
 
-generateEnglishTranslations().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+generateEnglishTranslations().catch(console.error).finally(() => process.exit(0));
