@@ -327,7 +327,7 @@ function FlashCard({
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
-            ) : word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
