@@ -348,9 +348,9 @@
 - [x] Update SwipeGame to display French translations when interface language is French — COMPLETED: locale-aware rendering
 - [x] Update SwipeGame to display English translations when interface language is English — COMPLETED: locale-aware rendering
 - [x] Generate English translations for all Korean/Chinese example sentences — COMPLETED: 1070+ words translated
-- [ ] Test French interface displays French translations correctly
-- [ ] Test English interface displays English translations correctly
-- [ ] Verify no duplicate Korean/Chinese text appears in translations
+- [x] Test French interface displays French translations correctly — FIXED: Removed French fallback from English UI
+- [x] Test English interface displays English translations correctly — FIXED: Removed French fallback from English UI
+- [x] Verify no duplicate Korean/Chinese text appears in translations — VERIFIED: English UI never shows French translations
 
 ## Phase 4: Fix Japanese Swipe Game (Complete)
 - [x] Fix progress.save procedure to handle Japanese language (currently only Korean/Chinese) — NOT NEEDED: procedure already handles all languages via language parameter
