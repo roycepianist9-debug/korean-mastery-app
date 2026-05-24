@@ -762,17 +762,28 @@ export async function getEnglishSynonyms(word: string) {
     .where(eq(englishSynonyms.word, word.toLowerCase()))
     .limit(1);
   
-  return result[0] ?? null;
+  const data = result[0];
+  if (data && typeof data.synonyms === 'string') {
+    data.synonyms = JSON.parse(data.synonyms);
+  }
+  return data ?? null;
 }
 
 export async function getEnglishSynonymsByLevel(level: 'beginner' | 'intermediate' | 'advanced') {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select()
+  const results = await db.select()
     .from(englishSynonyms)
     .where(eq(englishSynonyms.level, level))
     .orderBy(asc(englishSynonyms.word));
+  
+  return results.map(data => {
+    if (typeof data.synonyms === 'string') {
+      data.synonyms = JSON.parse(data.synonyms);
+    }
+    return data;
+  });
 }
 
 export async function getAllEnglishSynonyms(limit: number = 300, offset: number = 0) {
@@ -788,8 +799,15 @@ export async function getAllEnglishSynonyms(limit: number = 300, offset: number 
     db.select({ total: count() }).from(englishSynonyms),
   ]);
   
+  const parsedResults = results.map(data => {
+    if (typeof data.synonyms === 'string') {
+      data.synonyms = JSON.parse(data.synonyms);
+    }
+    return data;
+  });
+  
   return {
-    synonyms: results,
+    synonyms: parsedResults,
     total: countResult[0]?.total ?? 0,
   };
 }
