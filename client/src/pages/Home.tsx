@@ -136,12 +136,12 @@ export default function Home() {
   const isChinese = language === 'chinese';
   const isJapanese = language === 'japanese';
 
-  const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const wordStats = trpc.words.stats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined });
   const gameStats = trpc.gamification.getStats.useQuery();
-  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
-  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined });
+  const progressStats = trpc.progress.getStats.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined });
+  const progressByLevel = trpc.progress.getByLevel.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined });
+  const progressByPos = trpc.progress.getByPos.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined });
+  const todayCount = trpc.progress.todayCount.useQuery({ language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined });
   const [graphOpen, setGraphOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
