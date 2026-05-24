@@ -380,3 +380,16 @@
 
 ## UI Fixes
 - [x] Fix "Yearly plan" text being cropped on pricing page (responsive padding + text wrapping)
+
+
+## Polish Your English - Synonym Cards (May 24)
+- [ ] Create `english_synonyms` database table (word, synonyms_json, part_of_speech, level)
+- [ ] Build WordHippo scraper to extract synonyms (50+ per word)
+- [ ] Generate 500 base words with synonyms via scraper
+- [ ] Seed English synonyms into database
+- [ ] Add "English" as language option in LanguageContext
+- [ ] Create synonym card UI component (scrollable list + speaker icons)
+- [ ] Integrate with SwipeGame (reuse existing swipe mechanics)
+- [ ] Add English to language selector
+- [ ] Test synonym cards with speaker audio
+- [ ] Save checkpoint with English feature complete

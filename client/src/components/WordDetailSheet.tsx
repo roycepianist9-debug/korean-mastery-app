@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import React from "react";
-import { trpc } from "@/lib/trpc";
 import ClickableExample from "./ClickableExample";
 import { useAudio } from "@/hooks/useAudio";
 import { toast } from "sonner";

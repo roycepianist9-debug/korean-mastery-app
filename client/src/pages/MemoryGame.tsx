@@ -445,7 +445,7 @@ export default function MemoryGame() {
         </Button>
         <Button
           variant="outline"
-          onClick={() => navigate('/play')}
+          onClick={() => setLocation('/play')}
           className="w-full"
         >
           Back to Play

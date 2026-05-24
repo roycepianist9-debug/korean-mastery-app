@@ -1,6 +1,6 @@
 import { eq, and, like, or, sql, desc, asc, inArray, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, words, userProgress, userStats, appConfig, savedWords } from "../drizzle/schema";
+import { InsertUser, users, words, userProgress, userStats, appConfig, savedWords, englishSynonyms } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -749,4 +749,76 @@ export async function isSavedWord(userId: number, wordId: number): Promise<boole
     .limit(1);
   
   return result.length > 0;
+}
+
+// ─── English Synonyms Queries ───────────────────────────────────────────────────────────────────
+
+export async function getEnglishSynonyms(word: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(englishSynonyms)
+    .where(eq(englishSynonyms.word, word.toLowerCase()))
+    .limit(1);
+  
+  return result[0] ?? null;
+}
+
+export async function getEnglishSynonymsByLevel(level: 'beginner' | 'intermediate' | 'advanced') {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(englishSynonyms)
+    .where(eq(englishSynonyms.level, level))
+    .orderBy(asc(englishSynonyms.word));
+}
+
+export async function getAllEnglishSynonyms(limit: number = 300, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return { synonyms: [], total: 0 };
+  
+  const [results, countResult] = await Promise.all([
+    db.select()
+      .from(englishSynonyms)
+      .orderBy(asc(englishSynonyms.word))
+      .limit(limit)
+      .offset(offset),
+    db.select({ total: count() }).from(englishSynonyms),
+  ]);
+  
+  return {
+    synonyms: results,
+    total: countResult[0]?.total ?? 0,
+  };
+}
+
+export async function upsertEnglishSynonym(data: {
+  word: string;
+  partOfSpeech: string;
+  synonyms: string[];
+  level?: 'beginner' | 'intermediate' | 'advanced';
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const insertData = {
+    word: data.word.toLowerCase(),
+    partOfSpeech: data.partOfSpeech,
+    synonyms: JSON.stringify(data.synonyms),
+    level: data.level || 'intermediate',
+  };
+  
+  await db.insert(englishSynonyms)
+    .values(insertData as any)
+    .onDuplicateKeyUpdate({ set: insertData as any });
+}
+
+export async function deleteEnglishSynonym(word: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.delete(englishSynonyms)
+    .where(eq(englishSynonyms.word, word.toLowerCase()));
 }

@@ -32,7 +32,7 @@ async function generateJapaneseExamples() {
   console.log(`Found ${wordList.length} Japanese words needing examples`);
 
   const results: GeneratedExample[] = [];
-  const batchSize = 10;
+  const batchSize = 20;
   let totalProcessed = 0;
 
   // Process in batches
@@ -100,9 +100,9 @@ ${batch.map((w: any) => `- ID ${w.id}: ${w.japanese} (${w.hiragana}) - meaning: 
       console.error(`✗ Batch ${batchNum} failed:`, error.message);
     }
 
-    // Rate limit: wait 2 seconds between batches
+    // Rate limit: wait 1 second between batches
     if (i + batchSize < wordList.length) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 

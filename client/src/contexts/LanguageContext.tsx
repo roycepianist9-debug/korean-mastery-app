@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type Language = 'korean' | 'chinese' | 'japanese' | 'french';
+export type Language = 'korean' | 'chinese' | 'japanese' | 'english' | 'french';
 
 interface LanguageContextType {
   language: Language;
@@ -17,7 +17,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage on mount, with geolocation fallback
   useEffect(() => {
     const saved = localStorage.getItem('language') as Language | null;
-    if (saved && (saved === 'korean' || saved === 'chinese' || saved === 'japanese' || saved === 'french')) {
+    if (saved && (saved === 'korean' || saved === 'chinese' || saved === 'japanese' || saved === 'english' || saved === 'french')) {
       setLanguageState(saved);
       setMounted(true);
       return;
@@ -62,6 +62,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       case 'korean': return '🇰🇷 Korean';
       case 'chinese': return '🇨🇳 Chinese';
       case 'japanese': return '🇯🇵 Japanese';
+      case 'english': return '🇬🇧 English';
       case 'french': return '🇫🇷 French';
       default: return lang;
     }

@@ -14,6 +14,7 @@ import { startBatchTranslationJob, getJobStatus } from "./backgroundJobs";
 import { JAPANESE_VOCAB_300 } from "./japanese-vocab-300";
 import { adminProcedure } from "./_core/trpc";
 import { storagePut } from "./storage";
+import { englishSynonymsRouter } from "./englishSynonymsRouter";
 import {
   searchWords,
   getWordById,
@@ -35,6 +36,11 @@ import {
   removeSavedWord,
   getSavedWords,
   isSavedWord,
+  getEnglishSynonyms,
+  getEnglishSynonymsByLevel,
+  getAllEnglishSynonyms,
+  upsertEnglishSynonym,
+  deleteEnglishSynonym,
 } from "./db";
 
 export const appRouter = router({
@@ -448,6 +454,8 @@ export const appRouter = router({
   }),
 
   llm: router({}),
+
+  englishSynonyms: englishSynonymsRouter,
 
   admin: router({
     // Get current pricing config and admin status

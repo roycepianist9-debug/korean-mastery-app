@@ -16,6 +16,7 @@ import MemoryGame from "./pages/MemoryGame";
 import WordDetail from "./pages/WordDetail";
 import AdminSettings from "./pages/AdminSettings";
 import Rules from "./pages/Rules";
+import EnglishSynonyms from "./pages/EnglishSynonyms";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/word/:id" component={WordDetail} />
       <Route path="/admin" component={AdminSettings} />
       <Route path="/rules" component={Rules} />
+      <Route path="/english" component={EnglishSynonyms} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

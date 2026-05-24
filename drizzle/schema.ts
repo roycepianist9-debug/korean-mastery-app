@@ -1,5 +1,5 @@
 import { int, mysqlEnum, mysqlTable, text, varchar, index } from "drizzle-orm/mysql-core";
-import { timestamp } from "drizzle-orm/mysql-core";
+import { timestamp, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -78,7 +78,6 @@ export const words = mysqlTable("words", {
   jlptLevel: mysqlEnum("jlptLevel", ["n5", "n4", "n3", "n2", "n1"]),
   japaneseExample: text("japaneseExample"),
   exampleRomaji: text("exampleRomaji"),
-  exampleEnglish: text("exampleEnglish"),
   exampleJapaneseFrench: text("exampleJapaneseFrench"),
 }, (table) => [
   index("idx_words_language").on(table.language),
@@ -176,3 +175,19 @@ export const savedWords = mysqlTable("saved_words", {
 
 export type SavedWord = typeof savedWords.$inferSelect;
 export type InsertSavedWord = typeof savedWords.$inferInsert;
+
+
+/**
+ * English synonyms for "Polish Your English" feature
+ */
+export const englishSynonyms = mysqlTable("english_synonyms", {
+  id: int("id").autoincrement().primaryKey(),
+  word: varchar("word", { length: 255 }).notNull().unique(),
+  partOfSpeech: varchar("partOfSpeech", { length: 50 }).notNull(), // noun, verb, adjective, adverb, etc.
+  synonyms: json("synonyms").$type<string[]>().notNull(), // Array of 50+ synonyms
+  level: mysqlEnum("level", ["beginner", "intermediate", "advanced"]).default("intermediate").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EnglishSynonym = typeof englishSynonyms.$inferSelect;
+export type InsertEnglishSynonym = typeof englishSynonyms.$inferInsert;

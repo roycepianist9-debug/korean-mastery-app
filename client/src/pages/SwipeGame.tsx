@@ -704,6 +704,22 @@ export default function SwipeGame() {
         <div className="px-4 space-y-4">
           <div className="game-card p-4 space-y-4">
             <div>
+              <label className="text-sm font-bold text-foreground mb-2 block">Language</label>
+              <Select value={language} onValueChange={(value: any) => setLanguage(value)}>
+                <SelectTrigger className="w-full bg-secondary border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="korean">🇰🇷 Korean</SelectItem>
+                  <SelectItem value="chinese">🇨🇳 Chinese</SelectItem>
+                  <SelectItem value="japanese">🇯🇵 Japanese</SelectItem>
+                  <SelectItem value="english">🇬🇧 English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {language !== 'english' && (
+            <div>
               <label className="text-sm font-bold text-foreground mb-2 block">{isChinese ? 'HSK Level' : isJapanese ? 'JLPT Level' : t('swipe.topikLevel')}</label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full bg-secondary border-border">
@@ -739,7 +755,25 @@ export default function SwipeGame() {
                 </SelectContent>
               </Select>
             </div>
+            )}
 
+            {language === 'english' && (
+            <div>
+              <label className="text-sm font-bold text-foreground mb-2 block">Difficulty Level</label>
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="w-full bg-secondary border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
+                  <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
+                  <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            )}
+
+            {language !== 'english' && (
             <div>
               <label className="text-sm font-bold text-foreground mb-2 block">{t('swipe.partOfSpeech')}</label>
               <Select value={posFilter} onValueChange={setPosFilter}>
@@ -755,6 +789,7 @@ export default function SwipeGame() {
                 </SelectContent>
               </Select>
             </div>
+            )}
 
             {/* Deck Size */}
             <div>
