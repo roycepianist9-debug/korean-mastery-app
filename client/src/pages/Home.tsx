@@ -498,7 +498,7 @@ export default function Home() {
               <h1 className="text-2xl font-black text-foreground">
                 {isAuthenticated
                   ? (gs && gs.xp > 0 ? t('home.welcomeBack') : t('home.welcome'))
-                  : isChinese ? 'Chinese Mastery' : 'Korean Mastery'
+                  : 'Language Mastery'
                 }
               </h1>
             </div>
@@ -788,7 +788,7 @@ export default function Home() {
             {/* Try Instantly */}
             <div className="game-card p-4 text-center space-y-3">
               <p className="text-xs font-bold text-accent uppercase">{t('landing.tryInstantly')}</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => { sfx.whoosh(); setLocation('/play'); }}
                   className="bg-primary hover:bg-primary/90 text-white font-bold press-scale"
@@ -806,6 +806,12 @@ export default function Home() {
                   className="bg-accent hover:bg-accent/90 text-white font-bold press-scale"
                 >
                   🇯🇵 {t('landing.startJapanese')}
+                </Button>
+                <Button
+                  onClick={() => { sfx.whoosh(); setLocation('/english'); }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold press-scale"
+                >
+                  🇬🇧 English
                 </Button>
               </div>
             </div>
