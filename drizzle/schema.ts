@@ -161,3 +161,17 @@ export const appConfig = mysqlTable("app_config", {
 
 export type AppConfig = typeof appConfig.$inferSelect;
 export type InsertAppConfig = typeof appConfig.$inferInsert;
+
+
+/**
+ * Saved words for review list
+ */
+export const savedWords = mysqlTable("saved_words", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  wordId: int("wordId").notNull().references(() => words.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SavedWord = typeof savedWords.$inferSelect;
+export type InsertSavedWord = typeof savedWords.$inferInsert;

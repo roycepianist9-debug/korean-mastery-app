@@ -367,3 +367,15 @@
 - [ ] Seed HSK 7-9 words into database with meanings + examples + translations
 - [ ] Update UI to support HSK 7-9 level selection in filters
 - [ ] Test HSK 7-9 swipe game and word list
+
+
+## Saved Words & Review List (May 2026 - Round 18)
+- [ ] Add "saved_words" table to database schema (userId, wordId, createdAt)
+- [ ] Create tRPC procedure to add word to saved list
+- [ ] Create tRPC procedure to get user's saved words list
+- [ ] Add "+" button to word detail card to save words
+- [ ] Create "Saved Words" page/section to view and manage saved words
+- [ ] Test save/unsave functionality
+
+## UI Fixes
+- [ ] Fix "Yearly plan" text being cropped on pricing page

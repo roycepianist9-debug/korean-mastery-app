@@ -1,6 +1,6 @@
 import { eq, and, like, or, sql, desc, asc, inArray, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, words, userProgress, userStats, appConfig } from "../drizzle/schema";
+import { InsertUser, users, words, userProgress, userStats, appConfig, savedWords } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -701,4 +701,52 @@ export async function setAppConfig(key: string, value: string): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.insert(appConfig).values({ key, value }).onDuplicateKeyUpdate({ set: { value } });
+}
+
+// ─── Saved Words Queries ────────────────────────────────────────────────────────────────────────
+
+export async function addSavedWord(userId: number, wordId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Check if already saved
+  const existing = await db.select()
+    .from(savedWords)
+    .where(and(eq(savedWords.userId, userId), eq(savedWords.wordId, wordId)))
+    .limit(1);
+  
+  if (existing.length === 0) {
+    await db.insert(savedWords).values({ userId, wordId });
+  }
+}
+
+export async function removeSavedWord(userId: number, wordId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.delete(savedWords)
+    .where(and(eq(savedWords.userId, userId), eq(savedWords.wordId, wordId)));
+}
+
+export async function getSavedWords(userId: number, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(savedWords)
+    .innerJoin(words, eq(savedWords.wordId, words.id))
+    .where(and(eq(savedWords.userId, userId), eq(words.language, language)))
+    .orderBy(desc(savedWords.createdAt));
+}
+
+export async function isSavedWord(userId: number, wordId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db.select()
+    .from(savedWords)
+    .where(and(eq(savedWords.userId, userId), eq(savedWords.wordId, wordId)))
+    .limit(1);
+  
+  return result.length > 0;
 }

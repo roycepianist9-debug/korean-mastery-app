@@ -31,6 +31,10 @@ import {
   getTodayLearnedCount,
   getAppConfig,
   setAppConfig,
+  addSavedWord,
+  removeSavedWord,
+  getSavedWords,
+  isSavedWord,
 } from "./db";
 
 export const appRouter = router({
@@ -412,6 +416,35 @@ export const appRouter = router({
         throw new Error("Failed to open customer portal");
       }
     }),
+  }),
+
+  savedWords: router({
+    add: protectedProcedure
+      .input(z.object({ wordId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await addSavedWord(ctx.user.id, input.wordId);
+        return { success: true };
+      }),
+    
+    remove: protectedProcedure
+      .input(z.object({ wordId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await removeSavedWord(ctx.user.id, input.wordId);
+        return { success: true };
+      }),
+    
+    list: protectedProcedure
+      .input(z.object({ language: z.enum(['korean', 'chinese', 'japanese']).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const result = await getSavedWords(ctx.user.id, input?.language || 'korean');
+        return result.map(r => r.words);
+      }),
+    
+    isSaved: protectedProcedure
+      .input(z.object({ wordId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return isSavedWord(ctx.user.id, input.wordId);
+      }),
   }),
 
   llm: router({}),

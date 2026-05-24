@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
+import React, { useContext } from "react";
 import ClickableExample from "./ClickableExample";
 import { useAudio } from "@/hooks/useAudio";
 
@@ -44,9 +45,19 @@ interface WordDetailSheetProps {
 }
 
 export default function WordDetailSheet({ word, open, onOpenChange }: WordDetailSheetProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { locale } = useI18n();
   const [, setLocation] = useLocation();
+  const [isSaved, setIsSaved] = React.useState(false);
+  const trpc = useContext(React.createContext({}));
+  
+  // Check if word is saved when sheet opens
+  React.useEffect(() => {
+    if (isAuthenticated && word?.id) {
+      // Will implement tRPC call here
+      setIsSaved(false);
+    }
+  }, [word?.id, isAuthenticated]);
 
 
   const isChinese = word?.language === 'chinese';
@@ -135,16 +146,30 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
 
 
 
-          {/* Full page link */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full text-muted-foreground"
-            onClick={() => { handleOpenChange(false); setLocation(`/word/${word.id}`); }}
-          >
-            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-            View Full Page
-          </Button>
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {isAuthenticated && (
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  // Save word logic will go here
+                  setIsSaved(!isSaved);
+                }}
+              >
+                {isSaved ? '✓ Saved' : '+ Save'}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 text-muted-foreground"
+              onClick={() => { handleOpenChange(false); setLocation(`/word/${word.id}`); }}
+            >
+              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+              View Full
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
