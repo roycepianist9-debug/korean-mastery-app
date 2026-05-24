@@ -379,4 +379,4 @@
 - [x] Add pinyin display to Chinese memory game cards
 
 ## UI Fixes
-- [ ] Fix "Yearly plan" text being cropped on pricing page
+- [x] Fix "Yearly plan" text being cropped on pricing page (responsive padding + text wrapping)

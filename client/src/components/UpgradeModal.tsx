@@ -44,7 +44,7 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
     >
       <div
-        className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-6 pb-8 animate-slide-up"
+        className="w-full max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 pb-6 sm:pb-8 animate-slide-up overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
 
@@ -54,7 +54,7 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
             <Crown className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-xl font-black text-foreground">{t('upgrade.limitReached')}</h2>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-sm text-muted-foreground mt-1.5 px-2">
             <span className="font-bold text-primary">{learnedCount ?? limit}</span> {t('upgrade.wordsLearned')}.
             {' '}{t('upgrade.subtitle')}.
           </p>
@@ -77,24 +77,28 @@ export default function UpgradeModal({ open, onClose, learnedCount, limit = 150 
         </div>
 
         {/* Plan buttons */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {proPlans.map((plan: any) => (
             <Button
               key={plan.stripePriceId}
               onClick={() => handleUpgrade(plan.stripePriceId)}
               disabled={!!loading}
-              className={`w-full h-12 text-sm font-bold press-scale ${
+              className={`w-full h-auto py-3 px-3 text-sm font-bold press-scale flex flex-col items-center justify-center gap-1 ${
                 plan.interval === 'year'
                   ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
                   : 'bg-secondary hover:bg-secondary/80 text-foreground border border-border'
               }`}
             >
-              {loading === plan.stripePriceId ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              {plan.interval === 'year' ? t('upgrade.annual') : t('upgrade.monthly')} — ${(plan.priceInCents / 100).toFixed(2)}{plan.interval === 'year' ? t('upgrade.year') : t('upgrade.month')}
+              <div className="flex items-center gap-2 w-full justify-center">
+                {loading === plan.stripePriceId ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                <span className="truncate">
+                  {plan.interval === 'year' ? t('upgrade.annual') : t('upgrade.monthly')} — ${(plan.priceInCents / 100).toFixed(2)}{plan.interval === 'year' ? t('upgrade.year') : t('upgrade.month')}
+                </span>
+              </div>
               {plan.interval === 'year' && (
-                <span className="ml-2 text-xs opacity-80">({t('upgrade.save')})</span>
+                <span className="text-xs opacity-80">({t('upgrade.save')})</span>
               )}
             </Button>
           ))}
