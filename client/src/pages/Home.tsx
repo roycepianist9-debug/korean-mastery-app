@@ -793,19 +793,19 @@ export default function Home() {
                   onClick={() => { sfx.whoosh(); setLocation('/play'); }}
                   className="bg-primary hover:bg-primary/90 text-white font-bold press-scale"
                 >
-                  🇰🇷 {t('landing.startKorean')}
+                  🇰🇷 Korean
                 </Button>
                 <Button
                   onClick={() => { sfx.whoosh(); setLocation('/play?lang=chinese'); }}
                   className="bg-chart-3 hover:bg-chart-3/90 text-white font-bold press-scale"
                 >
-                  🇨🇳 {t('landing.startChinese')}
+                  🇨🇳 Chinese
                 </Button>
                 <Button
                   onClick={() => { sfx.whoosh(); setLocation('/play?lang=japanese'); }}
                   className="bg-accent hover:bg-accent/90 text-white font-bold press-scale"
                 >
-                  🇯🇵 {t('landing.startJapanese')}
+                  🇯🇵 Japanese
                 </Button>
                 <Button
                   onClick={() => { sfx.whoosh(); setLocation('/english'); }}

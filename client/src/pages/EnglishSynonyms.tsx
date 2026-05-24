@@ -25,8 +25,7 @@ export default function EnglishSynonyms() {
 
   // Fetch English synonyms by level
   const { data: synonymsData, isLoading, refetch } = trpc.englishSynonyms.getByLevel.useQuery(
-    { level },
-    { enabled: !!auth.user }
+    { level }
   );
 
   const synonyms = synonymsData || [];
@@ -52,21 +51,7 @@ export default function EnglishSynonyms() {
     setSavedWords(prev => new Set([...prev, word]));
   };
 
-  if (!auth.user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
-          <p className="text-gray-600 mb-6">
-            Please sign in to access the English Synonyms feature.
-          </p>
-          <Button onClick={() => setLocation('/')} className="w-full">
-            Back to Home
-          </Button>
-        </Card>
-      </div>
-    );
-  }
+
 
   if (isLoading) {
     return (
