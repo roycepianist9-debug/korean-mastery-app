@@ -719,6 +719,7 @@ export default function SwipeGame() {
                       <SelectItem value="4">HSK 4</SelectItem>
                       <SelectItem value="5">HSK 5</SelectItem>
                       <SelectItem value="6">HSK 6</SelectItem>
+                      <SelectItem value="7-9">HSK 7-9</SelectItem>
                     </>
                   ) : isJapanese ? (
                     <>

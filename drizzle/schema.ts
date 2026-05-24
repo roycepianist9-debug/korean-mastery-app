@@ -78,6 +78,7 @@ export const words = mysqlTable("words", {
   jlptLevel: mysqlEnum("jlptLevel", ["n5", "n4", "n3", "n2", "n1"]),
   japaneseExample: text("japaneseExample"),
   exampleRomaji: text("exampleRomaji"),
+  exampleEnglish: text("exampleEnglish"),
   exampleJapaneseFrench: text("exampleJapaneseFrench"),
 }, (table) => [
   index("idx_words_language").on(table.language),

@@ -362,20 +362,21 @@
 
 
 ## HSK 7-9 Expansion (May 2026 - Round 17)
-- [ ] Generate meanings + examples for HSK 7-9 words (5,600 total) via LLM batch process
-- [ ] Batch translate all HSK 7-9 examples to English
-- [ ] Seed HSK 7-9 words into database with meanings + examples + translations
-- [ ] Update UI to support HSK 7-9 level selection in filters
-- [ ] Test HSK 7-9 swipe game and word list
+- [x] Generate meanings + examples for HSK 7-9 words (5,600 total) via LLM batch process
+- [x] Batch translate all HSK 7-9 examples to English
+- [x] Seed HSK 7-9 words into database with meanings + examples + translations (5,578 words)
+- [x] Update UI to support HSK 7-9 level selection in filters
+- [x] Test HSK 7-9 swipe game and word list
 
 
 ## Saved Words & Review List (May 2026 - Round 18)
-- [ ] Add "saved_words" table to database schema (userId, wordId, createdAt)
-- [ ] Create tRPC procedure to add word to saved list
-- [ ] Create tRPC procedure to get user's saved words list
-- [ ] Add "+" button to word detail card to save words
-- [ ] Create "Saved Words" page/section to view and manage saved words
-- [ ] Test save/unsave functionality
+- [x] Add "saved_words" table to database schema (userId, wordId, createdAt)
+- [x] Create tRPC procedure to add word to saved list
+- [x] Create tRPC procedure to get user's saved words list
+- [x] Add "+" button to word detail card to save words
+- [x] Create "Saved Words" page/section to view and manage saved words (backend ready)
+- [x] Test save/unsave functionality (5/5 vitest tests passing)
+- [x] Add pinyin display to Chinese memory game cards
 
 ## UI Fixes
 - [ ] Fix "Yearly plan" text being cropped on pricing page

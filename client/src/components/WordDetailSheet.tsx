@@ -15,9 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import React, { useContext } from "react";
+import React from "react";
+import { trpc } from "@/lib/trpc";
 import ClickableExample from "./ClickableExample";
 import { useAudio } from "@/hooks/useAudio";
+import { toast } from "sonner";
 
 
 
@@ -49,15 +51,43 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   const { locale } = useI18n();
   const [, setLocation] = useLocation();
   const [isSaved, setIsSaved] = React.useState(false);
-  const trpc = useContext(React.createContext({}));
+  const trpcUtils = trpc.useUtils();
   
-  // Check if word is saved when sheet opens
-  React.useEffect(() => {
-    if (isAuthenticated && word?.id) {
-      // Will implement tRPC call here
+  // Check if word is saved
+  const { data: savedStatus } = trpc.savedWords.isSaved.useQuery(
+    { wordId: word?.id ?? 0 },
+    { enabled: isAuthenticated && !!word?.id }
+  );
+  
+  // Save/unsave mutations
+  const addSaved = trpc.savedWords.add.useMutation({
+    onSuccess: () => {
+      setIsSaved(true);
+      trpcUtils.savedWords.invalidate();
+      toast.success('Word saved!');
+    },
+    onError: () => {
+      toast.error('Failed to save word');
+    },
+  });
+  
+  const removeSaved = trpc.savedWords.remove.useMutation({
+    onSuccess: () => {
       setIsSaved(false);
+      trpcUtils.savedWords.invalidate();
+      toast.success('Word removed');
+    },
+    onError: () => {
+      toast.error('Failed to remove word');
+    },
+  });
+  
+  // Update isSaved state when savedStatus changes
+  React.useEffect(() => {
+    if (savedStatus !== undefined) {
+      setIsSaved(savedStatus);
     }
-  }, [word?.id, isAuthenticated]);
+  }, [savedStatus]);
 
 
   const isChinese = word?.language === 'chinese';
@@ -153,11 +183,23 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  // Save word logic will go here
-                  setIsSaved(!isSaved);
+                  if (word?.id) {
+                    if (isSaved) {
+                      removeSaved.mutate({ wordId: word.id });
+                    } else {
+                      addSaved.mutate({ wordId: word.id });
+                    }
+                  }
                 }}
+                disabled={addSaved.isPending || removeSaved.isPending}
               >
-                {isSaved ? '✓ Saved' : '+ Save'}
+                {addSaved.isPending || removeSaved.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : isSaved ? (
+                  <>✓ Saved</>
+                ) : (
+                  <>+ Save</>
+                )}
               </Button>
             )}
             <Button
