@@ -24,6 +24,7 @@ type GameStatus = 'settings' | 'playing' | 'completed';
 interface MemoryCard {
   id: string;
   content: string;
+  pinyin?: string; // pinyin for Chinese words
   isLanguage: boolean; // true = Korean/Chinese, false = French/English
   isFlipped: boolean;
   isMatched: boolean;
@@ -72,7 +73,7 @@ export default function MemoryGame() {
   // Get level options based on language
   const levelOptions = language === 'korean'
     ? ['TOPIK 1', 'TOPIK 2', 'TOPIK 3', 'TOPIK 4', 'TOPIK 5', 'TOPIK 6']
-    : ['HSK 1', 'HSK 2', 'HSK 3', 'HSK 4', 'HSK 5', 'HSK 6'];
+    : ['HSK 1', 'HSK 2', 'HSK 3', 'HSK 4', 'HSK 5', 'HSK 6', 'HSK 7-9'];
 
   const posOptions = ['noun', 'verb', 'adjective', 'adverb'];
 
@@ -90,6 +91,7 @@ export default function MemoryGame() {
         gameCards.push({
           id: `lang-${idx}`,
           content: languageContent,
+          pinyin: language === 'chinese' ? word.pinyin : undefined,
           isLanguage: true,
           isFlipped: false,
           isMatched: false,
@@ -364,6 +366,7 @@ export default function MemoryGame() {
                   {flipped.has(card.id) || matched.has(card.id) ? (
                     <div className="flex flex-col items-center justify-center h-full gap-1">
                       <span className="text-xs line-clamp-2">{card.content}</span>
+                      {card.pinyin && <span className="text-xs text-muted-foreground">{card.pinyin}</span>}
                     </div>
                   ) : (
                     <div className="flex items-center justify-center h-full text-2xl">?</div>

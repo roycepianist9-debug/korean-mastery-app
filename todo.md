@@ -359,3 +359,11 @@
 - [x] Verify word count is correct (92 unique Japanese words after deduplication) — VERIFIED: 396 total Japanese words (96 original + 300 newly imported)
 - [x] Test swipe game progress saving works for Japanese — TESTED: 14 comprehensive tests passing
 - [x] Complete remaining Jisho vocabulary import to 300+ words — COMPLETED: 300 JLPT N5/N4/N3 words imported
+
+
+## HSK 7-9 Expansion (May 2026 - Round 17)
+- [ ] Generate meanings + examples for HSK 7-9 words (5,600 total) via LLM batch process
+- [ ] Batch translate all HSK 7-9 examples to English
+- [ ] Seed HSK 7-9 words into database with meanings + examples + translations
+- [ ] Update UI to support HSK 7-9 level selection in filters
+- [ ] Test HSK 7-9 swipe game and word list

@@ -67,7 +67,7 @@ export const words = mysqlTable("words", {
   // Chinese fields
   chinese: varchar("chinese", { length: 255 }),
   pinyin: varchar("pinyin", { length: 255 }).notNull().default(""),
-  hskLevel: mysqlEnum("hskLevel", ["1", "2", "3", "4", "5", "6", "7", "8", "9"]),
+  hskLevel: mysqlEnum("hskLevel", ["1", "2", "3", "4", "5", "6", "7-9"]),
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
   exampleChineseFrench: text("exampleChineseFrench"),

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-type LanguageCode = 'ko-KR' | 'zh-CN';
+type LanguageCode = 'ko-KR' | 'zh-CN' | 'ja-JP';
 
 export function useAudio() {
   const speak = useCallback((text: string, language: LanguageCode = 'ko-KR') => {

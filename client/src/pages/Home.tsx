@@ -180,7 +180,7 @@ export default function Home() {
     if (!progressByLevel.data || !ws) return [];
 
     if (isChinese) {
-      const hskLevels = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      const hskLevels = ['1', '2', '3', '4', '5', '6', '7-9'];
       const levelTotals: Record<string, number> = {};
       for (const item of ws.byLevel) {
         if (item.level) levelTotals[item.level] = item.count;
