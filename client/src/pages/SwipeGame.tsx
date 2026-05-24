@@ -54,19 +54,6 @@ function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
   );
 }
 
-/* ─── Helper: Extract English meaning from Japanese format ─── */
-function extractEnglishMeaning(meaning: string): string {
-  if (!meaning) return '';
-  // Pattern: kanji（hiragana）English
-  // Extract everything after the closing parenthesis
-  const match = meaning.match(/）(.+)$/);
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  // If no parenthesis pattern, return as-is
-  return meaning;
-}
-
 /* ─── Flash Card ─── */
 function FlashCard({
   word,
@@ -293,7 +280,7 @@ function FlashCard({
               {locale === 'fr' && word.meaningFr ? (
                 <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaningFr}</p>
               ) : (
-                <p className="text-lg font-bold text-primary text-center leading-snug">{word.japanese ? extractEnglishMeaning(word.meaning) : word.meaning}</p>
+                <p className="text-lg font-bold text-primary text-center leading-snug">{word.meaning}</p>
               )}
             </div>
             {isAuthenticated && user?.role === 'admin' && (
