@@ -115,44 +115,28 @@ export default function EnglishSynonyms() {
         <EnglishSynonymCard
           word={currentWord.word}
           partOfSpeech={currentWord.partOfSpeech}
+          meaning={currentWord.meaning}
+          exampleSentence={currentWord.exampleSentence}
           synonyms={JSON.parse(currentWord.synonyms as any)}
           level={currentWord.level}
           onSave={handleSaveWord}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          canGoNext={currentIndex < synonyms.length - 1}
+          canGoPrevious={currentIndex > 0}
         />
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between gap-4">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            variant="outline"
-            className="gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Word {currentIndex + 1} of {synonyms.length}
-            </p>
-            <div className="w-64 h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-              <div
-                className="h-full bg-blue-600 transition-all duration-300"
-                style={{ width: `${((currentIndex + 1) / synonyms.length) * 100}%` }}
-              />
-            </div>
+        {/* Progress bar */}
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Word {currentIndex + 1} of {synonyms.length}
+          </p>
+          <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
+            <div
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${((currentIndex + 1) / synonyms.length) * 100}%` }}
+            />
           </div>
-
-          <Button
-            onClick={handleNext}
-            disabled={currentIndex === synonyms.length - 1}
-            variant="outline"
-            className="gap-2"
-          >
-            Next
-            <ChevronRight className="w-4 h-4" />
-          </Button>
         </div>
 
         {/* Stats */}

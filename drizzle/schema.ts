@@ -183,8 +183,10 @@ export type InsertSavedWord = typeof savedWords.$inferInsert;
 export const englishSynonyms = mysqlTable("english_synonyms", {
   id: int("id").autoincrement().primaryKey(),
   word: varchar("word", { length: 255 }).notNull().unique(),
-  partOfSpeech: varchar("partOfSpeech", { length: 50 }).notNull(), // noun, verb, adjective, adverb, etc.
-  synonyms: json("synonyms").$type<string[]>().notNull(), // Array of 50+ synonyms
+  partOfSpeech: varchar("partOfSpeech", { length: 50 }).notNull(),
+  meaning: text("meaning"),
+  exampleSentence: text("exampleSentence"),
+  synonyms: json("synonyms").$type<Array<{ word: string; register: 'formal' | 'casual' | 'sophisticated' | 'slang' | 'archaic' | 'british' | 'australian' | 'nuanced' }>>().notNull(),
   level: mysqlEnum("level", ["beginner", "intermediate", "advanced"]).default("intermediate").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
