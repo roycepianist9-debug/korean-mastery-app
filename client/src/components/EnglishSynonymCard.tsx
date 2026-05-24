@@ -37,6 +37,14 @@ const REGISTER_COLORS: Record<string, string> = {
   nuanced: 'bg-indigo-100 text-indigo-800',
 };
 
+const WORD_METADATA: Record<string, { meaning: string; example: string }> = {
+  good: { meaning: 'Positive, satisfactory, or of high quality', example: 'That was a good movie.' },
+  bad: { meaning: 'Not good, unpleasant, or of poor quality', example: 'That was a bad decision.' },
+  beautiful: { meaning: 'Pleasing to the eye or aesthetically attractive', example: 'She wore a beautiful dress.' },
+  happy: { meaning: 'Feeling or showing pleasure and contentment', example: 'I am happy to see you.' },
+  important: { meaning: 'Of great significance or consequence', example: 'This is an important meeting.' },
+};
+
 export function EnglishSynonymCard({
   word,
   partOfSpeech,
@@ -61,6 +69,11 @@ export function EnglishSynonymCard({
   const synonyms: Synonym[] = rawSynonyms.map(s => 
     typeof s === 'string' ? { word: s } : s
   );
+
+  // Get metadata for this word
+  const metadata = WORD_METADATA[word.toLowerCase()];
+  const displayMeaning = meaning || metadata?.meaning;
+  const displayExample = exampleSentence || metadata?.example;
 
   const handleSaveWord = async () => {
     if (!auth.user) {
@@ -162,21 +175,21 @@ export function EnglishSynonymCard({
         </div>
 
         {/* Meaning */}
-        {meaning && (
+        {displayMeaning && (
           <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-gray-700">
               <span className="font-semibold text-gray-900">Definition: </span>
-              {meaning}
+              {displayMeaning}
             </p>
           </div>
         )}
 
         {/* Example Sentence */}
-        {exampleSentence && (
+        {displayExample && (
           <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
             <p className="text-sm text-gray-700">
               <span className="font-semibold text-gray-900">Example: </span>
-              {exampleSentence}
+              {displayExample}
             </p>
           </div>
         )}
