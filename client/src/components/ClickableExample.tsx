@@ -5,11 +5,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Loader2, Volume2, Plus } from "lucide-react";
+import { Loader2, Volume2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAudio } from "@/hooks/useAudio";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface ClickableExampleProps {
   sentence: string;
@@ -18,23 +16,10 @@ interface ClickableExampleProps {
 
 function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | null; meaning: string | null }) {
   const [, setLocation] = useLocation();
-  const [showListModal, setShowListModal] = useState(false);
-  const customListsQuery = trpc.customLists.list.useQuery(undefined, { enabled: !!wordId });
-  const addWordMutation = trpc.customLists.addWord.useMutation();
 
   if (!wordId) {
     return <span className="text-foreground">{text}</span>;
   }
-
-  const handleAddToList = async (listId: number) => {
-    try {
-      await addWordMutation.mutateAsync({ listId, wordId });
-      toast.success(`Added "${text}" to list`);
-      setShowListModal(false);
-    } catch (error) {
-      toast.error('Failed to add word to list');
-    }
-  };
 
   return (
     <Popover>
@@ -45,49 +30,17 @@ function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | n
       </PopoverTrigger>
       <PopoverContent
         side="top"
-        className="w-auto max-w-80 p-3 bg-card border-border"
+        className="w-auto max-w-64 p-2.5 bg-card border-border"
         style={{ transformOrigin: "var(--radix-popover-content-transform-origin)" }}
       >
         <p className="text-sm font-bold text-foreground">{text}</p>
         {meaning && <p className="text-xs text-muted-foreground mt-0.5">{meaning}</p>}
-        <div className="flex gap-1.5 mt-2">
-          <button
-            onClick={() => setLocation(`/word/${wordId}`)}
-            className="text-[10px] text-primary font-bold px-2 py-1 rounded hover:bg-primary/10 transition-colors flex-1"
-          >
-            View full entry →
-          </button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 gap-1"
-            onClick={() => setShowListModal(!showListModal)}
-          >
-            <Plus className="w-3 h-3" />
-            <span className="text-xs">Add</span>
-          </Button>
-        </div>
-        {showListModal && (
-          <div className="mt-2 pt-2 border-t border-border">
-            {customListsQuery.isLoading ? (
-              <p className="text-xs text-muted-foreground">Loading lists...</p>
-            ) : customListsQuery.data && customListsQuery.data.length > 0 ? (
-              <div className="space-y-1">
-                {customListsQuery.data.map((list) => (
-                  <button
-                    key={list.id}
-                    onClick={() => handleAddToList(list.id)}
-                    className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-accent transition-colors"
-                  >
-                    {list.name}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No lists yet. Create one first!</p>
-            )}
-          </div>
-        )}
+        <button
+          onClick={() => setLocation(`/word/${wordId}`)}
+          className="text-[10px] text-primary font-bold mt-1 block"
+        >
+          View full entry →
+        </button>
       </PopoverContent>
     </Popover>
   );

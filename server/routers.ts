@@ -16,7 +16,6 @@ import { adminProcedure } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { englishSynonymsRouter } from "./englishSynonymsRouter";
 import { basicsRouter } from "./basicsRouter";
-import { customListsRouter } from "./customListsRouter";
 import {
   searchWords,
   getWordById,
@@ -43,20 +42,11 @@ import {
   getAllEnglishSynonyms,
   upsertEnglishSynonym,
   deleteEnglishSynonym,
-  createCustomList,
-  getCustomListsByUser,
-  getCustomList,
-  updateCustomList,
-  deleteCustomList,
-  addWordToList,
-  removeWordFromList,
-  getListWords,
 } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
   basics: basicsRouter,
-  customLists: customListsRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -1,6 +1,6 @@
 import { eq, and, like, or, sql, desc, asc, inArray, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, words, userProgress, userStats, appConfig, savedWords, englishSynonyms, customWordLists, customListWords, InsertCustomWordList, InsertCustomListWord } from "../drizzle/schema";
+import { InsertUser, users, words, userProgress, userStats, appConfig, savedWords, englishSynonyms } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -841,101 +841,4 @@ export async function deleteEnglishSynonym(word: string): Promise<void> {
   
   await db.delete(englishSynonyms)
     .where(eq(englishSynonyms.word, word.toLowerCase()));
-}
-
-// ─── Custom Word Lists ───────────────────────────────────────
-
-export async function createCustomList(data: {
-  userId: number;
-  name: string;
-  description?: string;
-  language: 'korean' | 'chinese' | 'japanese' | 'english';
-  color?: string;
-}): Promise<number> {
-  const db = await getDb();
-  if (!db) throw new Error('Database not available');
-  const result = await db.insert(customWordLists).values(data as InsertCustomWordList);
-  return result[0].insertId;
-}
-
-export async function getCustomListsByUser(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(customWordLists).where(eq(customWordLists.userId, userId));
-}
-
-export async function getCustomList(listId: number) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(customWordLists).where(eq(customWordLists.id, listId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function updateCustomList(listId: number, data: {
-  name?: string;
-  description?: string;
-  color?: string;
-}): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(customWordLists).set(data).where(eq(customWordLists.id, listId));
-}
-
-export async function deleteCustomList(listId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  // Cascade delete is handled by database constraints
-  await db.delete(customWordLists).where(eq(customWordLists.id, listId));
-}
-
-export async function addWordToList(listId: number, wordId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  // Check if already exists
-  const existing = await db.select().from(customListWords)
-    .where(and(eq(customListWords.listId, listId), eq(customListWords.wordId, wordId)))
-    .limit(1);
-  if (existing.length === 0) {
-    await db.insert(customListWords).values({ listId, wordId } as InsertCustomListWord);
-  }
-}
-
-export async function removeWordFromList(listId: number, wordId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  await db.delete(customListWords)
-    .where(and(eq(customListWords.listId, listId), eq(customListWords.wordId, wordId)));
-}
-
-export async function getListWords(listId: number, page: number = 1, pageSize: number = 50) {
-  const db = await getDb();
-  if (!db) return { words: [], total: 0 };
-  const offset = (page - 1) * pageSize;
-  const [results, countResult] = await Promise.all([
-    db.select({
-      id: words.id,
-      language: words.language,
-      korean: words.korean,
-      romanization: words.romanization,
-      meaning: words.meaning,
-      chinese: words.chinese,
-      pinyin: words.pinyin,
-      japanese: words.japanese,
-      hiragana: words.hiragana,
-      topikLevel: words.topikLevel,
-      hskLevel: words.hskLevel,
-      jlptLevel: words.jlptLevel,
-    })
-      .from(customListWords)
-      .innerJoin(words, eq(customListWords.wordId, words.id))
-      .where(eq(customListWords.listId, listId))
-      .orderBy(desc(customListWords.addedAt))
-      .limit(pageSize)
-      .offset(offset),
-    db.select({ total: count() }).from(customListWords).where(eq(customListWords.listId, listId)),
-  ]);
-  return {
-    words: results,
-    total: countResult[0]?.total ?? 0,
-  };
 }
