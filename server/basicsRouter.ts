@@ -1,14 +1,12 @@
+import { router, publicProcedure } from "./trpc";
 import { z } from "zod";
-import { router, publicProcedure } from "./_core/trpc";
-import { getDb } from "./db";
+import { db } from "./db";
 import { basicsCards } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export const basicsRouter = router({
   // Get all subsections with card counts
   getSubsections: publicProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) return [];
     const result = await db.execute(
       `SELECT DISTINCT subsection, subsectionTitle, COUNT(*) as cardCount 
        FROM basics_cards 
