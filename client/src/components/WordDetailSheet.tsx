@@ -30,6 +30,9 @@ interface WordDetailSheetProps {
     romanization?: string;
     chinese?: string | null;
     pinyin?: string | null;
+    japanese?: string | null;
+    hiragana?: string | null;
+    romaji?: string | null;
     pos: string;
     meaning: string;
     meaningFr?: string | null;
@@ -38,8 +41,13 @@ interface WordDetailSheetProps {
     exampleFrench?: string | null;
     chineseExample?: string | null;
     examplePinyin?: string | null;
+    exampleChineseFrench?: string | null;
+    japaneseExample?: string | null;
+    exampleRomaji?: string | null;
+    exampleJapaneseFrench?: string | null;
     topikLevel?: string | null;
     hskLevel?: string | null;
+    jlptLevel?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -90,10 +98,20 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
 
 
   const isChinese = word?.language === 'chinese';
-  const headword = isChinese ? (word?.chinese ?? '') : (word?.korean ?? '');
-  const subtext = isChinese ? (word?.pinyin ?? '') : (word?.romanization ?? '');
-  const exampleSentence = isChinese ? word?.chineseExample : word?.koreanExample;
-  const exampleTranslation = isChinese ? word?.examplePinyin : word?.exampleEnglish;
+  const isJapanese = word?.language === 'japanese';
+  const headword = isChinese ? (word?.chinese ?? '') : isJapanese ? (word?.japanese ?? '') : (word?.korean ?? '');
+  const subtext = isChinese ? (word?.pinyin ?? '') : isJapanese ? (word?.hiragana ?? '') : (word?.romanization ?? '');
+  const exampleSentence = isChinese ? word?.chineseExample : isJapanese ? word?.japaneseExample : word?.koreanExample;
+  const exampleLang: 'ko-KR' | 'zh-CN' | 'ja-JP' = isChinese ? 'zh-CN' : isJapanese ? 'ja-JP' : 'ko-KR';
+  // Locale-aware translation
+  const exampleTranslation = (() => {
+    if (locale === 'fr') {
+      if (isChinese) return word?.exampleChineseFrench || word?.exampleEnglish;
+      if (isJapanese) return word?.exampleJapaneseFrench || word?.exampleEnglish;
+      return word?.exampleFrench || word?.exampleEnglish;
+    }
+    return word?.exampleEnglish || (isChinese ? word?.exampleChineseFrench : isJapanese ? word?.exampleJapaneseFrench : word?.exampleFrench);
+  })();
 
 
 
@@ -106,11 +124,15 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   // Level badge
   const levelLabel = isChinese
     ? (word.hskLevel ? `HSK ${word.hskLevel}` : null)
+    : isJapanese
+    ? (word.jlptLevel ? word.jlptLevel.toUpperCase() : null)
     : (word.topikLevel === 'beginner' ? 'Beginner' :
        word.topikLevel === 'intermediate' ? 'Intermediate' : 'Advanced');
 
   const levelClass = isChinese
     ? 'bg-primary/20 text-primary'
+    : isJapanese
+    ? 'bg-chart-3/20 text-chart-3'
     : (word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
        word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
        'bg-accent/20 text-accent');
@@ -133,6 +155,9 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
           </div>
           <SheetTitle className="text-4xl font-black text-foreground">{headword}</SheetTitle>
           <p className="text-base text-muted-foreground font-medium">{subtext}</p>
+          {isJapanese && word?.romaji && (
+            <p className="text-xs text-muted-foreground/70 font-medium">{word.romaji}</p>
+          )}
         </SheetHeader>
 
         <div className="space-y-3 pt-2 pb-4">
@@ -156,17 +181,25 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
               </div>
               {exampleSentence && (
                 <div className="mb-1">
-                  {isChinese ? (
-                    <ChineseExampleWithAudio sentence={exampleSentence} />
-                  ) : (
-                    <ClickableExample sentence={exampleSentence} />
-                  )}
+                  <ClickableExample sentence={exampleSentence} language={exampleLang} />
                 </div>
               )}
-              {/* For Chinese: show pinyin below characters, then AI translation below pinyin */}
-              {isChinese && word?.examplePinyin && (
+              {/* For Chinese: show pinyin below characters */}
+              {isChinese && word?.examplePinyin && word.examplePinyin.trim() && !word.examplePinyin.match(/[\u4e00-\u9fff]/g) && (
                 <p className="text-xs text-muted-foreground font-medium mb-1 leading-relaxed">
                   {word.examplePinyin}
+                </p>
+              )}
+              {/* For Japanese: show romaji below */}
+              {isJapanese && word?.exampleRomaji && (
+                <p className="text-xs text-muted-foreground font-medium mb-1 leading-relaxed">
+                  {word.exampleRomaji}
+                </p>
+              )}
+              {/* Translation */}
+              {exampleTranslation && (
+                <p className="text-sm text-muted-foreground italic mt-1">
+                  {exampleTranslation}
                 </p>
               )}
 

@@ -282,41 +282,73 @@ function FlashCard({
           </div>
         </div>
 
-        {/* Example sentence - Display translation based on interface language */}
+        {/* Example sentences - locale-aware */}
         {showExamples && word.koreanExample ? (
           <div className="w-full space-y-2 text-center px-1">
-            {/* Korean example */}
+            {/* Korean example with clickable tokens */}
             <div className="space-y-1">
               <ClickableExample sentence={word.koreanExample} language="ko-KR" />
             </div>
-            {/* Translation: French in French UI, English in English UI */}
-            {word.exampleFrench ? (
+            {/* Translation: French when locale=fr, English when locale=en */}
+            {locale === 'fr' && word.exampleFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
               </div>
-            ) : word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+              </div>
+            ) : (word.exampleFrench || word.exampleEnglish) ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench || word.exampleEnglish}</p>
               </div>
             ) : null}
           </div>
         ) : showExamples && word.chineseExample ? (
           <div className="w-full space-y-2 text-center px-1">
-            {/* Chinese example */}
+            {/* Chinese example with clickable tokens */}
             <div className="space-y-1">
               <ChineseExampleWithAudio sentence={word.chineseExample} />
               {word.examplePinyin && word.examplePinyin.trim() && !word.examplePinyin.match(/[\u4e00-\u9fff]/g) && (
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* Translation: French or English */}
-            {word.exampleChineseFrench ? (
+            {/* Translation: French when locale=fr, English when locale=en */}
+            {locale === 'fr' && word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
-            ) : word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+              </div>
+            ) : (word.exampleChineseFrench || word.exampleEnglish) ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench || word.exampleEnglish}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : showExamples && word.japaneseExample ? (
+          <div className="w-full space-y-2 text-center px-1">
+            {/* Japanese example */}
+            <div className="space-y-1">
+              <ClickableExample sentence={word.japaneseExample} language="ja-JP" />
+              {word.exampleRomaji && (
+                <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.exampleRomaji}</p>
+              )}
+            </div>
+            {/* Translation: French when locale=fr, English when locale=en */}
+            {locale === 'fr' && word.exampleJapaneseFrench ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseFrench}</p>
+              </div>
+            ) : locale === 'en' && word.exampleEnglish ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+              </div>
+            ) : (word.exampleJapaneseFrench || word.exampleEnglish) ? (
+              <div className="space-y-1 border-t border-muted pt-2">
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseFrench || word.exampleEnglish}</p>
               </div>
             ) : null}
           </div>

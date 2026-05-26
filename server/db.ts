@@ -196,11 +196,11 @@ function stripParticles(word: string): string[] {
   return Array.from(new Set(candidates));
 }
 
-export async function tokenizeAndLookup(sentence: string, language: 'korean' | 'chinese' = 'korean') {
+export async function tokenizeAndLookup(sentence: string, language: 'korean' | 'chinese' | 'japanese' = 'korean') {
   const db = await getDb();
   if (!db || !sentence) return [];
 
-  const locale = language === 'chinese' ? 'zh' : 'ko';
+  const locale = language === 'chinese' ? 'zh' : language === 'japanese' ? 'ja' : 'ko';
   const segmenter = new Intl.Segmenter(locale, { granularity: 'word' });
   const segments = Array.from(segmenter.segment(sentence));
 
@@ -227,12 +227,12 @@ export async function tokenizeAndLookup(sentence: string, language: 'korean' | '
     // Query in chunks of 50 to avoid too-long IN clauses
     for (let i = 0; i < uniqueCandidates.length; i += 50) {
       const chunk = uniqueCandidates.slice(i, i + 50);
-      const results = await db.select({ id: words.id, korean: words.korean, chinese: words.chinese, meaning: words.meaning })
+      const results = await db.select({ id: words.id, korean: words.korean, chinese: words.chinese, japanese: words.japanese, meaning: words.meaning })
         .from(words)
-        .where(language === 'chinese' ? inArray(words.chinese, chunk) : inArray(words.korean, chunk))
+        .where(language === 'chinese' ? inArray(words.chinese, chunk) : language === 'japanese' ? inArray(words.japanese, chunk) : inArray(words.korean, chunk))
         .limit(chunk.length);
       for (const r of results) {
-        const key = language === 'chinese' ? r.chinese : r.korean;
+        const key = language === 'chinese' ? r.chinese : language === 'japanese' ? r.japanese : r.korean;
         if (key) {
           lookupMap.set(key, { id: r.id, meaning: r.meaning });
         }

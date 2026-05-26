@@ -77,7 +77,7 @@ export const appRouter = router({
       }),
 
     tokenize: publicProcedure
-      .input(z.object({ sentence: z.string(), language: z.enum(['korean', 'chinese']).optional() }))
+      .input(z.object({ sentence: z.string(), language: z.enum(['korean', 'chinese', 'japanese']).optional() }))
       .query(({ input }) => {
         return tokenizeAndLookup(input.sentence, input.language || 'korean');
       }),
@@ -706,7 +706,7 @@ export const appRouter = router({
                 hiragana: word.hiragana,
                 romaji: word.romaji,
                 meaning: word.meaning,
-                jlptLevel: word.jlptLevel,
+                jlptLevel: word.jlptLevel as 'n5' | 'n4' | 'n3' | 'n2' | 'n1',
                 pos: word.pos,
                 language: 'japanese',
                 japaneseExample: word.japaneseExample,

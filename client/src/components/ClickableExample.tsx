@@ -46,9 +46,9 @@ function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | n
   );
 }
 
-export default function ClickableExample({ sentence, language = 'ko-KR' }: ClickableExampleProps & { language?: 'ko-KR' | 'zh-CN' }) {
+export default function ClickableExample({ sentence, language = 'ko-KR' }: ClickableExampleProps) {
   const { speak } = useAudio();
-  const tokenLanguage = language === 'zh-CN' ? 'chinese' : 'korean';
+  const tokenLanguage = language === 'zh-CN' ? 'chinese' : language === 'ja-JP' ? 'japanese' : 'korean';
   const tokensQuery = trpc.words.tokenize.useQuery(
     { sentence, language: tokenLanguage },
     { enabled: !!sentence, staleTime: 60 * 60 * 1000 }

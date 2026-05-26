@@ -402,3 +402,13 @@
 - [x] Apply French meanings from cfdict to 10,552 Chinese words
 - [x] Install romanization libraries: pinyin-pro (Chinese), kuroshiro (Japanese), aromanize (Korean)
 - [x] Verify total: 75,892 words recovered (Korean: 56,556 + Chinese: 10,951 + Japanese: 8,385)
+
+## Locale-Aware Example Display Fix (May 2026 - Round 20)
+- [x] SwipeGame: Show French translations when locale=fr, English when locale=en (Korean, Chinese, Japanese)
+- [x] SwipeGame: Add Japanese example rendering with romaji and clickable tokens
+- [x] WordDetailSheet: Add Japanese fields (japanese, hiragana, romaji, jlptLevel) and locale-aware translations
+- [x] WordDetailSheet: Show romaji below hiragana for Japanese words
+- [x] ClickableExample: Support ja-JP language for Japanese tokenization
+- [x] Server tokenize: Add 'japanese' to language enum in tRPC procedure
+- [x] Server tokenizeAndLookup: Support Japanese word lookup (search by words.japanese)
+- [x] Fix TypeScript error: cast jlptLevel in Japanese import to proper enum type
