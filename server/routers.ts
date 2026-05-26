@@ -75,9 +75,9 @@ export const appRouter = router({
       }),
 
     tokenize: publicProcedure
-      .input(z.object({ sentence: z.string() }))
-      .query(async ({ input }) => {
-        return tokenizeAndLookup(input.sentence);
+      .input(z.object({ sentence: z.string(), language: z.enum(['korean', 'chinese']).optional() }))
+      .query(({ input }) => {
+        return tokenizeAndLookup(input.sentence, input.language || 'korean');
       }),
 
     getById: publicProcedure

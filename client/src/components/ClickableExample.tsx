@@ -11,7 +11,7 @@ import { useAudio } from "@/hooks/useAudio";
 
 interface ClickableExampleProps {
   sentence: string;
-  language?: 'ko-KR' | 'zh-CN';
+  language?: 'ko-KR' | 'zh-CN' | 'ja-JP';
 }
 
 function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | null; meaning: string | null }) {
@@ -48,8 +48,9 @@ function TokenWord({ text, wordId, meaning }: { text: string; wordId: number | n
 
 export default function ClickableExample({ sentence, language = 'ko-KR' }: ClickableExampleProps & { language?: 'ko-KR' | 'zh-CN' }) {
   const { speak } = useAudio();
+  const tokenLanguage = language === 'zh-CN' ? 'chinese' : 'korean';
   const tokensQuery = trpc.words.tokenize.useQuery(
-    { sentence },
+    { sentence, language: tokenLanguage },
     { enabled: !!sentence, staleTime: 60 * 60 * 1000 }
   );
 

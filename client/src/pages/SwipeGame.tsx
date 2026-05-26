@@ -36,22 +36,9 @@ type CardFilter = 'new' | 'reviewing' | 'all';
 
 
 
-/* ─── Chinese Example with Audio ─── */
+/* ─── Chinese Example with Clickable Lexemes ─── */
 function ChineseExampleWithAudio({ sentence }: { sentence: string }) {
-  const { speak } = useAudio();
-  const { user } = useAuth();
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <p className="text-sm text-foreground leading-relaxed">{sentence}</p>
-      <button
-        onClick={() => speak(sentence, 'zh-CN')}
-        className="inline-flex items-center justify-center w-5 h-5 text-primary hover:text-primary/80 transition-colors flex-shrink-0"
-        aria-label="Play audio"
-      >
-        <Volume2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
+  return <ClickableExample sentence={sentence} language="zh-CN" />;
 }
 
 /* ─── Flash Card ─── */
