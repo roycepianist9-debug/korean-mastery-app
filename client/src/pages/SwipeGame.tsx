@@ -305,7 +305,7 @@ function FlashCard({
             {/* Chinese example */}
             <div className="space-y-1">
               <ChineseExampleWithAudio sentence={word.chineseExample} />
-              {word.examplePinyin && (
+              {word.examplePinyin && word.examplePinyin.trim() && (
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
