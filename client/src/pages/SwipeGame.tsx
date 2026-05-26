@@ -305,11 +305,11 @@ function FlashCard({
             {/* Chinese example */}
             <div className="space-y-1">
               <ChineseExampleWithAudio sentence={word.chineseExample} />
-              {word.examplePinyin && word.examplePinyin.trim() && (
+              {word.examplePinyin && word.examplePinyin.trim() && !word.examplePinyin.match(/[\u4e00-\u9fff]/g) && (
                 <p className="text-xs text-muted-foreground/80 font-medium leading-relaxed">{word.examplePinyin}</p>
               )}
             </div>
-            {/* Translation: French in French UI, English in English UI */}
+            {/* Translation: French or English */}
             {word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
