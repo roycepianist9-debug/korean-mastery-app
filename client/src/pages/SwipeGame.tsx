@@ -290,7 +290,7 @@ function FlashCard({
               <ClickableExample sentence={word.koreanExample} language="ko-KR" />
             </div>
             {/* Translation: French in French UI, English in English UI */}
-            {locale === 'fr' && word.exampleFrench ? (
+            {word.exampleFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleFrench}</p>
               </div>
@@ -310,11 +310,11 @@ function FlashCard({
               )}
             </div>
             {/* Translation: French in French UI, English in English UI */}
-            {locale === 'fr' && word.exampleChineseFrench ? (
+            {word.exampleChineseFrench ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
-            ) : locale === 'en' && word.exampleEnglish ? (
+            ) : word.exampleEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
               </div>
