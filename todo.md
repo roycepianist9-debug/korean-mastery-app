@@ -237,6 +237,22 @@
 - [x] Remove "Tap to translate" button when AI Translation is ON — replaced with "Translation unavailable" message for graceful failure handling
 - [x] Diagnosed LLM translation failures: Gemini API quota exhausted (412 Precondition Failed error) — not a code bug, graceful UX implemented
 
+## Custom Word Lists Feature (In Progress)
+- [x] Create customWordLists and customListWords database tables
+- [x] Create tRPC procedures for list management (create, list, get, update, delete, addWord, removeWord, getWords)
+- [x] Add "Add to List" button in ClickableExample popover (where user drew red box)
+- [x] Implement inline list selector in popover
+- [x] Add 8 passing vitest tests for custom lists feature
+- [ ] Fix TypeScript compilation errors
+- [ ] Create proper list-selection dialog/modal with create-new-list flow
+- [ ] Add guest/auth handling for Add-to-List UI (show login prompt for guests)
+
+## CEDICT Integration (In Progress)
+- [ ] Download and parse CEDICT into searchable format
+- [ ] Create tRPC procedure for dictionary lookups
+- [ ] Update ClickableExample component to use dictionary fallback
+- [ ] Test clickable lexemes with unknown words (e.g., "Shenqi")
+
 
 ## Audio Playback & Theme Updates (May 2026 - Round 6)
 - [x] Add audio playback icon to Korean example sentences (speaker icon next to example)
