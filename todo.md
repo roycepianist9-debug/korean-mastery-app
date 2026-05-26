@@ -393,3 +393,12 @@
 - [x] Add English to language selector
 - [x] Test synonym cards with speaker audio (7/7 vitest tests passing)
 - [x] Save checkpoint with English feature complete
+
+## Database Recovery (May 2026 - Round 19)
+- [x] Re-import 56,556 Korean words from KRDICT JSON (beginner: 2,545 / intermediate: 12,455 / advanced: 41,556)
+- [x] Re-import 10,951 Chinese HSK words (HSK 1: 506, HSK 2: 750, HSK 3: 953, HSK 4: 972, HSK 5: 1,059, HSK 6: 1,123, HSK 7-9: 5,588)
+- [x] Re-import 8,385 Japanese JLPT words (N5: 662, N4: 632, N3: 1,797, N2: 1,831, N1: 3,463)
+- [x] Generate pinyin for 5,588 Chinese HSK 7-9 examples using pinyin-pro library
+- [x] Apply French meanings from cfdict to 10,552 Chinese words
+- [x] Install romanization libraries: pinyin-pro (Chinese), kuroshiro (Japanese), aromanize (Korean)
+- [x] Verify total: 75,892 words recovered (Korean: 56,556 + Chinese: 10,951 + Japanese: 8,385)
