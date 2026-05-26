@@ -1,0 +1,652 @@
+import mysql from "mysql2/promise";
+
+const basicsCards = [
+  // Numbers (90 cards)
+  ...Array.from({ length: 30 }, (_, i) => ({
+    subsection: "numbers",
+    subsectionTitle: "Numbers",
+    front: String(i + 1),
+    back: `Number ${i + 1}`,
+    example: `There are ${i + 1} items.`,
+  })),
+  ...Array.from({ length: 20 }, (_, i) => ({
+    subsection: "numbers",
+    subsectionTitle: "Numbers",
+    front: String((i + 1) * 100),
+    back: `Number ${(i + 1) * 100}`,
+    example: `The price is ${(i + 1) * 100} dollars.`,
+  })),
+  ...Array.from({ length: 20 }, (_, i) => ({
+    subsection: "numbers",
+    subsectionTitle: "Numbers",
+    front: String((i + 1) * 1000),
+    back: `Number ${(i + 1) * 1000}`,
+    example: `Population is ${(i + 1) * 1000} people.`,
+  })),
+  ...Array.from({ length: 20 }, (_, i) => ({
+    subsection: "numbers",
+    subsectionTitle: "Numbers",
+    front: String((i + 1) * 10000),
+    back: `Number ${(i + 1) * 10000}`,
+    example: `The distance is ${(i + 1) * 10000} meters.`,
+  })),
+
+  // Time & Clock (30 cards)
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "What time is it?",
+    back: "A question asking for the current time",
+    example: "What time is it? It's 3 o'clock.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's one o'clock",
+    back: "1:00 AM or PM",
+    example: "It's one o'clock in the morning.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's half past two",
+    back: "2:30",
+    example: "It's half past two in the afternoon.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's quarter past three",
+    back: "3:15",
+    example: "It's quarter past three.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's quarter to four",
+    back: "3:45",
+    example: "It's quarter to four.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's five minutes past",
+    back: "5 minutes after the hour",
+    example: "It's five minutes past nine.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "It's ten minutes to",
+    back: "10 minutes before the hour",
+    example: "It's ten minutes to noon.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "Noon",
+    back: "12:00 PM - middle of the day",
+    example: "Let's meet at noon.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "Midnight",
+    back: "12:00 AM - middle of the night",
+    example: "The party ends at midnight.",
+  },
+  {
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: "AM",
+    back: "Ante Meridiem - morning time",
+    example: "The meeting is at 9 AM.",
+  },
+  ...Array.from({ length: 20 }, (_, i) => ({
+    subsection: "time_clock",
+    subsectionTitle: "Time & Clock",
+    front: `${(i + 1) % 12 || 12}:${String((i * 3) % 60).padStart(2, "0")}`,
+    back: `Time: ${(i + 1) % 12 || 12}:${String((i * 3) % 60).padStart(2, "0")}`,
+    example: `The event starts at ${(i + 1) % 12 || 12}:${String((i * 3) % 60).padStart(2, "0")}.`,
+  })),
+
+  // Dates (40 cards)
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "January",
+    back: "First month of the year",
+    example: "My birthday is in January.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "February",
+    back: "Second month of the year",
+    example: "Valentine's Day is in February.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "March",
+    back: "Third month of the year",
+    example: "Spring begins in March.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "April",
+    back: "Fourth month of the year",
+    example: "April showers bring May flowers.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "May",
+    back: "Fifth month of the year",
+    example: "The flowers bloom in May.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "June",
+    back: "Sixth month of the year",
+    example: "Summer begins in June.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "July",
+    back: "Seventh month of the year",
+    example: "Independence Day is July 4th.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "August",
+    back: "Eighth month of the year",
+    example: "August is very hot.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "September",
+    back: "Ninth month of the year",
+    example: "School starts in September.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "October",
+    back: "Tenth month of the year",
+    example: "Halloween is in October.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "November",
+    back: "Eleventh month of the year",
+    example: "Thanksgiving is in November.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "December",
+    back: "Twelfth month of the year",
+    example: "Christmas is in December.",
+  },
+  ...Array.from({ length: 12 }, (_, i) => ({
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: `Day ${i + 1}`,
+    back: `The ${i + 1}${["st", "nd", "rd"][i % 3] || "th"} day of the month`,
+    example: `The meeting is on day ${i + 1}.`,
+  })),
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "1985",
+    back: "Year nineteen eighty-five",
+    example: "I was born in 1985.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "2024",
+    back: "Year twenty twenty-four",
+    example: "We are in 2024.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "Century",
+    back: "A period of 100 years",
+    example: "The 21st century started in 2001.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "January 1st, 1985",
+    back: "New Year's Day 1985",
+    example: "I remember January 1st, 1985.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "December 25th, 2000",
+    back: "Christmas Day 2000",
+    example: "We celebrated December 25th, 2000 together.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "July 4th, 1776",
+    back: "American Independence Day",
+    example: "July 4th, 1776 is an important date.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "Today",
+    back: "The current day",
+    example: "Today is a beautiful day.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "Tomorrow",
+    back: "The day after today",
+    example: "I'll see you tomorrow.",
+  },
+  {
+    subsection: "dates",
+    subsectionTitle: "Dates",
+    front: "Yesterday",
+    back: "The day before today",
+    example: "I saw him yesterday.",
+  },
+
+  // Countries (50 cards)
+  ...[
+    "France",
+    "Spain",
+    "Italy",
+    "Germany",
+    "United Kingdom",
+    "Japan",
+    "South Korea",
+    "China",
+    "India",
+    "Brazil",
+    "Mexico",
+    "Canada",
+    "United States",
+    "Australia",
+    "New Zealand",
+    "Russia",
+    "Egypt",
+    "South Africa",
+    "Thailand",
+    "Vietnam",
+    "Indonesia",
+    "Philippines",
+    "Malaysia",
+    "Singapore",
+    "Turkey",
+    "Greece",
+    "Portugal",
+    "Netherlands",
+    "Belgium",
+    "Switzerland",
+    "Austria",
+    "Poland",
+    "Sweden",
+    "Norway",
+    "Denmark",
+    "Finland",
+    "Ireland",
+    "Scotland",
+    "Wales",
+    "Argentina",
+    "Chile",
+    "Peru",
+    "Colombia",
+    "Venezuela",
+    "Nigeria",
+    "Kenya",
+    "Morocco",
+    "Saudi Arabia",
+    "Israel",
+    "Pakistan",
+  ].map((country) => ({
+    subsection: "countries",
+    subsectionTitle: "Countries",
+    front: country,
+    back: `A country: ${country}`,
+    example: `I want to visit ${country}.`,
+  })),
+
+  // Directions (40 cards)
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Turn left",
+    back: "Change direction to the left side",
+    example: "Turn left at the next corner.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Turn right",
+    back: "Change direction to the right side",
+    example: "Turn right after the traffic light.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Go straight",
+    back: "Continue in the same direction",
+    example: "Go straight for two blocks.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Go back",
+    back: "Return to where you came from",
+    example: "If you miss it, go back.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Keep walking",
+    back: "Continue walking forward",
+    example: "Keep walking until you see the sign.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Cross the street",
+    back: "Move from one side of the street to the other",
+    example: "Cross the street at the crosswalk.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "At the corner",
+    back: "At the intersection of two streets",
+    example: "Meet me at the corner.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Next to",
+    back: "Beside, adjacent to",
+    example: "The bank is next to the store.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Opposite",
+    back: "On the other side",
+    example: "The park is opposite the library.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Behind",
+    back: "At the back of something",
+    example: "The parking lot is behind the building.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "In front of",
+    back: "Facing something",
+    example: "Wait in front of the station.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Between",
+    back: "In the middle of two things",
+    example: "The restaurant is between the bank and the cafe.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Near",
+    back: "Close to something",
+    example: "There's a hotel near here.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Far",
+    back: "At a distance",
+    example: "The airport is far from the city.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "North",
+    back: "Direction towards the top of the map",
+    example: "Go north on this road.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "South",
+    back: "Direction towards the bottom of the map",
+    example: "The beach is south of here.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "East",
+    back: "Direction towards the right on a map",
+    example: "Travel east for 10 kilometers.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "West",
+    back: "Direction towards the left on a map",
+    example: "The sunset is in the west.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Up",
+    back: "Towards a higher position",
+    example: "Go up the stairs.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Down",
+    back: "Towards a lower position",
+    example: "Go down the escalator.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Here",
+    back: "In this place",
+    example: "I am here.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "There",
+    back: "In that place",
+    example: "The store is there.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Everywhere",
+    back: "In all places",
+    example: "I looked everywhere for my keys.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Nowhere",
+    back: "Not in any place",
+    example: "There's nowhere to sit.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Somewhere",
+    back: "In some place",
+    example: "Let's go somewhere nice.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Around",
+    back: "On all sides of something",
+    example: "Walk around the park.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Through",
+    back: "From one side to the other",
+    example: "Walk through the door.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Along",
+    back: "Following the length of something",
+    example: "Walk along the river.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Across",
+    back: "From one side to the opposite side",
+    example: "Swim across the pool.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Past",
+    back: "Beyond a certain point",
+    example: "Go past the church.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Beyond",
+    back: "Further than a certain point",
+    example: "The mountains are beyond the valley.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Inside",
+    back: "Within the interior",
+    example: "Come inside the building.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Outside",
+    back: "In the exterior",
+    example: "Let's sit outside.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Upstairs",
+    back: "On a higher floor",
+    example: "The bedroom is upstairs.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Downstairs",
+    back: "On a lower floor",
+    example: "The kitchen is downstairs.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Left side",
+    back: "The left direction",
+    example: "The left side of the room.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Right side",
+    back: "The right direction",
+    example: "The right side of the road.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Middle",
+    back: "The center point",
+    example: "Sit in the middle.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Edge",
+    back: "The border or boundary",
+    example: "Stand at the edge of the cliff.",
+  },
+  {
+    subsection: "directions",
+    subsectionTitle: "Directions",
+    front: "Center",
+    back: "The middle point",
+    example: "The city center is busy.",
+  },
+];
+
+async function seedBasicsCards() {
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "korean_mastery",
+  });
+
+  try {
+    console.log(`🌱 Seeding ${basicsCards.length} Basics cards...`);
+
+    // Clear existing data
+    await connection.execute("DELETE FROM basics_cards");
+
+    // Insert cards in batches
+    const batchSize = 100;
+    for (let i = 0; i < basicsCards.length; i += batchSize) {
+      const batch = basicsCards.slice(i, i + batchSize);
+      const values = batch
+        .map(
+          (card) =>
+            `('${card.subsection}', '${card.subsectionTitle}', '${card.front.replace(/'/g, "''")}', '${card.back.replace(/'/g, "''")}', '${card.example.replace(/'/g, "''")}')`
+        )
+        .join(",");
+
+      await connection.execute(
+        `INSERT INTO basics_cards (subsection, subsectionTitle, front, back, example) VALUES ${values}`
+      );
+
+      console.log(`   ✅ Inserted ${Math.min(i + batchSize, basicsCards.length)}/${basicsCards.length}`);
+    }
+
+    console.log(`\n✅ Successfully seeded ${basicsCards.length} Basics cards!`);
+  } catch (error) {
+    console.error("❌ Error seeding:", error.message);
+  } finally {
+    await connection.end();
+  }
+}
+
+seedBasicsCards();

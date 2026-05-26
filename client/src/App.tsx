@@ -17,6 +17,8 @@ import WordDetail from "./pages/WordDetail";
 import AdminSettings from "./pages/AdminSettings";
 import Rules from "./pages/Rules";
 import { EnglishSynonymsClean } from "./pages/EnglishSynonymsClean";
+import { BasicsHub } from "./components/BasicsHub";
+import { BasicsGame } from "./pages/BasicsGame";
 
 function Router() {
   return (
@@ -29,6 +31,8 @@ function Router() {
       <Route path="/admin" component={AdminSettings} />
       <Route path="/rules" component={Rules} />
       <Route path="/english" component={EnglishSynonymsClean} />
+      <Route path="/basics" component={BasicsHub} />
+      <Route path="/basics/:subsection" component={BasicsGame} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -191,3 +191,19 @@ export const englishSynonyms = mysqlTable("english_synonyms", {
 
 export type EnglishSynonym = typeof englishSynonyms.$inferSelect;
 export type InsertEnglishSynonym = typeof englishSynonyms.$inferInsert;
+
+/**
+ * Basics/Must-Know cards for language learners
+ */
+export const basicsCards = mysqlTable("basics_cards", {
+  id: int("id").autoincrement().primaryKey(),
+  subsection: varchar("subsection", { length: 100 }).notNull(),
+  subsectionTitle: varchar("subsectionTitle", { length: 255 }).notNull(),
+  front: text("front").notNull(),
+  back: text("back").notNull(),
+  example: text("example").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BasicsCard = typeof basicsCards.$inferSelect;
+export type InsertBasicsCard = typeof basicsCards.$inferInsert;

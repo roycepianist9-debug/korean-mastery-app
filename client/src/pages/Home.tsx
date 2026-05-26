@@ -669,7 +669,7 @@ export default function Home() {
         )}
 
         {/* Quick Start */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             onClick={() => { sfx.whoosh(); setLocation(isChinese ? '/play?lang=chinese' : '/play'); }}
             className="h-14 text-lg font-black bg-primary hover:bg-primary/90 press-scale rounded-2xl"
@@ -683,6 +683,13 @@ export default function Home() {
           >
             <Trophy className="w-6 h-6 mr-2" />
             Memory
+          </Button>
+          <Button
+            onClick={() => { sfx.whoosh(); setLocation('/basics'); }}
+            className="h-14 text-lg font-black bg-blue-600 hover:bg-blue-700 press-scale rounded-2xl"
+          >
+            <BookOpen className="w-6 h-6 mr-2" />
+            Basics
           </Button>
         </div>
 

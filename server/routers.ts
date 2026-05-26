@@ -15,6 +15,7 @@ import { JAPANESE_VOCAB_300 } from "./japanese-vocab-300";
 import { adminProcedure } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { englishSynonymsRouter } from "./englishSynonymsRouter";
+import { basicsRouter } from "./basicsRouter";
 import {
   searchWords,
   getWordById,
@@ -45,6 +46,7 @@ import {
 
 export const appRouter = router({
   system: systemRouter,
+  basics: basicsRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
