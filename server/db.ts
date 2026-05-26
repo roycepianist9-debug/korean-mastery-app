@@ -842,3 +842,7 @@ export async function deleteEnglishSynonym(word: string): Promise<void> {
   await db.delete(englishSynonyms)
     .where(eq(englishSynonyms.word, word.toLowerCase()));
 }
+
+
+// Export the database instance getter
+export { getDb as db };
