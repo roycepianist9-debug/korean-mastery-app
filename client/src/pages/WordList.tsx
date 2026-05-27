@@ -51,13 +51,13 @@ function WordCard({
       >
         <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center shrink-0">
           <span className="text-base font-black text-foreground">
-            {word.korean ? word.korean.charAt(0) : word.chinese?.charAt(0) || '?'}
+            {word.korean ? word.korean.charAt(0) : word.japanese ? word.japanese.charAt(0) : word.chinese?.charAt(0) || '?'}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-bold text-sm text-foreground truncate">
-              {word.korean || word.chinese}
+              {word.korean || word.japanese || word.chinese}
             </p>
             <span className="text-xs text-muted-foreground shrink-0">
               {word.romanization || word.pinyin}
@@ -66,7 +66,7 @@ function WordCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  speak(word.korean || word.chinese || '', word.korean ? 'ko-KR' : 'zh-CN');
+                  speak(word.korean || word.japanese || word.chinese || '', word.korean ? 'ko-KR' : word.japanese ? 'ja-JP' : 'zh-CN');
                 }}
                 className="p-1 rounded hover:bg-secondary/60 transition-colors active:scale-95 shrink-0"
                 title="Pronounce"
@@ -76,7 +76,7 @@ function WordCard({
             )}
           </div>
           <p className="text-xs text-muted-foreground truncate mt-0.5">
-            {locale === 'fr' && word.meaningFr ? word.meaningFr : word.meaning}
+            {locale === 'fr' && word.meaningFr ? word.meaningFr : (word.meaning || word.meaningFr)}
           </p>
         </div>
 
@@ -250,7 +250,7 @@ export default function WordList() {
   }, [posFilter, levelFilter, isChinese]);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="relative min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-4 pt-6 pb-3">
         <div className="flex items-center justify-between mb-4">
@@ -472,7 +472,7 @@ export default function WordList() {
         limit={paywallInfo?.limit}
       />
 
-      <BottomNav />
     </div>
+    <BottomNav />
   );
 }

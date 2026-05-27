@@ -412,3 +412,11 @@
 - [x] Server tokenize: Add 'japanese' to language enum in tRPC procedure
 - [x] Server tokenizeAndLookup: Support Japanese word lookup (search by words.japanese)
 - [x] Fix TypeScript error: cast jlptLevel in Japanese import to proper enum type
+
+## UI Fixes & Example Sentences (May 2026 - Round 21)
+- [ ] Fix Japanese "?" rendering in Words list (font/encoding issue)
+- [ ] Fix bottom nav bar floating in middle of page (needs fixed positioning at bottom)
+- [ ] Generate Korean example sentences via OpenRouter (Korean + EN + FR)
+- [ ] Generate Japanese example sentences via OpenRouter (Japanese + EN + FR)
+- [ ] Generate Chinese example sentences via OpenRouter (Chinese + pinyin + EN + FR)
+- [ ] Verify locale-aware display in SwipeGame (FR UI shows FR, EN UI shows EN)
