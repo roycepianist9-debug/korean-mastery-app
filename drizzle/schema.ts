@@ -63,7 +63,7 @@ export const words = mysqlTable("words", {
   koreanExample: text("koreanExample"),
   exampleEnglish: text("exampleEnglish"),
   exampleFrench: text("exampleFrench"),
-  topikLevel: mysqlEnum("topikLevel", ["beginner", "intermediate", "advanced"]).default("advanced"),
+  topikLevel: mysqlEnum('topikLevel', ['beginner', 'intermediate', 'advanced', 'native-like']).default('advanced'),
   // Chinese fields
   chinese: varchar("chinese", { length: 255 }),
   pinyin: varchar("pinyin", { length: 255 }).notNull().default(""),

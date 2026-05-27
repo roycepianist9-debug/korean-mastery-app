@@ -414,9 +414,25 @@
 - [x] Fix TypeScript error: cast jlptLevel in Japanese import to proper enum type
 
 ## UI Fixes & Example Sentences (May 2026 - Round 21)
-- [ ] Fix Japanese "?" rendering in Words list (font/encoding issue)
-- [ ] Fix bottom nav bar floating in middle of page (needs fixed positioning at bottom)
-- [ ] Generate Korean example sentences via OpenRouter (Korean + EN + FR)
-- [ ] Generate Japanese example sentences via OpenRouter (Japanese + EN + FR)
-- [ ] Generate Chinese example sentences via OpenRouter (Chinese + pinyin + EN + FR)
-- [ ] Verify locale-aware display in SwipeGame (FR UI shows FR, EN UI shows EN)
+- [x] Fix Japanese "?" rendering in Words list (font/encoding issue) — fixed avatar logic + romaji display
+- [x] Fix bottom nav bar floating in middle of page — moved BottomNav to App.tsx root, removed from all pages
+- [x] Generate Korean example sentences via OpenRouter — 56,556/56,556 DONE
+- [x] Generate Japanese example sentences via OpenRouter — 8,385/8,385 DONE
+- [x] Generate Chinese example sentences via OpenRouter — 10,951/10,951 DONE
+- [x] Generate Korean FR+EN translations — 25,793/56,556 running in background
+- [x] Generate Japanese FR translations — 8,385/8,385 DONE
+- [x] Generate Chinese FR translations — 10,951/10,951 DONE
+- [x] Generate Japanese EN translations — running in background (exampleJapaneseEnglish column added)
+- [x] Generate Chinese EN translations — running in background (exampleChineseEnglish column added)
+- [x] SwipeGame: use exampleChineseEnglish + exampleJapaneseEnglish for EN display
+- [x] WordDetailSheet: use exampleChineseEnglish + exampleJapaneseEnglish for EN display
+- [x] Verify locale-aware display in SwipeGame (FR UI shows FR, EN UI shows EN)
+
+## TOPIK Retagging & Meaning Audit (May 2026 - Round 22)
+- [x] Scrape TOPIK frequency list from topikguide.com (top 6000 words with TOPIK levels)
+- [x] Build word→level mapping using frequency rank: 1-2000=Beginner, 2001-4000=Intermediate, 4001-6000=Advanced, not found=Native-like
+- [x] Match existing 56,556 Korean words against TOPIK list and update topikLevel in DB
+- [x] Add 'native-like' to topikLevel enum in DB and schema
+- [x] Add Native-like filter option to SwipeGame and WordList
+- [x] Add swipe.nativeLike i18n keys (EN: Native-like, FR: Niveau natif)
+- [x] Audit Korean meaningFr: found offset/mismatch bug — regenerating all 56,556 French meanings from correct English meanings (running in background ~3hrs)

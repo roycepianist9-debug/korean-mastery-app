@@ -31,8 +31,9 @@ async function getConn() {
 }
 
 const LANGUAGE = process.argv[2] || 'korean'; // 'korean' or 'japanese'
+const FORCE = process.argv.includes('--force'); // overwrite existing meaningFr
 const BATCH_SIZE = 100;
-const PROGRESS_FILE = `/tmp/regen-fr-${LANGUAGE}.json`;
+const PROGRESS_FILE = `/tmp/regen-fr-${LANGUAGE}${FORCE ? '-force' : ''}.json`;
 
 console.log(`\n=== Regenerating French meanings for ${LANGUAGE} words ===\n`);
 
@@ -46,7 +47,9 @@ if (existsSync(PROGRESS_FILE)) {
 // Get total count
 const conn0 = await getConn();
 const [[{ total }]] = await conn0.execute(
-  `SELECT COUNT(*) as total FROM words WHERE language=? AND (meaningFr IS NULL OR meaningFr='') AND id > ?`,
+  FORCE
+    ? `SELECT COUNT(*) as total FROM words WHERE language=? AND id > ?`
+    : `SELECT COUNT(*) as total FROM words WHERE language=? AND (meaningFr IS NULL OR meaningFr='') AND id > ?`,
   [LANGUAGE, progress.lastId]
 );
 await conn0.end();
@@ -116,7 +119,9 @@ const startTime = Date.now();
 while (true) {
   const conn = await getConn();
   const [rows] = await conn.execute(
-    `SELECT id, meaning FROM words WHERE language=? AND (meaningFr IS NULL OR meaningFr='') AND id > ? ORDER BY id LIMIT ${BATCH_SIZE}`,
+    FORCE
+      ? `SELECT id, meaning FROM words WHERE language=? AND id > ? ORDER BY id LIMIT ${BATCH_SIZE}`
+      : `SELECT id, meaning FROM words WHERE language=? AND (meaningFr IS NULL OR meaningFr='') AND id > ? ORDER BY id LIMIT ${BATCH_SIZE}`,
     [LANGUAGE, progress.lastId]
   );
 

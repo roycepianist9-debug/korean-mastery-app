@@ -341,8 +341,9 @@ export default function WordList() {
                     ) : (
                       <>
                         <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
-                        <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
-                        <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
+                         <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
+                         <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
+                         <SelectItem value="native-like">{t('swipe.nativeLike') || 'Native-like'}</SelectItem>
                       </>
                     )}
                   </SelectContent>

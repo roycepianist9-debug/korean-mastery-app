@@ -191,10 +191,13 @@ function FlashCard({
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
               word.topikLevel === 'beginner' ? 'bg-primary/20 text-primary' :
               word.topikLevel === 'intermediate' ? 'bg-chart-3/20 text-chart-3' :
+              word.topikLevel === 'native-like' ? 'bg-purple-500/20 text-purple-500' :
               'bg-accent/20 text-accent'
             }`}>
               {word.topikLevel === 'beginner' ? t('swipe.beginner') :
-               word.topikLevel === 'intermediate' ? t('swipe.intermediate') : t('swipe.advanced')}
+               word.topikLevel === 'intermediate' ? t('swipe.intermediate') :
+               word.topikLevel === 'native-like' ? (t('swipe.nativeLike') || 'Native-like') :
+               t('swipe.advanced')}
             </span>
           )}
         </div>
@@ -768,6 +771,7 @@ export default function SwipeGame() {
                       <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
                       <SelectItem value="intermediate">{t('swipe.intermediate')}</SelectItem>
                       <SelectItem value="advanced">{t('swipe.advanced')}</SelectItem>
+                      <SelectItem value="native-like">{t('swipe.nativeLike') || 'Native-like'}</SelectItem>
                     </>
                   )}
                 </SelectContent>
