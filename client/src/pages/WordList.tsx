@@ -250,6 +250,7 @@ export default function WordList() {
   }, [posFilter, levelFilter, isChinese]);
 
   return (
+    <>
     <div className="relative min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-4 pt-6 pb-3">
@@ -474,5 +475,6 @@ export default function WordList() {
 
     </div>
     <BottomNav />
+    </>
   );
 }
