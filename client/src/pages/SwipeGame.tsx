@@ -3,7 +3,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 
 import {
@@ -318,13 +317,13 @@ function FlashCard({
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench}</p>
               </div>
-            ) : locale === 'en' && word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleChineseEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseEnglish}</p>
               </div>
-            ) : (word.exampleChineseFrench || word.exampleEnglish) ? (
+            ) : (word.exampleChineseFrench || word.exampleChineseEnglish) ? (
               <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench || word.exampleEnglish}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleChineseFrench || word.exampleChineseEnglish}</p>
               </div>
             ) : null}
           </div>
@@ -342,13 +341,13 @@ function FlashCard({
               <div className="space-y-1 border-t border-muted pt-2">
                 <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseFrench}</p>
               </div>
-            ) : locale === 'en' && word.exampleEnglish ? (
+            ) : locale === 'en' && word.exampleJapaneseEnglish ? (
               <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleEnglish}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseEnglish}</p>
               </div>
-            ) : (word.exampleJapaneseFrench || word.exampleEnglish) ? (
+            ) : (word.exampleJapaneseFrench || word.exampleJapaneseEnglish) ? (
               <div className="space-y-1 border-t border-muted pt-2">
-                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseFrench || word.exampleEnglish}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{word.exampleJapaneseFrench || word.exampleJapaneseEnglish}</p>
               </div>
             ) : null}
           </div>
@@ -880,7 +879,6 @@ export default function SwipeGame() {
           </Button>
         </div>
 
-        <BottomNav />
       </div>
     );
   }

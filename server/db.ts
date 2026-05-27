@@ -73,6 +73,7 @@ export async function searchWords(params: {
   pos?: string;
   topikLevel?: string;
   hskLevel?: string;
+  jlptLevel?: string;
   statuses?: string[];
   userId?: number;
   page: number;
@@ -131,6 +132,10 @@ export async function searchWords(params: {
 
   if (params.hskLevel && params.hskLevel !== 'all') {
     conditions.push(eq(words.hskLevel, params.hskLevel as any));
+  }
+
+  if (params.jlptLevel && params.jlptLevel !== 'all') {
+    conditions.push(eq(words.jlptLevel, params.jlptLevel as any));
   }
 
   // Status filter: filter by user progress status

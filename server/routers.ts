@@ -64,6 +64,7 @@ export const appRouter = router({
         pos: z.string().optional(),
         topikLevel: z.string().optional(),
         hskLevel: z.string().optional(),
+        jlptLevel: z.string().optional(),
         statuses: z.array(z.string()).optional(),
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).max(100).default(30),

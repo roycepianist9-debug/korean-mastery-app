@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -9,6 +9,7 @@ import { SoundProvider } from "./contexts/SoundContext";
 import { I18nProvider, useI18n } from "./contexts/I18nContext";
 import LocalePicker from "./components/LocalePicker";
 import FrenchOnboardingModal from "./components/FrenchOnboardingModal";
+import BottomNav from "./components/BottomNav";
 import Home from "./pages/Home";
 import WordList from "./pages/WordList";
 import SwipeGame from "./pages/SwipeGame";
@@ -41,10 +42,15 @@ function Router() {
 
 function AppContent() {
   const { hasChosenLocale } = useI18n();
+  const [location] = useLocation();
   
   if (!hasChosenLocale) {
     return <LocalePicker />;
   }
+
+  // Hide BottomNav during active swipe game session (not on session start screen)
+  // We always show it — the SwipeGame itself hides it when a session is active
+  const showBottomNav = true;
 
   return (
     <LanguageProvider>
@@ -53,6 +59,7 @@ function AppContent() {
           <Toaster />
           <FrenchOnboardingModal />
           <Router />
+          {showBottomNav && <BottomNav />}
         </TooltipProvider>
       </SoundProvider>
     </LanguageProvider>

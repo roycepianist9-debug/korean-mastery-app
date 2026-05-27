@@ -71,6 +71,7 @@ export const words = mysqlTable("words", {
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
   exampleChineseFrench: text("exampleChineseFrench"),
+  exampleChineseEnglish: text("exampleChineseEnglish"),
   // Japanese fields
   japanese: varchar("japanese", { length: 255 }),
   hiragana: varchar("hiragana", { length: 255 }).notNull().default(""),
@@ -78,7 +79,8 @@ export const words = mysqlTable("words", {
   jlptLevel: mysqlEnum("jlptLevel", ["n5", "n4", "n3", "n2", "n1"]),
   japaneseExample: text("japaneseExample"),
   exampleRomaji: text("exampleRomaji"),
-  exampleJapaneseFrench: text("exampleJapaneseFrench"),
+  exampleJapaneseFrench: text('exampleJapaneseFrench'),
+  exampleJapaneseEnglish: text('exampleJapaneseEnglish'),
 }, (table) => [
   index("idx_words_language").on(table.language),
   index("idx_words_korean").on(table.korean),
@@ -96,7 +98,9 @@ export const words = mysqlTable("words", {
 // meaningFr: French translation of meaning (e.g., "eau" for "water")
 // exampleFrench: French translation of koreanExample
 // exampleChineseFrench: French translation of chineseExample
+// exampleChineseEnglish: English translation of chineseExample
 // exampleJapaneseFrench: French translation of japaneseExample
+// exampleJapaneseEnglish: English translation of japaneseExample
 export type Word = typeof words.$inferSelect;
 export type InsertWord = typeof words.$inferInsert;
 

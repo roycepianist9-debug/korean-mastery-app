@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import BottomNav from "@/components/BottomNav";
 import UpgradeModal from "@/components/UpgradeModal";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLocation } from "wouter";
@@ -943,7 +942,6 @@ export default function Home() {
         learnedCount={0}
         limit={150}
       />
-      <BottomNav />
     </div>
   );
 }

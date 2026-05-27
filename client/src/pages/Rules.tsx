@@ -1,5 +1,4 @@
 import { useState } from "react";
-import BottomNav from "@/components/BottomNav";
 import { useLocation } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
 import {
@@ -139,7 +138,6 @@ export default function Rules() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

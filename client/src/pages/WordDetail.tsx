@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import BottomNav from "@/components/BottomNav";
 import { useAudio } from "@/hooks/useAudio";
 
 export default function WordDetail() {
@@ -41,7 +40,6 @@ export default function WordDetail() {
           <Skeleton className="h-4 w-32 mx-auto" />
           <Skeleton className="h-24 w-full" />
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -53,7 +51,6 @@ export default function WordDetail() {
         <Button variant="outline" className="mt-4" onClick={() => setLocation("/words")}>
           Back to Dictionary
         </Button>
-        <BottomNav />
       </div>
     );
   }
@@ -133,7 +130,6 @@ export default function WordDetail() {
 
 
 
-      <BottomNav />
     </div>
   );
 }

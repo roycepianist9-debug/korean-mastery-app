@@ -45,6 +45,8 @@ interface WordDetailSheetProps {
     japaneseExample?: string | null;
     exampleRomaji?: string | null;
     exampleJapaneseFrench?: string | null;
+    exampleJapaneseEnglish?: string | null;
+    exampleChineseEnglish?: string | null;
     topikLevel?: string | null;
     hskLevel?: string | null;
     jlptLevel?: string | null;
@@ -106,11 +108,14 @@ export default function WordDetailSheet({ word, open, onOpenChange }: WordDetail
   // Locale-aware translation
   const exampleTranslation = (() => {
     if (locale === 'fr') {
-      if (isChinese) return word?.exampleChineseFrench || word?.exampleEnglish;
-      if (isJapanese) return word?.exampleJapaneseFrench || word?.exampleEnglish;
+      if (isChinese) return word?.exampleChineseFrench || word?.exampleChineseEnglish;
+      if (isJapanese) return word?.exampleJapaneseFrench || word?.exampleJapaneseEnglish;
       return word?.exampleFrench || word?.exampleEnglish;
     }
-    return word?.exampleEnglish || (isChinese ? word?.exampleChineseFrench : isJapanese ? word?.exampleJapaneseFrench : word?.exampleFrench);
+    // English UI
+    if (isChinese) return word?.exampleChineseEnglish || word?.exampleChineseFrench;
+    if (isJapanese) return word?.exampleJapaneseEnglish || word?.exampleJapaneseFrench;
+    return word?.exampleEnglish || word?.exampleFrench;
   })();
 
 

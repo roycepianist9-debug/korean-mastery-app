@@ -3,7 +3,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useI18n } from "@/contexts/I18nContext";
 import { trpc } from "@/lib/trpc";
-import BottomNav from "@/components/BottomNav";
 import { useLocation, useSearch } from "wouter";
 import {
   Search, ChevronLeft, ChevronRight, BookOpen,
@@ -60,7 +59,7 @@ function WordCard({
               {word.korean || word.japanese || word.chinese}
             </p>
             <span className="text-xs text-muted-foreground shrink-0">
-              {word.romanization || word.pinyin}
+              {word.romanization || word.romaji || word.pinyin}
             </span>
             {audioSupported && (
               <button
@@ -163,7 +162,8 @@ export default function WordList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const isChinese = language === 'chinese';
-  const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : "beginner");
+  const isJapanese = language === 'japanese';
+  const defaultLevel = hasAnyUrlParam ? "all" : (isChinese ? "1" : isJapanese ? "all" : "beginner");
   const defaultStatuses = hasAnyUrlParam ? [] : ["new"];
   
   // Load persisted level filter from localStorage
@@ -208,12 +208,13 @@ export default function WordList() {
   const wordsQuery = trpc.words.search.useQuery({
     query: debouncedQuery,
     pos: posFilter !== 'all' ? posFilter : undefined,
-    topikLevel: !isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+    topikLevel: !isChinese && !isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
     hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+    jlptLevel: isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
-    language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | undefined,
+    language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined,
   });
 
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -242,15 +243,16 @@ export default function WordList() {
     if (posFilter !== 'all') p.set('pos', posFilter);
     if (levelFilter !== 'all') {
       if (isChinese) p.set('hskLevel', levelFilter);
+      else if (isJapanese) p.set('jlptLevel', levelFilter);
       else p.set('level', levelFilter);
     }
     if (isChinese) p.set('lang', 'chinese');
+    if (isJapanese) p.set('lang', 'japanese');
     const qs = p.toString();
     return `/play${qs ? '?' + qs : ''}`;
-  }, [posFilter, levelFilter, isChinese]);
+  }, [posFilter, levelFilter, isChinese, isJapanese]);
 
   return (
-    <>
     <div className="relative min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-4 pt-6 pb-3">
@@ -328,6 +330,14 @@ export default function WordList() {
                         <SelectItem value="8">HSK 8</SelectItem>
                         <SelectItem value="9">HSK 9</SelectItem>
                       </>
+                    ) : isJapanese ? (
+                      <>
+                        <SelectItem value="n5">JLPT N5</SelectItem>
+                        <SelectItem value="n4">JLPT N4</SelectItem>
+                        <SelectItem value="n3">JLPT N3</SelectItem>
+                        <SelectItem value="n2">JLPT N2</SelectItem>
+                        <SelectItem value="n1">JLPT N1</SelectItem>
+                      </>
                     ) : (
                       <>
                         <SelectItem value="beginner">{t('swipe.beginner')}</SelectItem>
@@ -372,10 +382,15 @@ export default function WordList() {
           <button
             onClick={() => {
               const params = new URLSearchParams();
-              if (levelFilter !== 'all') params.set(isChinese ? 'hskLevel' : 'level', levelFilter);
+              if (levelFilter !== 'all') {
+                if (isChinese) params.set('hskLevel', levelFilter);
+                else if (isJapanese) params.set('jlptLevel', levelFilter);
+                else params.set('level', levelFilter);
+              }
               if (posFilter !== 'all') params.set('pos', posFilter);
               if (statusFilter.length > 0) params.set('statuses', statusFilter.join(','));
               if (isChinese) params.set('lang', 'chinese');
+              if (isJapanese) params.set('lang', 'japanese');
               setLocation(`/play?${params.toString()}`);
             }}
             className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/20 border border-primary/40 text-primary font-bold text-sm press-scale transition-colors hover:bg-primary/30"
@@ -474,7 +489,5 @@ export default function WordList() {
       />
 
     </div>
-    <BottomNav />
-    </>
   );
 }

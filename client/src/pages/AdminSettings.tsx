@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
 import { Settings, Zap, ZapOff, DollarSign, User, Shield, Save, X, Sparkles, Loader2, Image } from "lucide-react";
 
@@ -229,7 +228,6 @@ export default function AdminSettings() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 px-6">
         <Shield className="w-10 h-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground text-center">Admin access only. This page is not available for regular users.</p>
-        <BottomNav />
       </div>
     );
   }
@@ -726,7 +724,6 @@ export default function AdminSettings() {
 
       </div>
 
-      <BottomNav />
     </div>
   );
 }
