@@ -685,8 +685,9 @@ export default function SwipeGame() {
     setHistory([]);
     setSessionDone(false);
     setSessionStarted(false);
-    setTimeout(() => setSessionStarted(true), 100);
-  }, []);
+    setLocation('/play');
+    setTimeout(() => { setSessionStarted(true); setLocation('/play?active=1'); }, 100);
+  }, [setLocation]);
 
   if (authLoading) {
     return (
@@ -876,7 +877,7 @@ export default function SwipeGame() {
           <Button
             size="lg"
             className="w-full h-14 text-lg font-black press-scale bg-gradient-to-r from-primary to-primary/80"
-            onClick={() => { sfx.whoosh(); setSessionStarted(true); }}
+            onClick={() => { sfx.whoosh(); setSessionStarted(true); setLocation('/play?active=1'); }}
           >
             <Gamepad2 className="w-6 h-6 mr-2" />
             {t('swipe.startSession')} ({deckSize} {t('swipe.cards')})
@@ -902,7 +903,7 @@ export default function SwipeGame() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
         <p className="text-muted-foreground text-center">No words found for this filter. Try different settings.</p>
-        <Button variant="outline" className="mt-4" onClick={() => setSessionStarted(false)}>
+        <Button variant="outline" className="mt-4" onClick={() => { setSessionStarted(false); setLocation('/play'); }}>
           Change Filters
         </Button>
       </div>
@@ -916,7 +917,7 @@ export default function SwipeGame() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <button onClick={() => setSessionStarted(false)} className="text-muted-foreground press-scale">
+        <button onClick={() => { setSessionStarted(false); setLocation('/play'); }} className="text-muted-foreground press-scale">
           <X className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
