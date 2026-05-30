@@ -928,7 +928,7 @@ export default function SwipeGame() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+      <div className="px-4 safe-area-top pb-2 flex items-center justify-between">
         <button onClick={() => { setSessionStarted(false); setLocation('/play'); }} className="text-muted-foreground press-scale">
           <X className="w-5 h-5" />
         </button>
@@ -992,7 +992,7 @@ export default function SwipeGame() {
       </div>
 
       {/* Bottom buttons */}
-      <div className="px-6 pb-8 flex items-center justify-center gap-4">
+      <div className="px-6 pb-4 flex items-center justify-center gap-4">
         <button
           onClick={() => { sfx.pop(); handleBack(); }}
           disabled={!canUndo}

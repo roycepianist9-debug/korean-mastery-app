@@ -368,6 +368,10 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 16px);
+}
+
 /* Active press feedback */
 .press-scale {
   transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);

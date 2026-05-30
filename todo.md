@@ -449,3 +449,8 @@
 - [x] Verify SwipeGame and WordList display "95% — Top 3,844 words" filter option (READY: Filter infrastructure in place)
 - [x] Test 95% coverage filter end-to-end in swipe game and word list (READY: All data complete)
 - [x] Add tooltip/info icon for "95% Coverage" label explaining pedagogical purpose (COMPLETED: Added ★ tooltip with hover text in SwipeGame and WordList)
+
+## SwipeGame UI Fixes (May 2026 - Round 24)
+- [x] Fix 95% filter stats not registering in Home page — added is95Percent field to getProgressByLevel query
+- [x] Fix top bar overlapping phone status bar — added safe-area-inset-top CSS
+- [x] Move bottom action buttons up by ~1cm (pb-8 → pb-4)
