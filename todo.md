@@ -436,3 +436,14 @@
 - [x] Add Native-like filter option to SwipeGame and WordList
 - [x] Add swipe.nativeLike i18n keys (EN: Native-like, FR: Niveau natif)
 - [x] Audit Korean meaningFr: found offset/mismatch bug — regenerating all 56,556 French meanings from correct English meanings (running in background ~3hrs)
+
+
+## 95% Coverage Chinese Vocabulary (May 2026 - Round 23)
+- [x] Import 1,272 missing Chinese words from PDF vocabulary list with AI-generated meanings, French translations, and examples (COMPLETED: 1272/1272 inserted)
+- [x] Fix TypeScript error in server/basicsRouter.ts (missing await on getDb()) — FIXED
+- [x] Fix TypeScript error in server/import-japanese.ts (missing await on getDb()) — FIXED
+- [ ] Verify all 3,844 words (2,467 existing + 1,272 new) now tagged with is95Percent=1
+- [ ] Verify Home page shows "95% — Top 3,844 words" in Chinese Progress by Level chart
+- [ ] Verify SwipeGame and WordList display "95% — Top 3,844 words" filter option
+- [ ] Test 95% coverage filter end-to-end in swipe game and word list
+- [ ] Add tooltip/info icon for "95% Coverage" label explaining pedagogical purpose

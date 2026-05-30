@@ -3,7 +3,7 @@
  * Usage: Call from browser console or admin panel
  */
 
-import { db } from './db';
+import { getDb } from './db';
 import { words } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 
@@ -55,6 +55,8 @@ const JLPT_VOCABULARY = [
 ];
 
 export async function importJapaneseVocabulary() {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
   try {
     console.log('🚀 Starting Japanese vocabulary import...');
     console.log(`📊 Importing ${JLPT_VOCABULARY.length} words`);

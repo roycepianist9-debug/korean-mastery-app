@@ -1,12 +1,14 @@
 import { router, publicProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { db } from "./db";
+import { getDb } from "./db";
 import { basicsCards } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 export const basicsRouter = router({
   // Get all subsections with card counts
   getSubsections: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
     const result = await db.execute(
       `SELECT DISTINCT subsection, subsectionTitle, COUNT(*) as cardCount 
        FROM basics_cards 
@@ -25,6 +27,8 @@ export const basicsRouter = router({
   getBySubsection: publicProcedure
     .input(z.object({ subsection: z.string() }))
     .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
       const cards = await db
         .select()
         .from(basicsCards)
@@ -42,6 +46,8 @@ export const basicsRouter = router({
       })
     )
     .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
       const cards = await db
         .select()
         .from(basicsCards)
@@ -53,6 +59,8 @@ export const basicsRouter = router({
 
   // Get total card count
   getCount: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
     const result = await db.execute("SELECT COUNT(*) as count FROM basics_cards");
     return (result[0] as any[])[0].count;
   }),
