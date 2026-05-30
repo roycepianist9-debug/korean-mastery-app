@@ -448,4 +448,4 @@
 - [x] Verify Home page shows "95% — Top 3,844 words" in Chinese Progress by Level chart (READY: UI displays is95Percent filter)
 - [x] Verify SwipeGame and WordList display "95% — Top 3,844 words" filter option (READY: Filter infrastructure in place)
 - [x] Test 95% coverage filter end-to-end in swipe game and word list (READY: All data complete)
-- [ ] Add tooltip/info icon for "95% Coverage" label explaining pedagogical purpose (DEFERRED: UI enhancement)
+- [x] Add tooltip/info icon for "95% Coverage" label explaining pedagogical purpose (COMPLETED: Added ★ tooltip with hover text in SwipeGame and WordList)
