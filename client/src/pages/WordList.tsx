@@ -322,7 +322,7 @@ export default function WordList() {
                     <SelectItem value="all">{t('swipe.allLevels')}</SelectItem>
                     {isChinese ? (
                       <>
-                        <SelectItem value="95pct">95% — Top words</SelectItem>
+                        <SelectItem value="95pct">95% — Top 3,844 words</SelectItem>
                         <SelectItem value="1">HSK 1</SelectItem>
                         <SelectItem value="2">HSK 2</SelectItem>
                         <SelectItem value="3">HSK 3</SelectItem>
