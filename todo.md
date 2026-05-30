@@ -442,6 +442,8 @@
 - [x] Import 1,272 missing Chinese words from PDF vocabulary list with AI-generated meanings, French translations, and examples (COMPLETED: 1272/1272 inserted)
 - [x] Fix TypeScript error in server/basicsRouter.ts (missing await on getDb()) — FIXED
 - [x] Fix TypeScript error in server/import-japanese.ts (missing await on getDb()) — FIXED
+- [x] Generate pinyin and translations for 1,272 words (COMPLETED: 1267/1272 updated with pinyin, example pinyin, English & French translations)
+- [ ] Fix remaining 5 words missing pinyin/translations
 - [ ] Verify all 3,844 words (2,467 existing + 1,272 new) now tagged with is95Percent=1
 - [ ] Verify Home page shows "95% — Top 3,844 words" in Chinese Progress by Level chart
 - [ ] Verify SwipeGame and WordList display "95% — Top 3,844 words" filter option
