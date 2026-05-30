@@ -308,7 +308,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="px-4 pt-6 pb-2">
+      <div className="px-4 safe-area-top pb-2">
         <div className="flex items-center justify-between mb-4">
           <LanguageToggle />
           <div className="flex items-center gap-2">

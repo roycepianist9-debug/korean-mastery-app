@@ -452,5 +452,6 @@
 
 ## SwipeGame UI Fixes (May 2026 - Round 24)
 - [x] Fix 95% filter stats not registering in Home page — added is95Percent field to getProgressByLevel query
-- [x] Fix top bar overlapping phone status bar — added safe-area-inset-top CSS
+- [x] Fix top bar overlapping phone status bar — added safe-area-inset-top CSS to all pages (Home, WordList, SwipeGame session setup)
 - [x] Move bottom action buttons up by ~1cm (pb-8 → pb-4)
+- [x] Add English flag next to Japanese in language selector

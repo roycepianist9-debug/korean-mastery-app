@@ -257,7 +257,7 @@ export default function WordList() {
   return (
     <div className="relative min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="px-4 pt-6 pb-3">
+      <div className="px-4 safe-area-top pb-3">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <button onClick={() => setLocation("/")} className="text-muted-foreground press-scale">

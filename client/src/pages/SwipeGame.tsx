@@ -720,7 +720,7 @@ export default function SwipeGame() {
   if (!sessionStarted) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <div className="px-4 pt-6 pb-4">
+        <div className="px-4 safe-area-top pb-4">
           <button onClick={() => { sfx.tap(); setLocation("/"); }} className="flex items-center gap-1 text-muted-foreground mb-4 press-scale">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">{t('rules.back')}</span>
@@ -740,7 +740,7 @@ export default function SwipeGame() {
                 <SelectContent>
                   <SelectItem value="korean">🇰🇷 Korean</SelectItem>
                   <SelectItem value="chinese">🇨🇳 Chinese</SelectItem>
-                  <SelectItem value="japanese">🇯🇵 Japanese</SelectItem>
+                  <SelectItem value="japanese">🇯🇵 Japanese / 🇬🇧 English</SelectItem>
                   <SelectItem value="english">🇬🇧 English</SelectItem>
                 </SelectContent>
               </Select>
