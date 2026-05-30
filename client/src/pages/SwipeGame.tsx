@@ -512,6 +512,11 @@ export default function SwipeGame() {
 
   // Update levelFilter from URL parameters when they change
   useEffect(() => {
+    // Check for 95pct Chinese filter first
+    if (params.get('95pct') === '1') {
+      setLevelFilter('95pct');
+      return;
+    }
     const urlLevel = params.get(levelParamName);
     if (urlLevel) {
       setLevelFilter(urlLevel);
@@ -592,8 +597,9 @@ export default function SwipeGame() {
     {
       pos: posFilter !== 'all' ? posFilter : undefined,
       topikLevel: !isChinese && !isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
-      hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+      hskLevel: isChinese && levelFilter !== 'all' && levelFilter !== '95pct' ? levelFilter : undefined,
       jlptLevel: isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
+      is95Percent: isChinese && levelFilter === '95pct' ? true : undefined,
       limit: deckSize,
       language: (language === 'french' ? 'korean' : language) as 'korean' | 'chinese' | 'japanese' | undefined,
       statuses: statusesForQuery,
@@ -751,6 +757,7 @@ export default function SwipeGame() {
                   <SelectItem value="all">{t('swipe.allLevels')}</SelectItem>
                   {isChinese ? (
                     <>
+                      <SelectItem value="95pct">95% — Top 2,467 words</SelectItem>
                       <SelectItem value="1">HSK 1</SelectItem>
                       <SelectItem value="2">HSK 2</SelectItem>
                       <SelectItem value="3">HSK 3</SelectItem>

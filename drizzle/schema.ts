@@ -71,7 +71,8 @@ export const words = mysqlTable("words", {
   chineseExample: text("chineseExample"),
   examplePinyin: text("examplePinyin"),
   exampleChineseFrench: text("exampleChineseFrench"),
-  exampleChineseEnglish: text("exampleChineseEnglish"),
+  exampleChineseEnglish: text('exampleChineseEnglish'),
+  is95Percent: int('is95Percent').default(0), // 1 = in top 95% Chinese vocabulary list
   // Japanese fields
   japanese: varchar("japanese", { length: 255 }),
   hiragana: varchar("hiragana", { length: 255 }).notNull().default(""),
@@ -92,6 +93,7 @@ export const words = mysqlTable("words", {
   index("idx_words_meaning_fr").on(table.meaningFr),
   index("idx_words_japanese").on(table.japanese),
   index("idx_words_jlpt").on(table.jlptLevel),
+  index("idx_words_95pct").on(table.is95Percent),
 ]);
 
 // Note: French translations are cached from Claude API batch job

@@ -209,8 +209,9 @@ export default function WordList() {
     query: debouncedQuery,
     pos: posFilter !== 'all' ? posFilter : undefined,
     topikLevel: !isChinese && !isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
-    hskLevel: isChinese && levelFilter !== 'all' ? levelFilter : undefined,
+    hskLevel: isChinese && levelFilter !== 'all' && levelFilter !== '95pct' ? levelFilter : undefined,
     jlptLevel: isJapanese && levelFilter !== 'all' ? levelFilter : undefined,
+    is95Percent: isChinese && levelFilter === '95pct' ? true : undefined,
     statuses: statusFilter.length > 0 ? statusFilter : undefined,
     page,
     pageSize: 30,
@@ -242,7 +243,8 @@ export default function WordList() {
     const p = new URLSearchParams();
     if (posFilter !== 'all') p.set('pos', posFilter);
     if (levelFilter !== 'all') {
-      if (isChinese) p.set('hskLevel', levelFilter);
+      if (isChinese && levelFilter === '95pct') p.set('95pct', '1');
+      else if (isChinese) p.set('hskLevel', levelFilter);
       else if (isJapanese) p.set('jlptLevel', levelFilter);
       else p.set('level', levelFilter);
     }
@@ -320,6 +322,7 @@ export default function WordList() {
                     <SelectItem value="all">{t('swipe.allLevels')}</SelectItem>
                     {isChinese ? (
                       <>
+                        <SelectItem value="95pct">95% — Top words</SelectItem>
                         <SelectItem value="1">HSK 1</SelectItem>
                         <SelectItem value="2">HSK 2</SelectItem>
                         <SelectItem value="3">HSK 3</SelectItem>

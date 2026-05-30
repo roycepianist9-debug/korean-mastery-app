@@ -74,6 +74,7 @@ export async function searchWords(params: {
   topikLevel?: string;
   hskLevel?: string;
   jlptLevel?: string;
+  is95Percent?: boolean;
   statuses?: string[];
   userId?: number;
   page: number;
@@ -136,6 +137,10 @@ export async function searchWords(params: {
 
   if (params.jlptLevel && params.jlptLevel !== 'all') {
     conditions.push(eq(words.jlptLevel, params.jlptLevel as any));
+  }
+
+  if (params.is95Percent) {
+    conditions.push(eq(words.is95Percent, 1));
   }
 
   // Status filter: filter by user progress status
@@ -279,6 +284,7 @@ export async function getRandomWords(params: {
   topikLevel?: string;
   hskLevel?: string;
   jlptLevel?: string;
+  is95Percent?: boolean;
   limit: number;
   excludeIds?: number[];
   language?: 'korean' | 'chinese' | 'japanese';
@@ -303,6 +309,7 @@ export async function getRandomWords(params: {
     if (params.topikLevel && params.topikLevel !== 'all') baseConditions.push(eq(words.topikLevel, params.topikLevel as any));
     if (params.hskLevel && params.hskLevel !== 'all') baseConditions.push(eq(words.hskLevel, params.hskLevel as any));
     if (params.jlptLevel && params.jlptLevel !== 'all') baseConditions.push(eq(words.jlptLevel, params.jlptLevel as any));
+    if (params.is95Percent) baseConditions.push(eq(words.is95Percent, 1));
     if (params.excludeIds && params.excludeIds.length > 0) {
       baseConditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
     }
@@ -354,6 +361,7 @@ export async function getRandomWords(params: {
   if (params.topikLevel && params.topikLevel !== 'all') conditions.push(eq(words.topikLevel, params.topikLevel as any));
   if (params.hskLevel && params.hskLevel !== 'all') conditions.push(eq(words.hskLevel, params.hskLevel as any));
   if (params.jlptLevel && params.jlptLevel !== 'all') conditions.push(eq(words.jlptLevel, params.jlptLevel as any));
+  if (params.is95Percent) conditions.push(eq(words.is95Percent, 1));
   if (params.excludeIds && params.excludeIds.length > 0) {
     conditions.push(sql`${words.id} NOT IN (${sql.join(params.excludeIds.map(id => sql`${id}`), sql`, `)})`);
   }
