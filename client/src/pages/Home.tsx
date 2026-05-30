@@ -184,15 +184,26 @@ export default function Home() {
       for (const item of ws.byLevel) {
         if (item.level) levelTotals[item.level] = item.count;
       }
-      return hskLevels
+      const result: any[] = [];
+      
+      // Add 95% Coverage as first row (full 3844-word list from PDF)
+      const learned95 = progressByLevel.data
+        .filter((r: any) => r.is95Percent && r.status === 'learned')
+        .reduce((sum: number, r: any) => sum + r.count, 0);
+      result.push({ level: '95pct', total: 3844, learned: learned95 });
+      
+      // Add HSK levels
+      hskLevels
         .filter(level => levelTotals[level] && levelTotals[level] > 0)
-        .map(level => {
+        .forEach(level => {
           const total = levelTotals[level] ?? 0;
           const learned = progressByLevel.data
             .filter((r: any) => r.hskLevel === level && r.status === 'learned')
             .reduce((sum: number, r: any) => sum + r.count, 0);
-          return { level, total, learned };
+          result.push({ level, total, learned });
         });
+      
+      return result;
     }
 
     if (isJapanese) {
@@ -244,7 +255,10 @@ export default function Home() {
     }).filter(p => p.total > 0);
   })();
   const levelLabel = (l: string) => {
-    if (isChinese) return `HSK ${l}`;
+    if (isChinese) {
+      if (l === '95pct') return '95% Coverage';
+      return `HSK ${l}`;
+    }
     if (isJapanese) {
       const levelMap: Record<string, string> = {
         'n5': 'JLPT N5',
@@ -268,6 +282,7 @@ export default function Home() {
   };
   const levelColor = (l: string) => {
     if (isChinese) {
+      if (l === '95pct') return 'text-chart-2';
       const n = parseInt(l);
       if (n <= 2) return 'text-primary';
       if (n <= 4) return 'text-chart-3';
@@ -282,7 +297,10 @@ export default function Home() {
   };
   const langParam = isChinese ? '&lang=chinese' : isJapanese ? '&lang=japanese' : '';
   const levelFilterParam = (l: string) => {
-    if (isChinese) return `/play?hskLevel=${l}&lang=chinese`;
+    if (isChinese) {
+      if (l === '95pct') return `/play?95pct=1&lang=chinese`;
+      return `/play?hskLevel=${l}&lang=chinese`;
+    }
     if (isJapanese) return `/play?jlptLevel=${l}&lang=japanese`;
     return `/play?level=${l}`;
   };
